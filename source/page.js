@@ -73,10 +73,12 @@
   var haveQr = !!svgQr && !small;
   if (haveQr) {
     qrW = row ? Math.round(Math.min(Sw * (lg ? 0.34 : 0.42), H * (lg ? 0.36 : 0.44))) : Math.round(Math.min(ph * 0.8, W * 0.3));
-    if (view === 2 && row) qrW = Math.round(Math.min(Sw * 0.45, H * 0.8));
+    if (view === 2 && row) qrW = Math.round(Math.min(Sw * 0.5, H * 0.8));
     if (view === 3) qrW = Math.round(Math.min(ph * 0.75, W * 0.34));
     var vbq = (svgQr.getAttribute('viewBox') || '').split(/[ ,]+/), mods = Math.round((+vbq[2] || +svgQr.getAttribute('width') || 0) / 4);   // modules incl. quiet zone (the filter draws 4 units per module)
-    if (mods > 8 && qrW > mods) qrW = Math.max(mods * 2, Math.floor(qrW / mods) * mods);   // whole pixels per module: a 1-bit screen keeps the squares crisp
+    var px = mods > 8 ? Math.floor(qrW / mods) : 99;
+    if (px < (lg ? 3 : 4)) haveQr = false;   // under 4 px per module (3 on the 2x X) a 1-bit panel can not be read: no QR, never a bad one
+    else if (mods > 8) qrW = px * mods;   // whole pixels per module: a 1-bit screen keeps the squares crisp
     if (qrW < 80) haveQr = false;
   }
   var sideHtml = '';
