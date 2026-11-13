@@ -1,0 +1,11 @@
+---
+watch:
+  - .trmnlp.yml
+  - src
+time_zone: Europe/Berlin
+custom_fields:
+  source: lichess
+variables:
+  trmnl:
+    plugin_settings:
+      instance_name: Your Move

@@ -1,0 +1,35 @@
+{% template main %}
+{%- capture ym_icon -%}<svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 24c0-5 1-8 4.500-11C9 13 7 12.500 6 11.500c-1-1 0-2.600 1-4l3-4 .5-1.500 2 1.500c1-.5 2.500-1.500 4.500-1.500 5.500 0 9 4 9 10.500 0 5-.5 8-.5 10.500z" fill="#000"/><circle cx="12.500" cy="8.500" r="1.100" fill="#fff"/></svg>{%- endcapture -%}
+{%- assign cf = trmnl.plugin_settings.custom_fields_values -%}
+<div class="layout gap--small" data-ym>
+{%- if none %}
+  <div class="flex flex--col flex--center-x gap--small">
+    <span class="title title--large">{{ t.none }}</span>
+    <span class="description">{{ t.none2 }}</span>
+  </div>
+{%- else %}
+  <div class="flex" data-ym-board></div>
+  <div class="flex flex--col" data-ym-side></div>
+{%- endif %}
+</div>
+{%- unless none %}
+<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "M", "fixed" }}</div>
+{%- endunless %}
+{%- assign ym_hide = cf.hide_title_bar | append: '' -%}
+{%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}
+<div class="title_bar">
+  <img class="image image--adaptive w--[28px] h--[28px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
+  <span class="title">{{ trmnl.plugin_settings.instance_name | default: "Your Move" }}</span>
+  {%- if puzzle.source == 'chesscom' %}<span class="instance">Chess.com</span>{% elsif puzzle %}<span class="instance">Lichess</span>{% endif %}
+</div>
+{%- endunless %}
+{%- unless none %}
+<script type="text/javascript">
+var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, account: {{ account | json }}, t: {{ t | json }}, to_move: {{ to_move | json }}, banner: {{ banner | json }}, notice: {{ notice | json }}, stale: {{ stale | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+// ==== DRAW
+{{DRAW}}
+// ==== PAGE
+{{PAGE}}
+</script>
+{%- endunless %}
+{% endtemplate %}
