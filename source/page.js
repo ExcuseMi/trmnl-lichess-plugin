@@ -4,7 +4,7 @@
   if (!root) return;
   var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
   var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg');
-  var P = YM.puzzle, A = YM.account, T = YM.t, view = YM.view;
+  var P = YM.puzzle, A = YM.account, T = YM.t, view = YM.view, C = YM.caps || {};
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
   function rect() { var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root), pl = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) || 0, pt = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) || 0; return { w: Math.floor(r.width - pl), h: Math.floor(r.height - pt) }; }
   var R = rect(), W = R.w, H = R.h, gap = Math.round(Math.min(W, H) * 0.035);
@@ -32,7 +32,7 @@
     var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('');
     var last = pts[n - 1];
     var area = d + 'L' + last[0].toFixed(1) + ' ' + (h - 1) + 'L' + pts[0][0].toFixed(1) + ' ' + (h - 1) + 'z';
-    return '<svg class="block" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + area + '" fill="' + (bits === 1 ? 'none' : '#cfcfcf') + '"/><path d="M0 ' + (h - 0.5) + 'H' + w + '" stroke="#000" stroke-width="1.4"/><path d="' + d + '" fill="none" stroke="#000" stroke-width="' + Math.max(2.2, h / 18).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="' + Math.max(3.5, h / 12).toFixed(1) + '" fill="#000"/></svg>';
+    return '<svg class="block" data-ym-part="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + area + '" fill="' + (bits === 1 ? 'none' : '#cfcfcf') + '"/><path d="M0 ' + (h - 0.5) + 'H' + w + '" stroke="#000" stroke-width="1.4"/><path d="' + d + '" fill="none" stroke="#000" stroke-width="' + Math.max(2.2, h / 18).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="' + Math.max(3.5, h / 12).toFixed(1) + '" fill="#000"/></svg>';
   }
   function bars(days, w, h) {
     var mx = Math.max(3, Math.max.apply(null, days.map(function (d) { return d.s + d.f; }))), bwid = w / 7, out = '';
@@ -43,7 +43,7 @@
       if (d.f) out += '<rect x="' + (x + 1).toFixed(1) + '" y="' + (h - 2 - hs - hf + 1).toFixed(1) + '" width="' + (bwd - 2).toFixed(1) + '" height="' + Math.max(1, hf - 2).toFixed(1) + '" fill="#fff" stroke="#000" stroke-width="2"/>';
       if (today) out += '<rect x="' + (x - 1).toFixed(1) + '" y="' + (h - 1) + '" width="' + (bwd + 2).toFixed(1) + '" height="1.5" fill="#000"/>';
     });
-    return '<svg class="block" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + out + '</svg>';
+    return '<svg class="block" data-ym-part="bars" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + out + '</svg>';
   }
   var tx = lg ? 'lg:' : '';
   function head() {
@@ -59,11 +59,13 @@
     var big = '<span class="value value--xlarge lg:value--xxxlarge">' + A.rating + '</span>';
     var chg = '';
     if (A.trend && A.trend !== 'flat') chg = '<span class="flex flex--row flex--center-y gap--xsmall">' + arrow(A.trend === 'up', Math.round(Math.max(14, innerW * 0.07))) + '<span class="value value--small lg:value--medium">' + (A.delta > 0 ? '+' : '') + A.delta + '</span></span>';
-    return '<div class="flex flex--col gap--xsmall"><span class="label label--small">' + esc(A.tactics ? T.tactics : T.rating_you) + '</span><div class="flex flex--row flex--center-y gap--small">' + big + chg + '</div></div>';
+    return '<div data-ym-part="rating" class="flex flex--col gap--xsmall"><span class="label label--small">' + esc(A.label === 'tactics' ? T.tactics : T.rating_you) + '</span><div class="flex flex--row flex--center-y gap--small">' + big + chg + '</div></div>';
   }
   function stats() {
-    if (!A || A.tactics) return '';
-    return '<span class="label label--small lg:label--medium">' + A.today + ' ' + T.today + '  |  ' + A.week + ' ' + T.week + '  |  ' + T.streak + ' ' + A.streak + '</span>';
+    if (!A) return '';
+    if (A.label === 'tactics') return A.rush ? '<span data-ym-part="stats" class="label label--small lg:label--medium">' + esc(T.rush + ' ' + A.rush) + '</span>' : '';
+    if (!C.solved && !C.streak) return '';
+    return '<span data-ym-part="stats" class="label label--small lg:label--medium">' + (C.solved ? A.today + ' ' + T.today + '  |  ' + A.week + ' ' + T.week : '') + (C.solved && C.streak ? '  |  ' : '') + (C.streak ? T.streak + ' ' + A.streak : '') + '</span>';
   }
   var parts = [], qrW = 0;
   var svgQr = document.querySelector('[data-ym-qr] svg');
@@ -80,14 +82,14 @@
   var mid = '';
   if (YM.banner) mid += '<div class="inverse rounded p--2"><span class="title title--small lg:title--medium">' + esc(YM.banner) + '</span></div>';
   if (A) mid += reward(innerW);
-  else if (!small && P.source === 'lichess') mid += '<span class="description description--small">' + esc(T.connect) + '</span>';
+  else if (!small && P.source === 'lichess' && !C.personal) mid += '<span data-ym-part="hint" class="description description--small">' + esc(T.connect) + '</span>';
   var extras = '';
   var chartH = Math.max(34, Math.round(Math.min(H * 0.1, innerW * 0.16)));
-  if (A && !A.tactics && !small && (view === 1 || (view === 3 && H > 440))) {
-    extras += spark(A.history, Math.round(innerW), chartH);
+  if (A && !small && (view === 1 || (view === 3 && H > 440))) {
+    if (C.history) extras += spark(A.history, Math.round(innerW), chartH);
     extras += stats();
-    extras += bars(A.days, Math.round(innerW), chartH);
-  } else if (A && !A.tactics && view === 2 && !small) { extras += stats(); }
+    if (C.solved && A.days) extras += bars(A.days, Math.round(innerW), chartH);
+  } else if (A && view === 2 && !small) { extras += stats(); }
   var qrBox = '';
   if (haveQr) {
     if (!svgQr.getAttribute('viewBox')) svgQr.setAttribute('viewBox', '0 0 ' + (svgQr.getAttribute('width') || qrW) + ' ' + (svgQr.getAttribute('height') || qrW));

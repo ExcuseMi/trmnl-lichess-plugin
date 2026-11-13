@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext(bundle() + '\n;this.api = { run, parseFen, lichessPosition, lichessModel, chesscomModel, accountFromActivity, shortThemes };', ctx);
+  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, chesscomModel, accountFromActivity, shortThemes };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -157,4 +157,51 @@ test('activity: today, week, streak, seven day bars', () => {
 test('state stays under TRMNL limit', async () => {
   const o = await load(account({})).run(input({ lichess_token: 't' }));
   assert.ok(JSON.stringify(o.trmnl_state).length < 8000);
+});
+
+// ---- providers, one by one, with fixture JSON through a mocked fetch
+const ctxOf = (api, extra) => ({ settings: { difficulty: 'normal', chesscom_user: '' }, token: '', state: {}, nowS: NOW, cache: {}, ...extra });
+
+test('provider lichess: capabilities follow the login; daily without, personal with', async () => {
+  const api = load(account({}));
+  const p = api.PROVIDERS.lichess;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.active(ctxOf(api)))), { personalPuzzles: false, solvedCheck: false, ratingHistory: false, streak: false });
+  assert.strictEqual(p.active(ctxOf(api, { token: 't' })).solvedCheck, true);
+  assert.strictEqual((await p.fetchPuzzle(ctxOf(api))).id, 'u3zfD');
+  assert.strictEqual(await p.fetchProgress(ctxOf(api)), null);
+});
+
+test('provider lichess: progress, solved check, one activity call per run', async () => {
+  const calls = [];
+  const rows = [{ date: NOW * 1000, win: true, puzzle: { id: 'a1' } }, { date: NOW * 1000 - 1, win: false, puzzle: { id: 'b2' } }];
+  const api = load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act(rows)) }, calls));
+  const p = api.PROVIDERS.lichess, ctx = ctxOf(api, { token: 't' });
+  const pr = await p.fetchProgress(ctx);
+  assert.strictEqual(pr.rating, 1873); assert.strictEqual(pr.today, 1); assert.strictEqual(pr.history.length, 5); assert.strictEqual(pr.days.length, 7);
+  assert.strictEqual(await p.isSolved('a1', ctx), true); assert.strictEqual(await p.isSolved('b2', ctx), false); assert.strictEqual(await p.isSolved('zz', ctx), false);
+  assert.strictEqual(calls.filter((u) => u.includes('puzzle/activity')).length, 1);
+  await assert.rejects(load(account({ 'https://lichess.org/api/account': resp(401, {}) })).PROVIDERS.lichess.fetchProgress(ctxOf(api, { token: 'bad' })), (e) => e.status === 401);
+});
+
+test('provider chess.com: no personal features, tactics and rush from public stats only', async () => {
+  const stats = { tactics: { highest: { rating: 1456 }, lowest: { rating: 800 } }, puzzle_rush: { best: { score: 31 } }, chess_daily: { last: { rating: 1500 } } };
+  const f = router({ 'https://api.chess.com/pub/puzzle': resp(200, CC), 'https://api.chess.com/pub/player/demo/stats': resp(200, stats) });
+  const api = load(f), p = api.PROVIDERS.chesscom;
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.capabilities)), { personalPuzzles: false, solvedCheck: false, ratingHistory: false, streak: false });
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.active(ctxOf(api)))), JSON.parse(JSON.stringify(p.capabilities)));
+  assert.strictEqual((await p.fetchPuzzle(ctxOf(api))).source, 'chesscom');
+  const pr = await p.fetchProgress(ctxOf(api, { settings: { chesscom_user: 'Demo' } }));
+  assert.strictEqual(pr.rating, 1456); assert.strictEqual(pr.rush, 31); assert.strictEqual(pr.label, 'tactics'); assert.strictEqual(pr.history, undefined); assert.strictEqual(pr.streak, undefined);
+  assert.strictEqual(await p.isSolved('x', ctxOf(api)), false);
+  assert.strictEqual(await p.fetchProgress(ctxOf(api)), null);
+  const o = await load(f).run(input({ source: 'chesscom', chesscom_user: 'demo' }));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(o.caps)), { personal: false, solved: false, history: false, streak: false });
+});
+
+test('run hands the view the capability flags: all with a login, none without', async () => {
+  const withTok = await load(account({})).run(input({ lichess_token: 't' }));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(withTok.caps)), { personal: true, solved: true, history: true, streak: true });
+  const without = await load(account({})).run(input({}));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(without.caps)), { personal: false, solved: false, history: false, streak: false });
+  assert.strictEqual(without.account, null);
 });
