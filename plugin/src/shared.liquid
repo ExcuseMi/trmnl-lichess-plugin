@@ -71,7 +71,7 @@ function boardSvg(o) {
     var c = o.board[i];
     if (c === '.') continue;
     var pp = pos(i);
-    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.11, pp[1] - q * 0.13, q * 1.22));
+    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.07, pp[1] - q * 0.07, q * 1.14));
   }
   if (o.coords) {
     var fs = Math.max(8, pad * 0.78);
@@ -94,7 +94,7 @@ function boardSvg(o) {
   var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg');
   var P = YM.puzzle, A = YM.account, T = YM.t, view = YM.view;
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function rect() { var r = root.getBoundingClientRect(); return { w: Math.floor(r.width), h: Math.floor(r.height) }; }
+  function rect() { var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root), pl = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) || 0, pt = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) || 0; return { w: Math.floor(r.width - pl), h: Math.floor(r.height - pt) }; }
   var R = rect(), W = R.w, H = R.h, gap = Math.round(Math.min(W, H) * 0.035);
   var row = W >= H * 1.15, small = view === 4 || (view === 2 && H < 300);
   var wide = view === 1 || view === 2;
@@ -178,8 +178,8 @@ function boardSvg(o) {
   } else if (A && !A.tactics && view === 2 && !small) { extras += stats(); }
   var qrBox = '';
   if (haveQr) {
+    if (!svgQr.getAttribute('viewBox')) svgQr.setAttribute('viewBox', '0 0 ' + (svgQr.getAttribute('width') || qrW) + ' ' + (svgQr.getAttribute('height') || qrW));
     svgQr.setAttribute('width', qrW); svgQr.setAttribute('height', qrW);
-    if (!svgQr.getAttribute('viewBox')) svgQr.setAttribute('viewBox', '0 0 ' + qrW + ' ' + qrW);
     svgQr.classList.add('block');
     qrBox = '<div class="flex flex--col flex--center-x gap--xsmall shrink-0" data-ym-qrbox></div>';
   }
