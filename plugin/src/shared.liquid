@@ -13,7 +13,7 @@
 {%- endif %}
 </div>
 {%- unless none %}
-<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "M", "fixed" }}</div>
+<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
 {%- endunless %}
 {%- assign ym_hide = cf.hide_title_bar | append: '' -%}
 {%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}
@@ -71,7 +71,7 @@ function boardSvg(o) {
     var c = o.board[i];
     if (c === '.') continue;
     var pp = pos(i);
-    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.07, pp[1] - q * 0.07, q * 1.14));
+    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.05, pp[1] - q * 0.02, q * 1.1));
   }
   if (o.coords) {
     var fs = Math.max(8, pad * 0.78);
@@ -91,6 +91,7 @@ function boardSvg(o) {
   var root = document.querySelector('[data-ym]');
   if (!root) return;
   var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
+  var dark = !!document.querySelector('.screen--dark-mode, .dark-mode') || has('screen--dark-mode'), INK = dark ? '#fff' : '#000', PAPER = dark ? '#000' : '#fff';
   var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg');
   var P = YM.puzzle, A = YM.account, T = YM.t, view = YM.view, C = YM.caps || {};
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -111,8 +112,8 @@ function boardSvg(o) {
   }
   var bw = row ? Sw : Sw, ph = row ? H : H - S - gap;
   // ---- panel pieces
-  function dot(white, r) { return '<svg class="block shrink-0" width="' + r * 2 + '" height="' + r * 2 + '" viewBox="0 0 ' + r * 2 + ' ' + r * 2 + '"><circle cx="' + r + '" cy="' + r + '" r="' + (r - 1.2) + '" fill="' + (white ? '#fff' : '#000') + '" stroke="#000" stroke-width="2"/></svg>'; }
-  function arrow(up, s) { return '<svg class="block shrink-0" width="' + s + '" height="' + s + '" viewBox="0 0 10 10"><path d="' + (up ? 'M5 1L9.2 8.5H0.8z' : 'M5 9L9.2 1.5H0.8z') + '" fill="#000"/></svg>'; }
+  function dot(white, r) { return '<svg class="block shrink-0" width="' + r * 2 + '" height="' + r * 2 + '" viewBox="0 0 ' + r * 2 + ' ' + r * 2 + '"><circle cx="' + r + '" cy="' + r + '" r="' + (r - 1.2) + '" fill="' + (white ? '#fff' : '#000') + '" stroke="' + INK + '" stroke-width="2"/></svg>'; }
+  function arrow(up, s) { return '<svg class="block shrink-0" width="' + s + '" height="' + s + '" viewBox="0 0 10 10"><path d="' + (up ? 'M5 1L9.2 8.5H0.8z' : 'M5 9L9.2 1.5H0.8z') + '" fill="' + INK + '"/></svg>'; }
   function spark(vals, w, h) {
     if (!vals || vals.length < 2) return '';
     var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), n = vals.length, pad = 5, pts = [], span = Math.max(1, hi - lo);
@@ -120,16 +121,16 @@ function boardSvg(o) {
     var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('');
     var last = pts[n - 1];
     var area = d + 'L' + last[0].toFixed(1) + ' ' + (h - 1) + 'L' + pts[0][0].toFixed(1) + ' ' + (h - 1) + 'z';
-    return '<svg class="block" data-ym-part="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + area + '" fill="' + (bits === 1 ? 'none' : '#cfcfcf') + '"/><path d="M0 ' + (h - 0.5) + 'H' + w + '" stroke="#000" stroke-width="1.4"/><path d="' + d + '" fill="none" stroke="#000" stroke-width="' + Math.max(2.2, h / 18).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="' + Math.max(3.5, h / 12).toFixed(1) + '" fill="#000"/></svg>';
+    return '<svg class="block" data-ym-part="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + area + '" fill="' + (bits === 1 ? 'none' : (dark ? '#555' : '#cfcfcf')) + '"/><path d="M0 ' + (h - 0.5) + 'H' + w + '" stroke="' + INK + '" stroke-width="1.4"/><path d="' + d + '" fill="none" stroke="' + INK + '" stroke-width="' + Math.max(2.2, h / 18).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="' + Math.max(3.5, h / 12).toFixed(1) + '" fill="' + INK + '"/></svg>';
   }
   function bars(days, w, h) {
     var mx = Math.max(3, Math.max.apply(null, days.map(function (d) { return d.s + d.f; }))), bwid = w / 7, out = '';
     days.forEach(function (d, i) {
       var x = i * bwid + bwid * 0.16, bwd = bwid * 0.68, hs = (h - 4) * d.s / mx, hf = (h - 4) * d.f / mx, today = i === 6;
-      if (d.s + d.f === 0) out += '<rect x="' + x.toFixed(1) + '" y="' + (h - 3) + '" width="' + bwd.toFixed(1) + '" height="2" fill="#000"/>';
-      out += '<rect x="' + x.toFixed(1) + '" y="' + (h - 2 - hs).toFixed(1) + '" width="' + bwd.toFixed(1) + '" height="' + hs.toFixed(1) + '" fill="#000"/>';
-      if (d.f) out += '<rect x="' + (x + 1).toFixed(1) + '" y="' + (h - 2 - hs - hf + 1).toFixed(1) + '" width="' + (bwd - 2).toFixed(1) + '" height="' + Math.max(1, hf - 2).toFixed(1) + '" fill="#fff" stroke="#000" stroke-width="2"/>';
-      if (today) out += '<rect x="' + (x - 1).toFixed(1) + '" y="' + (h - 1) + '" width="' + (bwd + 2).toFixed(1) + '" height="1.5" fill="#000"/>';
+      if (d.s + d.f === 0) out += '<rect x="' + x.toFixed(1) + '" y="' + (h - 3) + '" width="' + bwd.toFixed(1) + '" height="2" fill="' + INK + '"/>';
+      out += '<rect x="' + x.toFixed(1) + '" y="' + (h - 2 - hs).toFixed(1) + '" width="' + bwd.toFixed(1) + '" height="' + hs.toFixed(1) + '" fill="' + INK + '"/>';
+      if (d.f) out += '<rect x="' + (x + 1).toFixed(1) + '" y="' + (h - 2 - hs - hf + 1).toFixed(1) + '" width="' + (bwd - 2).toFixed(1) + '" height="' + Math.max(1, hf - 2).toFixed(1) + '" fill="'+PAPER+'" stroke="' + INK + '" stroke-width="2"/>';
+      if (today) out += '<rect x="' + (x - 1).toFixed(1) + '" y="' + (h - 1) + '" width="' + (bwd + 2).toFixed(1) + '" height="1.5" fill="' + INK + '"/>';
     });
     return '<svg class="block" data-ym-part="bars" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">' + out + '</svg>';
   }
@@ -144,7 +145,7 @@ function boardSvg(o) {
       (small ? '' : '<span class="label label--small lg:label--medium">' + esc(bits2.join('  |  ')) + '</span>') + '</div>';
   }
   function reward(innerW) {
-    var big = '<span class="value value--xlarge lg:value--xxxlarge">' + A.rating + '</span>';
+    var big = '<span class="value ' + (small ? 'value--medium lg:value--large' : 'value--xlarge') + '">' + A.rating + '</span>';
     var chg = '';
     if (A.trend && A.trend !== 'flat') chg = '<span class="flex flex--row flex--center-y gap--xsmall">' + arrow(A.trend === 'up', Math.round(Math.max(14, innerW * 0.07))) + '<span class="value value--small lg:value--medium">' + (A.delta > 0 ? '+' : '') + A.delta + '</span></span>';
     return '<div data-ym-part="rating" class="flex flex--col gap--xsmall"><span class="label label--small">' + esc(A.label === 'tactics' ? T.tactics : T.rating_you) + '</span><div class="flex flex--row flex--center-y gap--small">' + big + chg + '</div></div>';
@@ -159,9 +160,11 @@ function boardSvg(o) {
   var svgQr = document.querySelector('[data-ym-qr] svg');
   var haveQr = !!svgQr && !small;
   if (haveQr) {
-    qrW = row ? Math.round(Math.min(Sw * 0.4, H * 0.36)) : Math.round(Math.min(ph * 0.8, W * 0.3));
+    qrW = row ? Math.round(Math.min(Sw * (lg ? 0.34 : 0.42), H * (lg ? 0.36 : 0.44))) : Math.round(Math.min(ph * 0.8, W * 0.3));
     if (view === 2 && row) qrW = Math.round(Math.min(Sw * 0.45, H * 0.8));
     if (view === 3) qrW = Math.round(Math.min(ph * 0.75, W * 0.34));
+    var vbq = (svgQr.getAttribute('viewBox') || '').split(/[ ,]+/), mods = Math.round((+vbq[2] || +svgQr.getAttribute('width') || 0) / 4);   // modules incl. quiet zone (the filter draws 4 units per module)
+    if (mods > 8 && qrW > mods) qrW = Math.max(mods * 2, Math.floor(qrW / mods) * mods);   // whole pixels per module: a 1-bit screen keeps the squares crisp
     if (qrW < 80) haveQr = false;
   }
   var sideHtml = '';
@@ -173,7 +176,7 @@ function boardSvg(o) {
   else if (!small && P.source === 'lichess' && !C.personal) mid += '<span data-ym-part="hint" class="description description--small">' + esc(T.connect) + '</span>';
   var extras = '';
   var chartH = Math.max(34, Math.round(Math.min(H * 0.1, innerW * 0.16)));
-  if (A && !small && (view === 1 || (view === 3 && H > 440))) {
+  if (A && !small && (view === 1 || (view === 3 && H > 760))) {
     if (C.history) extras += spark(A.history, Math.round(innerW), chartH);
     extras += stats();
     if (C.solved && A.days) extras += bars(A.days, Math.round(innerW), chartH);

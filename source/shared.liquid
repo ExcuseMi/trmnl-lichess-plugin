@@ -13,7 +13,7 @@
 {%- endif %}
 </div>
 {%- unless none %}
-<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "M", "fixed" }}</div>
+<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
 {%- endunless %}
 {%- assign ym_hide = cf.hide_title_bar | append: '' -%}
 {%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}

@@ -42,7 +42,7 @@ function boardSvg(o) {
     var c = o.board[i];
     if (c === '.') continue;
     var pp = pos(i);
-    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.07, pp[1] - q * 0.07, q * 1.14));
+    out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] - q * 0.05, pp[1] - q * 0.02, q * 1.1));
   }
   if (o.coords) {
     var fs = Math.max(8, pad * 0.78);
