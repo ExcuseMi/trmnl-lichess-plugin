@@ -8,7 +8,7 @@ Unofficial. Lichess on your TRMNL: puzzles at your level, your correspondence ga
 |---|---|
 | Puzzles | A puzzle at your rating (or your weakest theme), the moves that led to it, your rating and week, a QR code to solve it |
 | Your games | The correspondence game where it is your turn, time left, moves, a QR code to play |
-| Profile | Ratings, 90-day rating chart, stats and recent results |
+| Profile | Your main rating with its peak and 90-day chart, your other ratings with trends, this week's games and streak, recent games |
 | Top game | The best live game now (a broadcast, else Lichess TV): players, clocks, moves, a QR code to watch |
 | Follow a player | The current game of a player you name, or their last game |
 

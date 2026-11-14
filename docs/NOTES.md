@@ -58,19 +58,21 @@ The moves call (`/game/export`) and the last-game call run after the playing lis
 
 ## Profile mode (`source/profile.js`)
 
+Layout R8 (owner 2026-11-14: the table version "looks pretty weak").
+
 | Part | Source | Rule |
 |---|---|---|
-| Header | `/api/account` | name, title chip, "Member since Mon YYYY" |
-| Ratings | account perfs + `/api/user/{u}/rating-history` | perfs with games > 0, most played first, max 8; `?` in its own column when provisional; change = rating now minus the last point on or before day -30 |
-| Few ratings (1-2) | same | hero card (perf, big rating, change, games) instead of the table |
-| Chart | rating history | most played rating perf (puzzles only if alone), last 90 days, max 45 points; y range >= 100, 3 gridlines; X only, hidden when its box is under 64 px |
-| Stats | account count, playTime, puzzle, storm | games, won/lost/drawn, time played, puzzles (if played), storm best |
-| Form | `/api/games/user/{u}?max=10&rated=true` | W/L/D chips, oldest left; W black, L outline, D grey box (white on 1-bit) |
+| Header (full view) | `/api/account` | title chip, name, "Member since Mon YYYY"; right: "Storm best N · 14d 23h played" |
+| Hero | account perfs + `/api/user/{u}/rating-history` | most played rating perf (puzzles only when alone): big rating, `?` when provisional, 30-day change, "Peak 1976 · Sep 2026" (highest history point, "now" when the current rating is higher), 90-day chart (max 45 points, y range >= 100, gridlines, no numbers) |
+| Cards | same | the other perfs with games > 0, most played first (max 9, grid of 3): short name, rating, `?`, 30-day change, trend (90 days, max 16 points) |
+| This week | `/api/games/user/{u}?max=30&rated=true` (ndjson) | games of the last 7 days ("30+" when all fetched games are inside), one framed bar with a segment per game (won black, drawn grey, lost white), "8 won · 2 drawn · 5 lost", hero rating change over 7 days, streak of the newest same results ("3 wins in a row", >= 2) |
+| Recent games | same | newest first, max 12: chip, "opponent (rating)", time control; packed from the top of their panel |
 
-- Calls: account, history and games start side by side (all at once when the name is saved in `pf`; else history and games right after the account). Failures are said on screen ("Lichess history: HTTP 503"); the saved `pf` stands in per part; account 401/403 = connect screen; no account and no saved profile = calm screen.
-- Layout rules: lists are packed (row pitch <= 1.6x line height, checked); never spread to fill. Spare height goes to the chart (X) or the packed group sits as one block; the ratings table is top-aligned. Full view has two arrangements (OG: head+ratings | stats+form; X: head+ratings+stats | chart+form). The page script hides, in order: chart, ratings header, least played ratings, last stats lines.
-- Quadrant: username, top 3 ratings, form chips only.
-- Fixtures `plugin/tests/fixtures/profile_*`; scenarios `profile_many`, `profile_new`, `profile_fail`, `profile_partial`; unit tests `test/profile.test.js`; renders `renders/design-r3.png`.
+- Calls: account, history and games start side by side (all at once when the name is saved in `pf`; else history and games right after the account). Failures are said on screen in the week card ("Lichess history: HTTP 503"); the saved `pf` (rows with change, trend, peak; recent games) stands in per part; account 401/403 = connect screen; no account and no saved profile = calm screen.
+- Views: full: header over two columns (hero, week | cards, recent games). Half horizontal: hero | week, cards. Half vertical: one column (hero, week, cards, recent games). Quadrant: hero and week only.
+- The hero chart and the card trends take the spare height. The page script hides, in order: the oldest recent games (down to 3), the least played cards (down to 3), the recent games, the peak line, the other cards; a hero chart under 40 px and a trend under 16 px go. A column whose blocks no longer fill it gives the height to its last card (a list stays packed from the top).
+- Charts: `YM.sparks` (`{id, pts, hero}`), drawn by `spark()` in `page.js` with TRMNLCharts.
+- Guards: `test/profile.test.js`; rendered checks in `view_checks.json` (hero, peak, cards sorted, week bar segments = games, lost framed and unlike drawn, recent games packed from the top, quadrant hero and week only, old layout gone; the bar, packing and quadrant checks were seen red on mutations). Fixtures `plugin/tests/fixtures/profile_*` (24 games over 14 days; new player: 5 games); scenarios `profile_many`, `profile_new`, `profile_fail`, `profile_partial`; renders `renders/design-r8.png`, `renders/design-r8-bar-1bit.png`, `renders/design-r8-new-x.png`.
 
 ## Top game and Following modes (`source/live.js`)
 
@@ -108,7 +110,8 @@ The board takes the full content height (check >= 97 %); the panel gets the rest
 | `GET /api/account` | puzzle:read token | 3.5 s | name, puzzle rating |
 | `GET /api/puzzle/dashboard/30` | puzzle:read | 2 s | weakest theme (focus on only, once a day) |
 | `GET /api/puzzle/next?difficulty=&angle=` | puzzle:read | 3.5 s | the puzzle (started at once, used unless the current one is kept) |
-| `GET /api/user/{name}/rating-history` | token sent, public | 3.5 s | rating chart |
+| `GET /api/user/{name}/rating-history` | token sent, public | 3.5 s | rating chart; Profile: changes, peak, trends |
+| `GET /api/games/user/{name}?max=30&rated=true` | token sent, public | <= 2.2 s | Profile: this week, recent games |
 | `GET /api/user/{name}/activity` | public | 3.5 s | week: solved, failed, rating change per day; failure reuses the saved week |
 | `GET /api/account/playing?nb=50` | valid token | 3.5 s | Your games: ongoing games |
 | `GET /game/export/{id}?moves=true` | token sent | <= 2.2 s | Your games: move list |

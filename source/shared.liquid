@@ -101,144 +101,93 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
     {%- endif %}
   </div>
 {%- elsif mode == "profile" %}
-  {%- comment -%} Profile: no board. Blocks are captured once and placed per view. One panel style, one gap. Lists are packed (normal row
-  spacing, never spread); spare height goes to the chart (X) or the packed group is centred in its panel as one block. The page script
-  hides what does not fit: the chart, the ratings header, the least played ratings, the last stats. {%- endcomment -%}
+  {%- comment -%} Profile (R8): no board. Hero (the most played rating, big, 30-day change, peak, 90-day chart), the other ratings as cards
+  in a grid (tiny trend each), this week (games, won/drawn/lost as one framed bar (lost white), week change, streak), recent games (packed rows). One panel style,
+  one gap. Recent games are packed from the top of their panel. The hero chart and the card trends take the spare height; the page script hides, in order: the oldest recent games, the least
+  played cards, the recent card. Full: header over two columns; half horizontal: hero | week and cards; half vertical: one column;
+  quadrant: hero and week only. {%- endcomment -%}
   {%- if view == 4 %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--1" %}{% else %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--2" %}{% endif %}
-  {%- assign ym_chart_on = false %}{% if pf.chart and view != 4 %}{% assign ym_chart_on = true %}{% endif %}
-  {%- assign ym_few = false %}{% if pf.rows.size < 3 and view != 4 %}{% assign ym_few = true %}{% endif %}
-  {%- comment -%} One or two ratings: a hero card (perf, big rating, change, games) instead of a table; in the full view everything but the chart sits in the left column. {%- endcomment -%}
-  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock = " lg:grow-0" %}{% else %}{% assign ym_unlock = "" %}{% endif %}
-  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock_r = " lg:grow-0" %}{% else %}{% assign ym_unlock_r = "" %}{% endif %}
-  {%- if view == 1 and ym_few %}{% assign ym_stats_grow = "" %}{% else %}{% assign ym_stats_grow = " grow" %}{% endif %}
+  {%- assign ym_gap = "gap--small lg:gap--medium" %}{% if view == 4 %}{% assign ym_gap = "gap--small" %}{% endif %}
+  {%- assign ym_h = pf.hero %}{% assign ym_w = pf.week %}
+  {%- capture ym_b_name %}<div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}{% if view == 1 %}<span class="value value--small font--bold">{{ pf.name }}</span>{% else %}<span class="label font--bold">{{ pf.name }}</span>{% endif %}</div>{% endcapture %}
   {%- capture ym_b_head %}
-    <div class="{{ ym_pp }} shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="header">
-      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]" src="{{ ym_wK }}" alt="">
-      <div class="flex flex--col flex--left text--left">
-        <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="value value--small font--bold">{{ pf.name }}</span></div>
-        {%- if pf.since != "" %}<span class="label">{{ t.member }} {{ pf.since }}</span>{% endif %}
-      </div>
+    <div class="{{ ym_pp }} shrink-0 flex flex--row flex--between flex--center-y gap--small" data-ym-card="header">
+      <div class="flex flex--row flex--left flex--center-y gap--small">{{ ym_b_name }}{% if pf.since != "" %}<span class="label">{{ t.member }} {{ pf.since }}</span>{% endif %}</div>
+      {%- if pf.extra != "" %}<span class="label" data-ym-part="extra">{{ pf.extra }}</span>{% endif %}
     </div>
   {%- endcapture %}
-  {%- capture ym_b_rat %}
-    {%- if view == 4 %}
-    <div class="{{ ym_pp }} grow flex flex--col flex--stretch-x flex--center-y gap--xsmall lg:gap--medium" data-ym-card="ratings">
-      <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="label font--bold">{{ pf.name }}</span></div>
-      {%- if pf.rows.size < 3 %}
-      {%- for r in pf.rows %}
-      <div class="flex flex--col flex--center-x gap--xsmall" data-ym-row data-games="{{ r.games }}">
-        <span class="label">{{ r.name }}</span>
-        <div class="flex flex--row flex--center-y gap--small"><span class="value lg:value--large font--bold">{{ r.rating }}</span>{% if r.prov %}<span class="label">?</span>{% endif %}{% if r.change != "" %}<span class="value value--xsmall">{{ r.change }}</span>{% endif %}</div>
-        <span class="label">{{ r.games_text }} {{ t.games_w }}</span>
+  {%- capture ym_b_hero %}
+    <div class="{{ ym_pp }} grow flex flex--col flex--stretch-x gap--xsmall" data-ym-card="hero">
+      {%- if ym_h %}
+      <div class="flex flex--row flex--between flex--center-y gap--small">
+        {%- if view == 1 %}<span class="label font--bold">{{ ym_h.name }}</span>{% else %}{{ ym_b_name }}{% endif %}
+        <span class="label">{% if view != 1 %}{{ ym_h.name }} · {% endif %}{{ ym_h.games_text }} {{ t.games_w }}</span>
       </div>
-      {%- endfor %}
+      <div class="flex flex--row flex--left flex--center-y gap--small" data-ym-part="hero">
+        <span class="value lg:value--large font--bold">{{ ym_h.rating }}</span>{% if ym_h.prov %}<span class="label">?</span>{% endif %}
+        {%- if ym_h.change != "" %}<span class="value value--xsmall">{{ ym_h.change }}</span><span class="label">{{ t.change_h }}</span>{% endif %}
+      </div>
+      {%- if ym_h.peak %}<span class="label" data-ym-part="peak">{{ t.peak }} {{ ym_h.peak }} · {{ ym_h.peak_when }}</span>{% endif %}
+      {%- if pf.chart %}<div class="w--full grow" id="ym-spark" data-ym-part="spark"></div>{% endif %}
       {%- else %}
-      {%- for r in pf.rows %}{% if forloop.index > 3 %}{% break %}{% endif %}
-      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
-        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
-        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
-        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
-        <span class="label w--[56px] flex--end">{{ r.change }}</span>
-      </div>
-      {%- endfor %}
+      {{ ym_b_name }}<span class="label">{{ t.no_recent }}</span>
       {%- endif %}
     </div>
-    {%- elsif ym_few %}
-    <div class="{{ ym_pp }} flex flex--row flex--center-x flex--center-y gap--medium grow" data-ym-card="ratings">
-      {%- for r in pf.rows %}
-      <div class="flex flex--col flex--center-x gap--xsmall" data-ym-row data-games="{{ r.games }}">
-        <span class="label">{{ r.name }}</span>
-        <div class="flex flex--row flex--center-y gap--small"><span class="value lg:value--large font--bold">{{ r.rating }}</span>{% if r.prov %}<span class="label">?</span>{% endif %}{% if r.change != "" %}<span class="value value--xsmall">{{ r.change }}</span>{% endif %}</div>
-        <span class="label">{{ r.games_text }} {{ t.games_w }}</span>
-      </div>
-      {%- endfor %}
-    </div>
-    {%- else %}
-    <div class="{{ ym_pp }} flex flex--col flex--stretch-x gap--small lg:gap--medium grow{{ ym_unlock_r }}" data-ym-card="ratings">
-      <div class="flex flex--row flex--center-y gap--small" data-ym-part="rhead">
-        <span class="label font--bold grow">{{ t.ratings }}</span>
-        <span class="label w--[72px] flex--end">{{ t.rating_h }}</span>
-        <span class="label w--[14px]"></span>
-        <span class="label w--[72px] flex--end">{{ t.change_h }}</span>
-        <span class="label w--[64px] flex--end">{{ t.games_h }}</span>
-      </div>
-      {%- for r in pf.rows %}
-      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
-        {%- if view == 3 %}
-        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
-        {%- else %}
-        <span class="label grow">{{ r.name }}</span>
-        {%- endif %}
-        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
-        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
-        <span class="label w--[72px] flex--end">{{ r.change }}</span>
-        <span class="label w--[64px] flex--end">{{ r.games_text }}</span>
-      </div>
-      {%- endfor %}
-    </div>
-    {%- endif %}
   {%- endcapture %}
-  {%- capture ym_b_chart %}
-    {%- if ym_chart_on %}
-    <div class="{{ ym_pp }} hidden lg:flex lg:grow flex--col flex--stretch-x gap--small" data-ym-card="chart" data-ym-part="chart">
-      <div class="flex flex--row flex--between gap--small"><span class="label font--bold">{{ pf.chart.name }}, {{ t.chart_h }}</span><span class="label">{{ t.low }} {{ pf.chart.lo }} · {{ t.high }} {{ pf.chart.hi }}</span></div>
-      <div class="w--full grow" id="{{ ym_chart }}" data-ym-part="spark"></div>
-    </div>
-    {%- endif %}
-  {%- endcapture %}
-  {%- assign ym_stats_grow_keep = ym_stats_grow %}{% assign ym_stats_grow = "" %}
-  {%- capture ym_b_stats_x %}
-    {%- if pf.stats.size > 0 %}
-    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small" data-ym-card="stats">
-      {%- for s in pf.stats %}
-      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
-      {%- endfor %}
-    </div>
-    {%- endif %}
-  {%- endcapture %}
-  {%- assign ym_stats_grow = ym_stats_grow_keep %}
-  {%- capture ym_b_stats %}
-    {%- if pf.stats.size > 0 %}
-    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small{{ ym_stats_grow }}{{ ym_unlock }}" data-ym-card="stats">
-      {%- for s in pf.stats %}
-      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
-      {%- endfor %}
-    </div>
-    {%- endif %}
-  {%- endcapture %}
-  {%- capture ym_b_form %}
-    <div class="{{ ym_pp }} flex flex--col flex--left gap--small shrink-0" data-ym-card="form">
-      {%- if view != 4 %}<span class="label">{{ t.recent }}</span>{% endif %}
-      {%- if pf.form.size > 0 %}
-      <div class="flex flex--row{% if view != 4 %} flex--wrap{% else %} w--full{% endif %} flex--center-y gap--xsmall" data-ym-part="form">
-        {%- for c in pf.form %}<span class="label label--outline{% if c.c == "W" %} label--inverted{% elsif c.c == "D" %} bg--gray-60 1bit:bg--white{% endif %} flex--center w--[{% if view == 4 %}30{% else %}26{% endif %}px]" data-ym-chip="{{ c.c }}">{{ c.c }}</span>{% endfor %}
-      </div>
-      {%- else %}<span class="label">{{ t.no_recent }}</span>{% endif %}
+  {%- capture ym_b_week %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--col flex--stretch-x gap--xsmall" data-ym-card="week">
+      <div class="flex flex--row flex--between flex--center-y gap--small"><span class="label font--bold">{{ t.week }}</span>{% if ym_w.n > 0 %}<span class="label">{{ ym_w.n }}{% if ym_w.more %}+{% endif %} {{ t.games_w }}</span>{% endif %}</div>
+      {%- if ym_w.n > 0 %}
+      <div class="label label--outline p--0 flex flex--row flex--stretch gap--none w--full h--[10px] lg:h--[12px]" data-ym-part="bar">{% for b in ym_w.bar %}<div class="grow {% if b == "W" %}bg--black{% elsif b == "D" %}bg--gray-45{% else %}bg--white{% endif %}" data-ym-seg="{{ b }}"></div>{% endfor %}</div>
+      <span class="label" data-ym-part="record">{{ ym_w.won }} {{ t.won }} · {{ ym_w.drawn }} {{ t.drawn }} · {{ ym_w.lost }} {{ t.lost }}</span>
+      {%- if ym_w.change != "" or ym_w.streak != "" %}<span class="label" data-ym-part="streak">{% if ym_w.change != "" %}{{ ym_w.change_name }} {{ ym_w.change }}{% if ym_w.streak != "" %} · {% endif %}{% endif %}{{ ym_w.streak }}</span>{% endif %}
+      {%- else %}<span class="label">{{ t.week_none }}</span>{% endif %}
       {%- if stale %}<span class="label">{{ t.offline_pf }}</span>{% endif %}
       {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
     </div>
   {%- endcapture %}
-  {%- assign ym_col = "flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" %}
-  {%- if view == 1 and ym_few %}
-  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats }}{{ ym_b_form }}</div>
-  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
-  {%- elsif view == 1 %}
-  {%- comment -%} Two arrangements, one per device size: OG (no chart) head and ratings | stats and form; X: head, ratings and stats | chart and form. {%- endcomment -%}
-  {%- if ym_chart_on %}{% assign ym_og = " lg:hidden" %}{% else %}{% assign ym_og = "" %}{% endif %}
-  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
-  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
-  {%- if ym_chart_on %}
-  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats_x }}</div>
-  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_chart }}{{ ym_b_form }}</div>
-  {%- endif %}
+  {%- capture ym_b_cards %}
+    {%- if pf.cards.size > 0 %}
+    <div class="grid grid--cols-3 {{ ym_gap }} shrink-0{% if view != 3 %} grow{% endif %}" data-ym-part="cards">
+      {%- for c in pf.cards %}
+      <div class="{{ ym_pp }} flex flex--col flex--stretch-x gap--xsmall" data-ym-card="perf" data-ym-row data-games="{{ c.games }}">
+        <div class="flex flex--row flex--between flex--center-y gap--xsmall"><span class="label">{{ c.short }}</span><span class="label">{{ c.change }}</span></div>
+        <div class="flex flex--row flex--left flex--center-y gap--xsmall"><span class="value value--small font--bold">{{ c.rating }}</span>{% if c.prov %}<span class="label">?</span>{% endif %}</div>
+        {%- if c.spark %}<div class="w--full grow h--[20px] lg:h--[40px]" id="{{ c.spark }}" data-ym-part="trend"></div>{% endif %}
+      </div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- capture ym_b_recent %}
+    {%- if pf.show.size > 0 %}
+    <div class="{{ ym_pp }} {% if pf.cards.size == 0 %}grow{% else %}shrink-0{% endif %} flex flex--col flex--stretch-x gap--xsmall" data-ym-card="recent">
+      <span class="label font--bold">{{ t.recent }}</span>
+      {%- for g in pf.show %}
+      <div class="flex flex--row flex--left flex--center-y gap--small shrink-0" data-ym-game-row>
+        <span class="label label--outline{% if g.c == "W" %} label--inverted{% elsif g.c == "D" %} bg--gray-60 1bit:bg--white{% endif %} flex--center w--[26px] lg:w--[40px]" data-ym-chip="{{ g.c }}">{{ g.c }}</span>
+        <span class="label grow">{{ g.opp }}</span><span class="label">{{ g.tc }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- assign ym_col = "flex flex--col flex--stretch-x " | append: ym_gap | append: " grow w--[0px]" %}
+  {%- if view == 1 %}
+  <div class="flex flex--col flex--stretch-x {{ ym_gap }} grow" data-ym-panel>
+    {{ ym_b_head }}
+    <div class="flex flex--row flex--stretch-y {{ ym_gap }} grow" data-ym-cols>
+      <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_hero }}{{ ym_b_week }}</div>
+      <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_cards }}{{ ym_b_recent }}</div>
+    </div>
+  </div>
   {%- elsif view == 2 %}
-  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
-  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
-  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_hero }}</div>
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_week }}{{ ym_b_cards }}{% if pf.cards.size == 0 %}{{ ym_b_recent }}{% endif %}</div>
   {%- elsif view == 3 %}
-  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_chart }}{{ ym_b_stats }}{{ ym_b_form }}</div>
+  <div class="flex flex--col flex--stretch-x {{ ym_gap }} grow" data-ym-panel data-ym-col>{{ ym_b_hero }}{{ ym_b_week }}{{ ym_b_cards }}{{ ym_b_recent }}</div>
   {%- else %}
-  <div class="flex flex--col flex--stretch-x gap--small grow" data-ym-panel data-ym-col>{{ ym_b_rat }}{{ ym_b_form }}</div>
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_hero }}{{ ym_b_week }}</div>
   {%- endif %}
 {%- else %}
   <div class="flex flex-none" data-ym-board></div>
@@ -348,7 +297,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 <script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
 <script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {% if mode == "profile" and pf.chart %}{{ pf.chart.pts | json }}{% else %}{{ account.history | json }}{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }}, live: {% if mode == "top" or mode == "following" %}true{% else %}false{% endif %} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {{ account.history | json }}, sparks: {% if mode == "profile" %}{{ sparks | json }}{% else %}[]{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }}, live: {% if mode == "top" or mode == "following" %}true{% else %}false{% endif %} };
 // ==== DRAW
 {{DRAW}}
 // ==== PAGE
