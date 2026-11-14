@@ -1,0 +1,54 @@
+[
+ {
+  "name": "login_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "owner",
+  "checks": {
+   "rating, recent results, week, moves and QR": "!!document.querySelector('[data-ym-part=rating]') && !!document.querySelector('[data-ym-part=recent]') && !!document.querySelector('[data-ym-part=bars]') && !!document.querySelector('[data-ym-part=moves]') && !!document.querySelector('[data-ym-qrbox] svg')",
+   "no connect hint": "!document.querySelector('[data-ym-part=hint]') && !document.querySelector('[data-ym-connect]')",
+   "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "newest move at the bottom, the last move a dark block": "(function(){var r=document.querySelectorAll('[data-ym-part=moves] tr'), last=r[r.length-1]; var n=Array.prototype.map.call(r,function(x){return parseInt(x.textContent,10)}); return n.every(function(v,i){return !i||v>n[i-1]}) && !!last.querySelector('.label--inverted');})()",
+   "title bar says the mode": "/^Puzzles/.test(document.querySelector('[data-ym-instance]').textContent.trim())",
+   "no inline style outside the board": "Array.prototype.every.call(document.querySelectorAll('[style]'),function(e){return !!e.closest('[data-ym-board]') || !e.closest('[data-ym]') })"
+  }
+ },
+ {
+  "name": "login_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "owner",
+  "checks": {
+   "QR on the OG": "!!document.querySelector('[data-ym-qrbox] svg') && getComputedStyle(document.querySelector('[data-ym-qrbox]')).display!=='none'",
+   "week hidden on the OG (no room)": "getComputedStyle(document.querySelector('[data-ym-part=bars]')).display==='none'"
+  }
+ },
+ {
+  "name": "login_quadrant_x",
+  "view": "quadrant",
+  "device": "v2",
+  "scenario": "owner",
+  "checks": {
+   "rating only: no moves, no week, no QR": "!!document.querySelector('[data-ym-part=rating]') && !document.querySelector('[data-ym-part=moves]') && !document.querySelector('[data-ym-part=bars]') && !document.querySelector('[data-ym-qrbox]')"
+  }
+ },
+ {
+  "name": "connect_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "daily",
+  "checks": {
+   "connect screen, no board": "!!document.querySelector('[data-ym-connect]') && !document.querySelector('[data-ym-board]')",
+   "title bar mode Connect account": "document.querySelector('[data-ym-instance]').textContent.trim()==='Connect account'"
+  }
+ },
+ {
+  "name": "connect_quadrant_og",
+  "view": "quadrant",
+  "device": "og_png",
+  "scenario": "daily",
+  "checks": {
+   "connect screen in the quadrant": "!!document.querySelector('[data-ym-connect]')"
+  }
+ }
+]

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 # Renders PNGs for the review sheet. YM_CASES: JSON list of {name, view, device, dark, scenario}; YM_OUT: folder.
-# Scenarios: account (Lichess login, rising rating), daily (no login), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
+# Scenarios: account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
 require 'json'
 require 'fileutils'
 require 'time'
@@ -32,6 +32,14 @@ end
 TRMNLP::Testing::Run.prepend(YmOAuthSeed)
 ENV['TRMNL_OAUTH_CLIENT_ID'] ||= 'trmnlp-render'   # Lichess checks neither; any id and secret make the local provider configured
 ENV['TRMNL_OAUTH_CLIENT_SECRET'] ||= 'trmnlp-render'
+# GET /api/user/{name}/activity, newest day first: puzzles on 5 of the last 7 days with the rating before and after.
+D0 = (NOW.to_i / 86_400) * 86_400_000
+WEEK = [[2, 1, 1458, 1470], [0, 0, 0, 0], [3, 1, 1440, 1458], [1, 2, 1452, 1440], [4, 0, 1421, 1452], [0, 0, 0, 0], [2, 2, 1425, 1421]]
+       .each_with_index.map do |(w, l, b, a), i|
+         day = { interval: { start: D0 - i * 86_400_000, end: D0 - (i - 1) * 86_400_000 } }
+         day[:puzzles] = { score: { win: w, loss: l, draw: 0, rp: { before: b, after: a } } } if w + l > 0
+         day
+       end.freeze
 def lichess_mocks(rating: 1873, solved: nil, puzzle: 'lichess_daily.json')
   acts = activity(3, 4)
   acts = ({ date: NOW.to_i * 1000, win: true, puzzle: { id: solved, rating: 1800 } }.to_json + "\n" + acts) if solved
@@ -39,7 +47,8 @@ def lichess_mocks(rating: 1873, solved: nil, puzzle: 'lichess_daily.json')
     'https://lichess.org/api/puzzle/activity*' => { body: acts },
     'https://lichess.org/api/user/Demo/rating-history' => { json: HIST },
     'https://lichess.org/api/puzzle/next*' => { json: JSON.parse(fx(puzzle)) },
-    'https://lichess.org/api/token/test' => { json: { 'tok' => { scopes: 'puzzle:read', userId: 'demo' } } } }
+    'https://lichess.org/api/token/test' => { json: { 'tok' => { scopes: 'puzzle:read', userId: 'demo' } } },
+    'https://lichess.org/api/user/Demo/activity' => { json: WEEK } }
 end
 FONT_SIZES_JS = <<~JS.freeze
   (function () {
@@ -56,7 +65,7 @@ RSpec.describe 'renders' do
   JSON.parse(ENV.fetch('YM_CASES')).each do |c|
     it c['name'] do
       sc = c['scenario'] || 'daily'
-      mocks = { 'https://lichess.org/api/puzzle/daily' => { json: JSON.parse(fx('lichess_daily.json')) }}
+      mocks = { 'https://lichess.org/api/puzzle/daily' => { json: JSON.parse(fx(c['puzzle'] || 'lichess_daily.json')) }}   # puzzle: another fixture (board cases)
       fields = {}
       state = nil
       login = nil
@@ -66,6 +75,8 @@ RSpec.describe 'renders' do
       when 'banner'
         mocks = lichess_mocks(rating: 1873, solved: 'old1').merge(mocks); login = 'tok'
         state = { 'rating' => 1861, 'cur' => { 'id' => 'old1', 't' => NOW.to_i - 7200, 'r0' => 1861 }, 'last' => { 'id' => 'old1' } }
+      when 'case'    # a board case (edge squares, a knight move, black to move): a login and the puzzle in c['puzzle']
+        mocks = lichess_mocks(puzzle: c['puzzle'] || 'lichess_daily.json').merge(mocks); login = 'tok'
       when 'owner'   # the owner's real case of 2026-11-14: puzzle uBhLF (public), rating 1470
         mocks = lichess_mocks(rating: 1470, puzzle: 'lichess_uBhLF.json').merge(mocks); login = 'tok'
         state = { 'rating' => 1470, 'cur' => nil, 'last' => nil }
@@ -77,6 +88,7 @@ RSpec.describe 'renders' do
       dev = c['device'].is_a?(Hash) ? c['device'].transform_keys(&:to_sym) : (c['device'] || 'v2')
       opts = { view: c['view'], device: dev, mocks: mocks, custom_fields: fields, now: NOW.iso8601, wait_for: "document.querySelector('[data-ym-drawn],[data-ym-none]') !== null || document.querySelector('.layout') !== null" }
       opts[:dark_mode] = true if c['dark']
+      opts[:palette] = c['palette'] if c['palette']   # e.g. the X's gray-4 or bw palette
       opts[:state] = state if state
       opts[:orientation] = c['portrait'] ? :portrait : :landscape
       Thread.current[:ym_oauth] = login
@@ -86,6 +98,8 @@ RSpec.describe 'renders' do
       FileUtils.cp(s.png_path, File.join(ENV.fetch('YM_OUT'), "#{c['name']}.png"))
       # Type system (owner 2026-11-14): the side panel uses at most 4 text sizes. Counts the computed font size of every element
       # that draws text (its own text nodes, SVG text included); the board's coordinates are outside the panel.
+      # View checks (tools/view_checks.json): each a JavaScript expression on the rendered page that must be true.
+      (c['checks'] || {}).each { |what, js| expect(s.evaluate(js)).to be_truthy, "#{c['name']}: #{what}" }
       sizes = s.evaluate(FONT_SIZES_JS)
       expect(sizes.length).to be <= 4, "#{c['name']}: #{sizes.length} text sizes in the panel: #{sizes.inspect}"
     end

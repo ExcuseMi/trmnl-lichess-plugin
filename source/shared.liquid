@@ -1,53 +1,117 @@
 {% template main %}
-{%- capture ym_icon -%}<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="4 3 37 39"><defs><mask id="ck" maskUnits="userSpaceOnUse" x="0" y="0" width="45" height="45"><rect width="45" height="45" fill="#fff"/><path d="M 16.5,29.5 L 20.5,33.5 L 28.5,25.5" fill="none" stroke="#000" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></mask></defs><g mask="url(#ck)"><g fill="none" fill-rule="evenodd" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M 22.5,11.63 L 22.5,5" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 22.5,25 C 22.5,25 27,17.5 25.5,14.5 C 25.5,14.5 24.5,12 22.5,12 C 20.5,12 19.5,14.5 19.5,14.5 C 18,17.5 22.5,25 22.5,25" fill="#000000" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M 12.5,37 C 18,40.5 27,40.5 32.5,37 L 32.5,30 C 32.5,30 41.5,25.5 38.5,19.5 C 34.5,13 25,16 22.5,23.5 L 22.5,27 L 22.5,23.5 C 20,16 10.5,13 6.5,19.5 C 3.5,25.5 12.5,30 12.5,30 L 12.5,37" fill="#000000" stroke="#000000"/><path d="M 19.5,8 L 25.5,8" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 32,29.5 C 32,29.5 40.5,25.5 38.03,19.85 C 34.15,14 25,18 22.5,24.5 L 22.5,26.6 L 22.5,24.5 C 20,18 10.85,14 6.97,19.85 C 4.5,25.5 13,29.5 13,29.5" fill="none" stroke="#000000"/><path d="M 12.5,30 C 18,27 27,27 32.5,30 M 12.5,33.5 C 18,30.5 27,30.5 32.5,33.5 M 12.5,37 C 18,34 27,34 32.5,37" fill="none" stroke="#000000"/></g></g></svg>{%- endcapture -%}
-{%- assign cf = trmnl.plugin_settings.custom_fields_values -%}
-<style>
-[data-ym-panel]{height:100%;width:100%;min-height:0;align-items:stretch;justify-content:flex-start;text-align:left}
-[data-ym-fill]{flex:1 1 0;min-height:0;overflow:hidden;align-self:stretch}
-[data-ym-bottom]{align-items:stretch;align-self:stretch}
-[data-ym-qrbox]{align-items:center;justify-content:center}
-[data-ym-b],.ym-b{font-weight:700}
-.ym-nw{white-space:nowrap}
-[data-ym-wrap]{white-space:normal}
-.ym-stretch{align-self:stretch}
-.ym-rcard{min-width:9em;flex-basis:0;overflow:hidden}
-[data-ym-bottom]{flex-wrap:wrap}
-.screen--lg .ym-rcard{min-width:13em}
-.ym-fig{display:inline-block;vertical-align:-0.22em}
-.ym-mv{width:100%;border-collapse:collapse}
-.ym-mv td{padding:0.12em 0.4em}
-.ym-mv td.ym-n{width:2.6em;text-align:right;padding:0.12em 0.5em}
-.ym-hl{display:block;border-radius:3px;padding:0 0.3em;background:#000;color:#fff}
-.screen--dark-mode .ym-hl{background:#fff;color:#000}
-.ym-chip{display:inline-block;border:2px solid currentColor;border-radius:6px;padding:0 0.35em}
-.ym-chip--win{background:#000;color:#fff;border-color:#000}
-.screen--dark-mode .ym-chip--win{background:#fff;color:#000;border-color:#fff}
-</style>
-<div class="layout gap--small" data-ym>
-{%- if none %}
-  <div class="flex flex--col flex--center-x gap--small">
+{%- capture ym_icon -%}{{ICON}}{%- endcapture -%}
+{{PIECES}}
+{%- comment -%} Framework markup only (owner 2026-11-14): layout, cards, rating, move list, QR, connect screen and title bar are
+plain HTML with Framework classes, no inline styles or style blocks. Only the chessboard (data-ym-board) is drawn by the page script.
+Type: heading value--small, rating value / lg:value--large, change value--xsmall, every other text label. {%- endcomment -%}
+{%- if view == 3 %}{% assign ym_dir = "col" %}{% else %}{% assign ym_dir = "row" %}{% endif -%}
+<div class="layout layout--{{ ym_dir }} layout--stretch gap--small lg:gap--medium" data-ym>
+{%- if connect %}
+  <div class="flex flex--col flex--center-x flex--center-y gap--medium w--full" data-ym-connect>
+    <img class="image image--adaptive w--[72px] h--[72px] lg:w--[112px] lg:h--[112px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
+    <span class="title title--large">{{ t.connect_title }}</span>
+    <span class="description text--center">{{ notice | default: t.connect_line }}</span>
+  </div>
+{%- elsif none %}
+  <div class="flex flex--col flex--center-x flex--center-y gap--small w--full">
     <span class="title title--large">{{ t.none }}</span>
     <span class="description">{{ t.none2 }}</span>
   </div>
 {%- else %}
-  <div class="flex" data-ym-board></div>
-  <div class="flex flex--col" data-ym-side></div>
+  <div class="flex shrink-0" data-ym-board></div>
+  <div class="flex flex--col flex--stretch gap--small lg:gap--medium grow" data-ym-panel>
+    <div class="outline rounded p--2 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
+      {%- if turn_w %}{% assign ym_k = ym_wK %}{% else %}{% assign ym_k = ym_bK %}{% endif %}
+      <img class="image w--[32px] h--[32px] lg:w--[56px] lg:h--[56px]" src="{{ ym_k }}" alt="">
+      <div class="flex flex--col flex--left text--left">
+        <span class="value value--small font--bold">{{ t.your_turn }}</span>
+        {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{{ find }}</span>{% endif %}
+      </div>
+    </div>
+    {%- if view == 1 %}
+    <div class="outline rounded p--2 flex flex--col flex--left text--left gap--xsmall" data-ym-card="puzzle">
+      <span class="label font--bold">{{ t.puzzle_n }} #{{ puzzle.id }}</span>
+      {%- if meta != "" %}<span class="label" data-ym-meta>{{ meta }}</span>{% endif %}
+      {%- if puzzle.game and puzzle.game.kind != "" %}
+      <div class="hidden lg:flex flex--col flex--left" data-ym-game>
+        <span class="label">{{ t.from_game }} {{ puzzle.game.kind }}</span>
+        {%- for p in puzzle.game.players %}
+        <span class="label"><svg class="inline-block" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p[0] == "w" %}none{% else %}currentColor{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg> {{ p[1] }}{% if p[2] > 0 %} ({{ p[2] }}){% endif %}</span>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+    {%- endif %}
+    {%- if banner != "" %}<div class="outline rounded p--2 label--inverted"><span class="label font--bold">{{ banner }}</span></div>{% endif %}
+    {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
+    {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
+    {%- if account == nil and view == 1 %}<span class="label" data-ym-part="hint">{{ t.connect }}</span>{% endif %}
+    {%- if view == 1 and rows.size > 1 %}
+    <table class="table table--small" data-ym-part="moves">
+      <tbody>
+      {%- for r in rows %}
+        {%- if r.back < 4 %}
+        <tr class="{% if r.back > 1 %}hidden lg:table-row{% endif %}">
+          <td class="bg--gray-75 text--center"><span class="label">{{ r.n }}.</span></td>
+          <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% else %}{% assign ym_f = ym_wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}">{% endif %}{{ r.ws }}</span></td>
+          <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% else %}{% assign ym_f = ym_bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}">{% endif %}{{ r.bs }}</span>{% endif %}</td>
+        </tr>
+        {%- endif %}
+      {%- endfor %}
+      </tbody>
+    </table>
+    {%- endif %}
+    <div class="grow"></div>
+    <div class="flex flex--row flex--bottom gap--small lg:gap--medium">
+      {%- if account %}
+      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall grow" data-ym-card="rating">
+        <span class="label">{{ t.rating_you }}</span>
+        <div class="flex flex--row flex--center-y gap--small" data-ym-part="rating">
+          <span class="value lg:value--large">{{ account.rating }}</span>
+          {%- if change != "" %}<span class="value value--xsmall">{{ change }}</span>{% endif %}
+        </div>
+        {%- if view == 1 and chips.size > 0 %}
+        <div class="hidden lg:flex flex--row gap--xsmall" data-ym-part="recent">
+          {%- for c in chips %}<span class="label {% if c.up %}label--inverted{% else %}label--outline{% endif %}">{{ c.text }}</span>{% endfor %}
+        </div>
+        {%- endif %}
+        {%- if view == 1 and caps.solved and days %}
+        <div class="hidden lg:flex flex--col flex--center-x gap--xsmall" data-ym-part="bars">
+          <span class="label">{{ week_line }}</span>
+          <div class="flex flex--row gap--xsmall">
+            {%- for d in days %}
+            <div class="flex flex--col flex--center-x">
+              <div class="w--[26px] h--[26px] rounded--small {% if d.on %}bg--black{% else %}outline{% endif %}"></div>
+              <span class="label{% if d.today %} font--bold{% endif %}">{{ d.name }}</span>
+            </div>
+            {%- endfor %}
+          </div>
+        </div>
+        {%- elsif view == 1 and caps.streak and account.streak > 0 %}
+        <span class="label hidden lg:visible" data-ym-part="stats">{{ t.streak }} {{ account.streak }}</span>
+        {%- endif %}
+      </div>
+      {%- endif %}
+      {%- if view != 4 %}
+      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
+        {{ puzzle.url | qr_code: 4, "m", "fixed" }}
+        <span class="label">{{ t.scan }}</span>
+      </div>
+      {%- endif %}
+    </div>
+  </div>
 {%- endif %}
 </div>
-{%- unless none %}
-<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
-{%- endunless %}
-{%- assign ym_hide = cf.hide_title_bar | append: '' -%}
-{%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}
+{%- if view == 1 or connect %}
 <div class="title_bar">
   <img class="image image--adaptive w--[28px] h--[28px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
   <span class="title">{{ trmnl.plugin_settings.instance_name | default: "Lichess" }}</span>
-  {%- if puzzle %}<span class="instance">Puzzles</span>{% endif %}
+  <span class="instance" data-ym-instance>{{ instance_long }}</span>
 </div>
-{%- endunless %}
+{%- endif %}
 {%- unless none %}
 <script type="text/javascript">
-var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, account: {{ account | json }}, caps: {{ caps | json }}, t: {{ t | json }}, to_move: {{ to_move | json }}, banner: {{ banner | json }}, notice: {{ notice | json }}, problems: {{ problems | json }}, stale: {{ stale | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 {{DRAW}}
 // ==== PAGE

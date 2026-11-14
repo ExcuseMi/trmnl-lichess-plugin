@@ -1,53 +1,128 @@
 {% template main %}
-{%- capture ym_icon -%}<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="4 3 37 39"><defs><mask id="ck" maskUnits="userSpaceOnUse" x="0" y="0" width="45" height="45"><rect width="45" height="45" fill="#fff"/><path d="M 16.5,29.5 L 20.5,33.5 L 28.5,25.5" fill="none" stroke="#000" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></mask></defs><g mask="url(#ck)"><g fill="none" fill-rule="evenodd" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M 22.5,11.63 L 22.5,5" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 22.5,25 C 22.5,25 27,17.5 25.5,14.5 C 25.5,14.5 24.5,12 22.5,12 C 20.5,12 19.5,14.5 19.5,14.5 C 18,17.5 22.5,25 22.5,25" fill="#000000" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M 12.5,37 C 18,40.5 27,40.5 32.5,37 L 32.5,30 C 32.5,30 41.5,25.5 38.5,19.5 C 34.5,13 25,16 22.5,23.5 L 22.5,27 L 22.5,23.5 C 20,16 10.5,13 6.5,19.5 C 3.5,25.5 12.5,30 12.5,30 L 12.5,37" fill="#000000" stroke="#000000"/><path d="M 19.5,8 L 25.5,8" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 32,29.5 C 32,29.5 40.5,25.5 38.03,19.85 C 34.15,14 25,18 22.5,24.5 L 22.5,26.6 L 22.5,24.5 C 20,18 10.85,14 6.97,19.85 C 4.5,25.5 13,29.5 13,29.5" fill="none" stroke="#000000"/><path d="M 12.5,30 C 18,27 27,27 32.5,30 M 12.5,33.5 C 18,30.5 27,30.5 32.5,33.5 M 12.5,37 C 18,34 27,34 32.5,37" fill="none" stroke="#000000"/></g></g></svg>{%- endcapture -%}
-{%- assign cf = trmnl.plugin_settings.custom_fields_values -%}
-<style>
-[data-ym-panel]{height:100%;width:100%;min-height:0;align-items:stretch;justify-content:flex-start;text-align:left}
-[data-ym-fill]{flex:1 1 0;min-height:0;overflow:hidden;align-self:stretch}
-[data-ym-bottom]{align-items:stretch;align-self:stretch}
-[data-ym-qrbox]{align-items:center;justify-content:center}
-[data-ym-b],.ym-b{font-weight:700}
-.ym-nw{white-space:nowrap}
-[data-ym-wrap]{white-space:normal}
-.ym-stretch{align-self:stretch}
-.ym-rcard{min-width:9em;flex-basis:0;overflow:hidden}
-[data-ym-bottom]{flex-wrap:wrap}
-.screen--lg .ym-rcard{min-width:13em}
-.ym-fig{display:inline-block;vertical-align:-0.22em}
-.ym-mv{width:100%;border-collapse:collapse}
-.ym-mv td{padding:0.12em 0.4em}
-.ym-mv td.ym-n{width:2.6em;text-align:right;padding:0.12em 0.5em}
-.ym-hl{display:block;border-radius:3px;padding:0 0.3em;background:#000;color:#fff}
-.screen--dark-mode .ym-hl{background:#fff;color:#000}
-.ym-chip{display:inline-block;border:2px solid currentColor;border-radius:6px;padding:0 0.35em}
-.ym-chip--win{background:#000;color:#fff;border-color:#000}
-.screen--dark-mode .ym-chip--win{background:#fff;color:#000;border-color:#fff}
-</style>
-<div class="layout gap--small" data-ym>
-{%- if none %}
-  <div class="flex flex--col flex--center-x gap--small">
+{%- capture ym_icon -%}<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="-2.5 0.2 55.6 55.6"><path d="M38.956.5c-3.53.418-6.452.902-9.286 2.984C5.534 1.786-.692 18.533.68 29.364 3.493 50.214 31.918 55.785 41.329 41.7c-7.444 7.696-19.276 8.752-28.323 3.084S-.506 27.392 4.683 17.567C9.873 7.742 18.996 4.535 29.03 6.405c2.43-1.418 5.225-3.22 7.655-3.187l-1.694 4.86 12.752 21.37c-.439 5.654-5.459 6.112-5.459 6.112-.574-1.47-1.634-2.942-4.842-6.036-3.207-3.094-17.465-10.177-15.788-16.207-2.001 6.967 10.311 14.152 14.04 17.663 3.73 3.51 5.426 6.04 5.795 6.756 0 0 9.392-2.504 7.838-8.927L37.4 7.171z" fill="#000" stroke="#000" stroke-width="2.2" stroke-linejoin="round"/></svg>{%- endcapture -%}
+{%- capture ym_wK -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgc3Ryb2tlLXdpZHRoPSIxLjUiPjxwYXRoIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIGQ9Ik0yMi41IDExLjYzVjZNMjAgOGg1Ii8+PHBhdGggZmlsbD0iI2ZmZiIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIGQ9Ik0yMi41IDI1czQuNS03LjUgMy0xMC41YzAgMC0xLTIuNS0zLTIuNXMtMyAyLjUtMyAyLjVjLTEuNSAzIDMgMTAuNSAzIDEwLjUiLz48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMTIuNSAzN2M1LjUgMy41IDE0LjUgMy41IDIwIDB2LTdzOS00LjUgNi0xMC41Yy00LTYuNS0xMy41LTMuNS0xNiA0VjI3di0zLjVjLTIuNS03LjUtMTItMTAuNS0xNi00LTMgNiA2IDEwLjUgNiAxMC41djciLz48cGF0aCBkPSJNMTIuNSAzMGM1LjUtMyAxNC41LTMgMjAgMG0tMjAgMy41YzUuNS0zIDE0LjUtMyAyMCAwbS0yMCAzLjVjNS41LTMgMTQuNS0zIDIwIDAiLz48L2c+PC9zdmc+{%- endcapture -%}
+{%- capture ym_wQ -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHBhdGggZD0iTSA5LDI2IEMgMTcuNSwyNC41IDMwLDI0LjUgMzYsMjYgTCAzOC41LDEzLjUgTCAzMSwyNSBMIDMwLjcsMTAuOSBMIDI1LjUsMjQuNSBMIDIyLjUsMTAgTCAxOS41LDI0LjUgTCAxNC4zLDEwLjkgTCAxNCwyNSBMIDYuNSwxMy41IEwgOSwyNiB6Ii8+PHBhdGggZD0iTSA5LDI2IEMgOSwyOCAxMC41LDI4IDExLjUsMzAgQyAxMi41LDMxLjUgMTIuNSwzMSAxMiwzMy41IEMgMTAuNSwzNC41IDExLDM2IDExLDM2IEMgOS41LDM3LjUgMTEsMzguNSAxMSwzOC41IEMgMTcuNSwzOS41IDI3LjUsMzkuNSAzNCwzOC41IEMgMzQsMzguNSAzNS41LDM3LjUgMzQsMzYgQyAzNCwzNiAzNC41LDM0LjUgMzMsMzMuNSBDIDMyLjUsMzEgMzIuNSwzMS41IDMzLjUsMzAgQyAzNC41LDI4IDM2LDI4IDM2LDI2IEMgMjcuNSwyNC41IDE3LjUsMjQuNSA5LDI2IHoiLz48cGF0aCBkPSJNIDExLjUsMzAgQyAxNSwyOSAzMCwyOSAzMy41LDMwIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTSAxMiwzMy41IEMgMTgsMzIuNSAyNywzMi41IDMzLDMzLjUiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSI2IiBjeT0iMTIiIHI9IjIiIC8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyIiAvPjxjaXJjbGUgY3g9IjIyLjUiIGN5PSI4IiByPSIyIiAvPjxjaXJjbGUgY3g9IjMxIiBjeT0iOSIgcj0iMiIgLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyIiAvPjwvZz48L3N2Zz4={%- endcapture -%}
+{%- capture ym_wR -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0iI2ZmZmZmZiIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC4zKSI+PHBhdGggZD0iTSA5LDM5IEwgMzYsMzkgTCAzNiwzNiBMIDksMzYgTCA5LDM5IHogIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgLz48cGF0aCBkPSJNIDEyLDM2IEwgMTIsMzIgTCAzMywzMiBMIDMzLDM2IEwgMTIsMzYgeiAiIHN0cm9rZS1saW5lY2FwPSJidXR0IiAvPjxwYXRoIGQ9Ik0gMTEsMTQgTCAxMSw5IEwgMTUsOSBMIDE1LDExIEwgMjAsMTEgTCAyMCw5IEwgMjUsOSBMIDI1LDExIEwgMzAsMTEgTCAzMCw5IEwgMzQsOSBMIDM0LDE0IiBzdHJva2UtbGluZWNhcD0iYnV0dCIgLz48cGF0aCBkPSJNIDM0LDE0IEwgMzEsMTcgTCAxNCwxNyBMIDExLDE0IiAvPjxwYXRoIGQ9Ik0gMzEsMTcgTCAzMSwyOS41IEwgMTQsMjkuNSBMIDE0LDE3IiBzdHJva2UtbGluZWNhcD0iYnV0dCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIgLz48cGF0aCBkPSJNIDMxLDI5LjUgTCAzMi41LDMyIEwgMTIuNSwzMiBMIDE0LDI5LjUiIC8+PHBhdGggZD0iTSAxMSwxNCBMIDM0LDE0IiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIC8+PC9nPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_wB -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC42KSI+PGcgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCI+PHBhdGggZD0iTSA5LDM2IEMgMTIuMzksMzUuMDMgMTkuMTEsMzYuNDMgMjIuNSwzNCBDIDI1Ljg5LDM2LjQzIDMyLjYxLDM1LjAzIDM2LDM2IEMgMzYsMzYgMzcuNjUsMzYuNTQgMzksMzggQyAzOC4zMiwzOC45NyAzNy4zNSwzOC45OSAzNiwzOC41IEMgMzIuNjEsMzcuNTMgMjUuODksMzguOTYgMjIuNSwzNy41IEMgMTkuMTEsMzguOTYgMTIuMzksMzcuNTMgOSwzOC41IEMgNy42NSwzOC45OSA2LjY4LDM4Ljk3IDYsMzggQyA3LjM1LDM2LjU0IDksMzYgOSwzNiB6Ii8+PHBhdGggZD0iTSAxNSwzMiBDIDE3LjUsMzQuNSAyNy41LDM0LjUgMzAsMzIgQyAzMC41LDMwLjUgMzAsMzAgMzAsMzAgQyAzMCwyNy41IDI3LjUsMjYgMjcuNSwyNiBDIDMzLDI0LjUgMzMuNSwxNC41IDIyLjUsMTAuNSBDIDExLjUsMTQuNSAxMiwyNC41IDE3LjUsMjYgQyAxNy41LDI2IDE1LDI3LjUgMTUsMzAgQyAxNSwzMCAxNC41LDMwLjUgMTUsMzIgeiIvPjxwYXRoIGQ9Ik0gMjUgOCBBIDIuNSAyLjUgMCAxIDEgMjAsOCBBIDIuNSAyLjUgMCAxIDEgMjUgOCB6Ii8+PC9nPjxwYXRoIGQ9Ik0gMTcuNSwyNiBMIDI3LjUsMjYgTSAxNSwzMCBMIDMwLDMwIE0gMjIuNSwxNS41IEwgMjIuNSwyMC41IE0gMjAsMTggTCAyNSwxOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_wN -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC4zKSI+PHBhdGggZD0iTSAyMiwxMCBDIDMyLjUsMTEgMzguNSwxOCAzOCwzOSBMIDE1LDM5IEMgMTUsMzAgMjUsMzIuNSAyMywxOCIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjMDAwMDAwIiAvPjxwYXRoIGQ9Ik0gMjQsMTggQyAyNC4zOCwyMC45MSAxOC40NSwyNS4zNyAxNiwyNyBDIDEzLDI5IDEzLjE4LDMxLjM0IDExLDMxIEMgOS45NTgsMzAuMDYgMTIuNDEsMjcuOTYgMTEsMjggQyAxMCwyOCAxMS4xOSwyOS4yMyAxMCwzMCBDIDksMzAgNS45OTcsMzEgNiwyNiBDIDYsMjQgMTIsMTQgMTIsMTQgQyAxMiwxNCAxMy44OSwxMi4xIDE0LDEwLjUgQyAxMy4yNyw5LjUwNiAxMy41LDguNSAxMy41LDcuNSBDIDE0LjUsNi41IDE2LjUsMTAgMTYuNSwxMCBMIDE4LjUsMTAgQyAxOC41LDEwIDE5LjI4LDguMDA4IDIxLDcgQyAyMiw3IDIyLDEwIDIyLDEwIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9IiMwMDAwMDAiIC8+PHBhdGggZD0iTSA5LjUgMjUuNSBBIDAuNSAwLjUgMCAxIDEgOC41LDI1LjUgQSAwLjUgMC41IDAgMSAxIDkuNSAyNS41IHoiIGZpbGw9IiMwMDAwMDAiIHN0cm9rZT0iIzAwMDAwMCIgLz48cGF0aCBkPSJNIDE1IDE1LjUgQSAwLjUgMS41IDAgMSAxIDE0LDE1LjUgQSAwLjUgMS41IDAgMSAxIDE1IDE1LjUgeiIgdHJhbnNmb3JtPSJtYXRyaXgoMC44NjYsMC41LC0wLjUsMC44NjYsOS42OTMsLTUuMTczKSIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIiAvPjwvZz48L3N2Zz4={%- endcapture -%}
+{%- capture ym_wP -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PHBhdGggZD0ibSAyMi41LDkgYyAtMi4yMSwwIC00LDEuNzkgLTQsNCAwLDAuODkgMC4yOSwxLjcxIDAuNzgsMi4zOCBDIDE3LjMzLDE2LjUgMTYsMTguNTkgMTYsMjEgYyAwLDIuMDMgMC45NCwzLjg0IDIuNDEsNS4wMyBDIDE1LjQxLDI3LjA5IDExLDMxLjU4IDExLDM5LjUgSCAzNCBDIDM0LDMxLjU4IDI5LjU5LDI3LjA5IDI2LjU5LDI2LjAzIDI4LjA2LDI0Ljg0IDI5LDIzLjAzIDI5LDIxIDI5LDE4LjU5IDI3LjY3LDE2LjUgMjUuNzIsMTUuMzggMjYuMjEsMTQuNzEgMjYuNSwxMy44OSAyNi41LDEzIGMgMCwtMi4yMSAtMS43OSwtNCAtNCwtNCB6IiBmaWxsPSIjZmZmZmZmIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_bK -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0gMjIuNSwxMS42MyBMIDIyLjUsNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTSAyMi41LDI1IEMgMjIuNSwyNSAyNywxNy41IDI1LjUsMTQuNSBDIDI1LjUsMTQuNSAyNC41LDEyIDIyLjUsMTIgQyAyMC41LDEyIDE5LjUsMTQuNSAxOS41LDE0LjUgQyAxOCwxNy41IDIyLjUsMjUgMjIuNSwyNSIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiLz48cGF0aCBkPSJNIDEyLjUsMzcgQyAxOCw0MC41IDI3LDQwLjUgMzIuNSwzNyBMIDMyLjUsMzAgQyAzMi41LDMwIDQxLjUsMjUuNSAzOC41LDE5LjUgQyAzNC41LDEzIDI1LDE2IDIyLjUsMjMuNSBMIDIyLjUsMjcgTCAyMi41LDIzLjUgQyAyMCwxNiAxMC41LDEzIDYuNSwxOS41IEMgMy41LDI1LjUgMTIuNSwzMCAxMi41LDMwIEwgMTIuNSwzNyIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIi8+PHBhdGggZD0iTSAyMCw4IEwgMjUsOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PHBhdGggZD0iTSAzMiwyOS41IEMgMzIsMjkuNSA0MC41LDI1LjUgMzguMDMsMTkuODUgQyAzNC4xNSwxNCAyNSwxOCAyMi41LDI0LjUgTCAyMi41LDI2LjYgTCAyMi41LDI0LjUgQyAyMCwxOCAxMC44NSwxNCA2Ljk3LDE5Ljg1IEMgNC41LDI1LjUgMTMsMjkuNSAxMywyOS41IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiLz48cGF0aCBkPSJNIDEyLjUsMzAgQyAxOCwyNyAyNywyNyAzMi41LDMwIE0gMTIuNSwzMy41IEMgMTgsMzAuNSAyNywzMC41IDMyLjUsMzMuNSBNIDEyLjUsMzcgQyAxOCwzNCAyNywzNCAzMi41LDM3IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiLz48L2c+PC9zdmc+{%- endcapture -%}
+{%- capture ym_bQ -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNIDksMjYgQyAxNy41LDI0LjUgMzAsMjQuNSAzNiwyNiBMIDM4LjUsMTMuNSBMIDMxLDI1IEwgMzAuNywxMC45IEwgMjUuNSwyNC41IEwgMjIuNSwxMCBMIDE5LjUsMjQuNSBMIDE0LjMsMTAuOSBMIDE0LDI1IEwgNi41LDEzLjUgTCA5LDI2IHoiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBmaWxsPSIjMDAwMDAwIiAvPjxwYXRoIGQ9Im0gOSwyNiBjIDAsMiAxLjUsMiAyLjUsNCAxLDEuNSAxLDEgMC41LDMuNSAtMS41LDEgLTEsMi41IC0xLDIuNSAtMS41LDEuNSAwLDIuNSAwLDIuNSA2LjUsMSAxNi41LDEgMjMsMCAwLDAgMS41LC0xIDAsLTIuNSAwLDAgMC41LC0xLjUgLTEsLTIuNSAtMC41LC0yLjUgLTAuNSwtMiAwLjUsLTMuNSAxLC0yIDIuNSwtMiAyLjUsLTQgLTguNSwtMS41IC0xOC41LC0xLjUgLTI3LDAgeiIgLz48cGF0aCBkPSJNIDExLjUsMzAgQyAxNSwyOSAzMCwyOSAzMy41LDMwIiAvPjxwYXRoIGQ9Im0gMTIsMzMuNSBjIDYsLTEgMTUsLTEgMjEsMCIgLz48Y2lyY2xlIGN4PSI2IiBjeT0iMTIiIHI9IjIiIC8+PGNpcmNsZSBjeD0iMTQiIGN5PSI5IiByPSIyIiAvPjxjaXJjbGUgY3g9IjIyLjUiIGN5PSI4IiByPSIyIiAvPjxjaXJjbGUgY3g9IjMxIiBjeT0iOSIgcj0iMiIgLz48Y2lyY2xlIGN4PSIzOSIgY3k9IjEyIiByPSIyIiAvPjxwYXRoIGQ9Ik0gMTEsMzguNSBBIDM1LDM1IDEgMCAwIDM0LDM4LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIC8+PGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIj48cGF0aCBkPSJNIDExLDI5IEEgMzUsMzUgMSAwIDEgMzQsMjkiIC8+PHBhdGggZD0iTSAxMi41LDMxLjUgTCAzMi41LDMxLjUiIC8+PHBhdGggZD0iTSAxMS41LDM0LjUgQSAzNSwzNSAxIDAgMCAzMy41LDM0LjUiIC8+PHBhdGggZD0iTSAxMC41LDM3LjUgQSAzNSwzNSAxIDAgMCAzNC41LDM3LjUiIC8+PC9nPjwvZz48L3N2Zz4={%- endcapture -%}
+{%- capture ym_bR -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0iIzAwMDAwMCIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC4zKSI+PHBhdGggZD0iTSA5LDM5IEwgMzYsMzkgTCAzNiwzNiBMIDksMzYgTCA5LDM5IHogIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgLz48cGF0aCBkPSJNIDEyLjUsMzIgTCAxNCwyOS41IEwgMzEsMjkuNSBMIDMyLjUsMzIgTCAxMi41LDMyIHogIiBzdHJva2UtbGluZWNhcD0iYnV0dCIgLz48cGF0aCBkPSJNIDEyLDM2IEwgMTIsMzIgTCAzMywzMiBMIDMzLDM2IEwgMTIsMzYgeiAiIHN0cm9rZS1saW5lY2FwPSJidXR0IiAvPjxwYXRoIGQ9Ik0gMTQsMjkuNSBMIDE0LDE2LjUgTCAzMSwxNi41IEwgMzEsMjkuNSBMIDE0LDI5LjUgeiAiIHN0cm9rZS1saW5lY2FwPSJidXR0IiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiAvPjxwYXRoIGQ9Ik0gMTQsMTYuNSBMIDExLDE0IEwgMzQsMTQgTCAzMSwxNi41IEwgMTQsMTYuNSB6ICIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIC8+PHBhdGggZD0iTSAxMSwxNCBMIDExLDkgTCAxNSw5IEwgMTUsMTEgTCAyMCwxMSBMIDIwLDkgTCAyNSw5IEwgMjUsMTEgTCAzMCwxMSBMIDMwLDkgTCAzNCw5IEwgMzQsMTQgTCAxMSwxNCB6ICIgc3Ryb2tlLWxpbmVjYXA9ImJ1dHQiIC8+PHBhdGggZD0iTSAxMiwzNS41IEwgMzMsMzUuNSBMIDMzLDM1LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiAvPjxwYXRoIGQ9Ik0gMTMsMzEuNSBMIDMyLDMxLjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiAvPjxwYXRoIGQ9Ik0gMTQsMjkuNSBMIDMxLDI5LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiAvPjxwYXRoIGQ9Ik0gMTQsMTYuNSBMIDMxLDE2LjUiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIxIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIiAvPjxwYXRoIGQ9Ik0gMTEsMTQgTCAzNCwxNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjEiIHN0cm9rZS1saW5lam9pbj0ibWl0ZXIiIC8+PC9nPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_bB -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC42KSI+PGcgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIiBzdHJva2UtbGluZWNhcD0iYnV0dCI+PHBhdGggZD0iTSA5LDM2IEMgMTIuMzksMzUuMDMgMTkuMTEsMzYuNDMgMjIuNSwzNCBDIDI1Ljg5LDM2LjQzIDMyLjYxLDM1LjAzIDM2LDM2IEMgMzYsMzYgMzcuNjUsMzYuNTQgMzksMzggQyAzOC4zMiwzOC45NyAzNy4zNSwzOC45OSAzNiwzOC41IEMgMzIuNjEsMzcuNTMgMjUuODksMzguOTYgMjIuNSwzNy41IEMgMTkuMTEsMzguOTYgMTIuMzksMzcuNTMgOSwzOC41IEMgNy42NSwzOC45OSA2LjY4LDM4Ljk3IDYsMzggQyA3LjM1LDM2LjU0IDksMzYgOSwzNiB6Ii8+PHBhdGggZD0iTSAxNSwzMiBDIDE3LjUsMzQuNSAyNy41LDM0LjUgMzAsMzIgQyAzMC41LDMwLjUgMzAsMzAgMzAsMzAgQyAzMCwyNy41IDI3LjUsMjYgMjcuNSwyNiBDIDMzLDI0LjUgMzMuNSwxNC41IDIyLjUsMTAuNSBDIDExLjUsMTQuNSAxMiwyNC41IDE3LjUsMjYgQyAxNy41LDI2IDE1LDI3LjUgMTUsMzAgQyAxNSwzMCAxNC41LDMwLjUgMTUsMzIgeiIvPjxwYXRoIGQ9Ik0gMjUgOCBBIDIuNSAyLjUgMCAxIDEgMjAsOCBBIDIuNSAyLjUgMCAxIDEgMjUgOCB6Ii8+PC9nPjxwYXRoIGQ9Ik0gMTcuNSwyNiBMIDI3LjUsMjYgTSAxNSwzMCBMIDMwLDMwIE0gMjIuNSwxNS41IEwgMjIuNSwyMC41IE0gMjAsMTggTCAyNSwxOCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2UtbGluZWpvaW49Im1pdGVyIi8+PC9nPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_bN -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PGcgZmlsbD0ibm9uZSIgZmlsbC1ydWxlPSJldmVub2RkIiBzdHJva2U9IiMwMDAwMDAiIHN0cm9rZS13aWR0aD0iMS41IiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDAsMC4zKSI+PHBhdGggZD0iTSAyMiwxMCBDIDMyLjUsMTEgMzguNSwxOCAzOCwzOSBMIDE1LDM5IEMgMTUsMzAgMjUsMzIuNSAyMywxOCIgZmlsbD0iIzAwMDAwMCIgc3Ryb2tlPSIjMDAwMDAwIiAvPjxwYXRoIGQ9Ik0gMjQsMTggQyAyNC4zOCwyMC45MSAxOC40NSwyNS4zNyAxNiwyNyBDIDEzLDI5IDEzLjE4LDMxLjM0IDExLDMxIEMgOS45NTgsMzAuMDYgMTIuNDEsMjcuOTYgMTEsMjggQyAxMCwyOCAxMS4xOSwyOS4yMyAxMCwzMCBDIDksMzAgNS45OTcsMzEgNiwyNiBDIDYsMjQgMTIsMTQgMTIsMTQgQyAxMiwxNCAxMy44OSwxMi4xIDE0LDEwLjUgQyAxMy4yNyw5LjUwNiAxMy41LDguNSAxMy41LDcuNSBDIDE0LjUsNi41IDE2LjUsMTAgMTYuNSwxMCBMIDE4LjUsMTAgQyAxOC41LDEwIDE5LjI4LDguMDA4IDIxLDcgQyAyMiw3IDIyLDEwIDIyLDEwIiBmaWxsPSIjMDAwMDAwIiBzdHJva2U9IiMwMDAwMDAiIC8+PHBhdGggZD0iTSA5LjUgMjUuNSBBIDAuNSAwLjUgMCAxIDEgOC41LDI1LjUgQSAwLjUgMC41IDAgMSAxIDkuNSAyNS41IHoiIGZpbGw9IiNmZmZmZmYiIHN0cm9rZT0iI2ZmZmZmZiIgLz48cGF0aCBkPSJNIDE1IDE1LjUgQSAwLjUgMS41IDAgMSAxIDE0LDE1LjUgQSAwLjUgMS41IDAgMSAxIDE1IDE1LjUgeiIgdHJhbnNmb3JtPSJtYXRyaXgoMC44NjYsMC41LC0wLjUsMC44NjYsOS42OTMsLTUuMTczKSIgZmlsbD0iI2ZmZmZmZiIgc3Ryb2tlPSIjZmZmZmZmIiAvPjxwYXRoIGQ9Ik0gMjQuNTUsMTAuNCBMIDI0LjEsMTEuODUgTCAyNC42LDEyIEMgMjcuNzUsMTMgMzAuMjUsMTQuNDkgMzIuNSwxOC43NSBDIDM0Ljc1LDIzLjAxIDM1Ljc1LDI5LjA2IDM1LjI1LDM5IEwgMzUuMiwzOS41IEwgMzcuNDUsMzkuNSBMIDM3LjUsMzkgQyAzOCwyOC45NCAzNi42MiwyMi4xNSAzNC4yNSwxNy42NiBDIDMxLjg4LDEzLjE3IDI4LjQ2LDExLjAyIDI1LjA2LDEwLjUgTCAyNC41NSwxMC40IHogIiBmaWxsPSIjZmZmZmZmIiBzdHJva2U9Im5vbmUiIC8+PC9nPjwvc3ZnPg=={%- endcapture -%}
+{%- capture ym_bP -%}data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0NSA0NSI+PHBhdGggZD0ibSAyMi41LDkgYyAtMi4yMSwwIC00LDEuNzkgLTQsNCAwLDAuODkgMC4yOSwxLjcxIDAuNzgsMi4zOCBDIDE3LjMzLDE2LjUgMTYsMTguNTkgMTYsMjEgYyAwLDIuMDMgMC45NCwzLjg0IDIuNDEsNS4wMyBDIDE1LjQxLDI3LjA5IDExLDMxLjU4IDExLDM5LjUgSCAzNCBDIDM0LDMxLjU4IDI5LjU5LDI3LjA5IDI2LjU5LDI2LjAzIDI4LjA2LDI0Ljg0IDI5LDIzLjAzIDI5LDIxIDI5LDE4LjU5IDI3LjY3LDE2LjUgMjUuNzIsMTUuMzggMjYuMjEsMTQuNzEgMjYuNSwxMy44OSAyNi41LDEzIGMgMCwtMi4yMSAtMS43OSwtNCAtNCwtNCB6IiBmaWxsPSIjMDAwMDAwIiBmaWxsLXJ1bGU9Im5vbnplcm8iIHN0cm9rZT0iIzAwMDAwMCIgc3Ryb2tlLXdpZHRoPSIxLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJtaXRlciIvPjwvc3ZnPg=={%- endcapture -%}
+{%- comment -%} Framework markup only (owner 2026-11-14): layout, cards, rating, move list, QR, connect screen and title bar are
+plain HTML with Framework classes, no inline styles or style blocks. Only the chessboard (data-ym-board) is drawn by the page script.
+Type: heading value--small, rating value / lg:value--large, change value--xsmall, every other text label. {%- endcomment -%}
+{%- if view == 3 %}{% assign ym_dir = "col" %}{% else %}{% assign ym_dir = "row" %}{% endif -%}
+<div class="layout layout--{{ ym_dir }} layout--stretch gap--small lg:gap--medium" data-ym>
+{%- if connect %}
+  <div class="flex flex--col flex--center-x flex--center-y gap--medium w--full" data-ym-connect>
+    <img class="image image--adaptive w--[72px] h--[72px] lg:w--[112px] lg:h--[112px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
+    <span class="title title--large">{{ t.connect_title }}</span>
+    <span class="description text--center">{{ notice | default: t.connect_line }}</span>
+  </div>
+{%- elsif none %}
+  <div class="flex flex--col flex--center-x flex--center-y gap--small w--full">
     <span class="title title--large">{{ t.none }}</span>
     <span class="description">{{ t.none2 }}</span>
   </div>
 {%- else %}
-  <div class="flex" data-ym-board></div>
-  <div class="flex flex--col" data-ym-side></div>
+  <div class="flex shrink-0" data-ym-board></div>
+  <div class="flex flex--col flex--stretch gap--small lg:gap--medium grow" data-ym-panel>
+    <div class="outline rounded p--2 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
+      {%- if turn_w %}{% assign ym_k = ym_wK %}{% else %}{% assign ym_k = ym_bK %}{% endif %}
+      <img class="image w--[32px] h--[32px] lg:w--[56px] lg:h--[56px]" src="{{ ym_k }}" alt="">
+      <div class="flex flex--col flex--left text--left">
+        <span class="value value--small font--bold">{{ t.your_turn }}</span>
+        {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{{ find }}</span>{% endif %}
+      </div>
+    </div>
+    {%- if view == 1 %}
+    <div class="outline rounded p--2 flex flex--col flex--left text--left gap--xsmall" data-ym-card="puzzle">
+      <span class="label font--bold">{{ t.puzzle_n }} #{{ puzzle.id }}</span>
+      {%- if meta != "" %}<span class="label" data-ym-meta>{{ meta }}</span>{% endif %}
+      {%- if puzzle.game and puzzle.game.kind != "" %}
+      <div class="hidden lg:flex flex--col flex--left" data-ym-game>
+        <span class="label">{{ t.from_game }} {{ puzzle.game.kind }}</span>
+        {%- for p in puzzle.game.players %}
+        <span class="label"><svg class="inline-block" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p[0] == "w" %}none{% else %}currentColor{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg> {{ p[1] }}{% if p[2] > 0 %} ({{ p[2] }}){% endif %}</span>
+        {%- endfor %}
+      </div>
+      {%- endif %}
+    </div>
+    {%- endif %}
+    {%- if banner != "" %}<div class="outline rounded p--2 label--inverted"><span class="label font--bold">{{ banner }}</span></div>{% endif %}
+    {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
+    {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
+    {%- if account == nil and view == 1 %}<span class="label" data-ym-part="hint">{{ t.connect }}</span>{% endif %}
+    {%- if view == 1 and rows.size > 1 %}
+    <table class="table table--small" data-ym-part="moves">
+      <tbody>
+      {%- for r in rows %}
+        {%- if r.back < 4 %}
+        <tr class="{% if r.back > 1 %}hidden lg:table-row{% endif %}">
+          <td class="bg--gray-75 text--center"><span class="label">{{ r.n }}.</span></td>
+          <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% else %}{% assign ym_f = ym_wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}">{% endif %}{{ r.ws }}</span></td>
+          <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% else %}{% assign ym_f = ym_bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}">{% endif %}{{ r.bs }}</span>{% endif %}</td>
+        </tr>
+        {%- endif %}
+      {%- endfor %}
+      </tbody>
+    </table>
+    {%- endif %}
+    <div class="grow"></div>
+    <div class="flex flex--row flex--bottom gap--small lg:gap--medium">
+      {%- if account %}
+      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall grow" data-ym-card="rating">
+        <span class="label">{{ t.rating_you }}</span>
+        <div class="flex flex--row flex--center-y gap--small" data-ym-part="rating">
+          <span class="value lg:value--large">{{ account.rating }}</span>
+          {%- if change != "" %}<span class="value value--xsmall">{{ change }}</span>{% endif %}
+        </div>
+        {%- if view == 1 and chips.size > 0 %}
+        <div class="hidden lg:flex flex--row gap--xsmall" data-ym-part="recent">
+          {%- for c in chips %}<span class="label {% if c.up %}label--inverted{% else %}label--outline{% endif %}">{{ c.text }}</span>{% endfor %}
+        </div>
+        {%- endif %}
+        {%- if view == 1 and caps.solved and days %}
+        <div class="hidden lg:flex flex--col flex--center-x gap--xsmall" data-ym-part="bars">
+          <span class="label">{{ week_line }}</span>
+          <div class="flex flex--row gap--xsmall">
+            {%- for d in days %}
+            <div class="flex flex--col flex--center-x">
+              <div class="w--[26px] h--[26px] rounded--small {% if d.on %}bg--black{% else %}outline{% endif %}"></div>
+              <span class="label{% if d.today %} font--bold{% endif %}">{{ d.name }}</span>
+            </div>
+            {%- endfor %}
+          </div>
+        </div>
+        {%- elsif view == 1 and caps.streak and account.streak > 0 %}
+        <span class="label hidden lg:visible" data-ym-part="stats">{{ t.streak }} {{ account.streak }}</span>
+        {%- endif %}
+      </div>
+      {%- endif %}
+      {%- if view != 4 %}
+      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
+        {{ puzzle.url | qr_code: 4, "m", "fixed" }}
+        <span class="label">{{ t.scan }}</span>
+      </div>
+      {%- endif %}
+    </div>
+  </div>
 {%- endif %}
 </div>
-{%- unless none %}
-<div hidden data-ym-qr>{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
-{%- endunless %}
-{%- assign ym_hide = cf.hide_title_bar | append: '' -%}
-{%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}
+{%- if view == 1 or connect %}
 <div class="title_bar">
   <img class="image image--adaptive w--[28px] h--[28px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
   <span class="title">{{ trmnl.plugin_settings.instance_name | default: "Lichess" }}</span>
-  {%- if puzzle %}<span class="instance">Puzzles</span>{% endif %}
+  <span class="instance" data-ym-instance>{{ instance_long }}</span>
 </div>
-{%- endunless %}
+{%- endif %}
 {%- unless none %}
 <script type="text/javascript">
-var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, account: {{ account | json }}, caps: {{ caps | json }}, t: {{ t | json }}, to_move: {{ to_move | json }}, banner: {{ banner | json }}, notice: {{ notice | json }}, problems: {{ problems | json }}, stale: {{ stale | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 // Generated by tools/pieces.js from assets/pieces/cburnett (Colin M.L. Burnett, BSD licence). Do not edit.
 var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#fff\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#fff\" d=\"M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7\"/><path d=\"M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0\"/></g>",
@@ -63,46 +138,61 @@ var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" st
   "bN":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000000\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" transform=\"translate(0,0.3)\"><path d=\"M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18\" fill=\"#000000\" stroke=\"#000000\" /><path d=\"M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10\" fill=\"#000000\" stroke=\"#000000\" /><path d=\"M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z\" fill=\"#ffffff\" stroke=\"#ffffff\" /><path d=\"M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z\" transform=\"matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)\" fill=\"#ffffff\" stroke=\"#ffffff\" /><path d=\"M 24.55,10.4 L 24.1,11.85 L 24.6,12 C 27.75,13 30.25,14.49 32.5,18.75 C 34.75,23.01 35.75,29.06 35.25,39 L 35.2,39.5 L 37.45,39.5 L 37.5,39 C 38,28.94 36.62,22.15 34.25,17.66 C 31.88,13.17 28.46,11.02 25.06,10.5 L 24.55,10.4 z \" fill=\"#ffffff\" stroke=\"none\" /></g>",
   "bP":"<path d=\"m 22.5,9 c -2.21,0 -4,1.79 -4,4 0,0.89 0.29,1.71 0.78,2.38 C 17.33,16.5 16,18.59 16,21 c 0,2.03 0.94,3.84 2.41,5.03 C 15.41,27.09 11,31.58 11,39.5 H 34 C 34,31.58 29.59,27.09 26.59,26.03 28.06,24.84 29,23.03 29,21 29,18.59 27.67,16.5 25.72,15.38 26.21,14.71 26.5,13.89 26.5,13 c 0,-2.21 -1.79,-4 -4,-4 z\" fill=\"#000000\" fill-rule=\"nonzero\" stroke=\"#000000\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/>"};
 // Drawing: the board as SVG text, cburnett pieces (source/pieces.js, 45 x 45 each). No DOM here, so it can be tested in Node.
-// Rim board: a grey rim (#555, #777 in dark mode, black on 1-bit where grey would dither) with white coordinates on it,
-// light squares white, dark squares grey (2-bit and up) or fine diagonal lines (1-bit), last move tinted and framed with an arrow.
+// Rim board: a grey rim (level 85, 119 in dark mode, black on 1-bit) with white coordinates on it, light squares white,
+// dark squares grey (170), the last move tinted (119) and framed. The board keeps its light look in dark mode.
+// Colours come from the Framework (TRMNLPaint, owner 2026-11-14): every grey is a level 0..255 asked as the bg--{token} that
+// paints it on this screen, so bit depth, palette (the X's gray-16, gray-4, bw) and dark mode shape it as CSS does. A token
+// that dithers comes back as a pattern tile. Without the Framework (Node tests) the level is used as a plain grey.
+var YM_DARK = false;
+function ymToken(level) {   // dark mode inverts every token, so the token for the opposite level paints this one
+  var l = YM_DARK ? 255 - level : level;
+  if (l <= 0) return 'black';
+  if (l >= 255) return 'white';
+  return 'gray-' + Math.max(10, Math.min(75, Math.round((l + 17) / 3.4 / 5) * 5));
+}
+var YM_FILLS = {};
+function ymFill(level) {   // { paint: an SVG fill value, def: a <pattern> to put in that SVG's <defs> or '' }
+  var k = ymToken(level), g = typeof window !== 'undefined' ? window.TRMNLPaint : null;
+  if (YM_FILLS[k]) return YM_FILLS[k];
+  var f = g && g.bg ? g.bg(k) : null, r;
+  if (f && f.url && f.size) {
+    var id = 'ymf-' + k, z = (+f.size).toFixed(3);
+    r = { paint: 'url(#' + id + ')', def: '<pattern id="' + id + '" width="' + z + '" height="' + z + '" patternUnits="userSpaceOnUse"><rect width="' + z + '" height="' + z + '" fill="' + (f.color || '#fff') + '"/><image href="' + f.url + '" width="' + z + '" height="' + z + '"/></pattern>' };
+  } else if (f && f.color) r = { paint: f.color, def: '' };
+  else { var v = Math.max(0, Math.min(255, Math.round(level))); r = { paint: 'rgb(' + v + ',' + v + ',' + v + ')', def: '' }; }
+  return (YM_FILLS[k] = r);
+}
+function ymSolid(level) { var f = ymFill(level); return f.def ? (level >= 128 ? ymFill(255).paint : ymFill(0).paint) : f.paint; }   // strokes and text: never a tile
+function ymInks(svg) { var W = ymSolid(255), K = ymSolid(0); return svg.replace(/#f{3}(f{3})?\b/gi, W).replace(/#0{3}(0{3})?\b/g, K); }   // the set's white and black as Framework inks
 function pieceSvg(type, white, x, y, s) {
   var k = (white ? 'w' : 'b') + type.toUpperCase();
-  return '<svg x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '" viewBox="0 0 45 45">' + PIECE_SVG[k] + '</svg>';
-}
-// The move arrow from square a to square b (top-left corners, side q): a shaft and a head that stops short of b's centre.
-function arrowSvg(a, b, q, bits) {
-  var ax = a[0] + q / 2, ay = a[1] + q / 2, bx = b[0] + q / 2, by = b[1] + q / 2, dx = bx - ax, dy = by - ay, L = Math.sqrt(dx * dx + dy * dy);
-  if (!L) return '';
-  var ux = dx / L, uy = dy / L, nx = -uy, ny = ux, tip = L - q * 0.22, hl = Math.min(q * 0.42, tip * 0.6), sw = q * 0.09, hw = q * 0.24;
-  var P = function (t, n) { return (ax + ux * t + nx * n).toFixed(1) + ' ' + (ay + uy * t + ny * n).toFixed(1); };
-  var d = 'M' + P(q * 0.12, sw) + 'L' + P(tip - hl, sw) + 'L' + P(tip - hl, hw) + 'L' + P(tip, 0) + 'L' + P(tip - hl, -hw) + 'L' + P(tip - hl, -sw) + 'L' + P(q * 0.12, -sw) + 'Z';
-  return '<path d="' + d + '" fill="' + (bits === 1 ? '#000' : '#333') + '" stroke="#fff" stroke-width="' + Math.max(1.5, q * 0.025).toFixed(1) + '" stroke-linejoin="round" shape-rendering="geometricPrecision"/>';
+  return '<svg x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '" viewBox="0 0 45 45">' + ymInks(PIECE_SVG[k]) + '</svg>';
 }
 // o: { size, board (64 chars), flip, from, to (indices or -1), coords, bits (1, 2 or 4), dark (dark mode), font }
 function boardSvg(o) {
   var S = o.size, m = o.coords ? Math.round(S * 0.058) : Math.max(4, Math.round(S * 0.02)), q = Math.floor((S - 2 * m) / 8), B = q * 8, x0 = Math.round((S - B) / 2), i, out = [];
-  var rim = o.bits === 1 ? '#000' : o.dark ? '#777' : '#555', sq = o.bits === 1 ? 'url(#ymd)' : '#aaa', lw = Math.max(1, Math.round(S * 0.003));
+  YM_DARK = !!o.dark; YM_FILLS = {};
+  var fRim = ymFill(o.dark ? 119 : 85), fSq = ymFill(170), fLm = ymFill(119), fW = ymFill(255), K = ymSolid(0), Wt = ymSolid(255), lw = Math.max(1, Math.round(S * 0.003));
+  var rim = o.bits === 1 ? K : fRim.paint, sq = fSq.paint;
   out.push('<svg xmlns="http://www.w3.org/2000/svg" class="block" width="' + S + '" height="' + S + '" viewBox="0 0 ' + S + ' ' + S + '" shape-rendering="crispEdges">');
-  out.push('<defs><pattern id="ymlm" width="3" height="3" patternUnits="userSpaceOnUse"><rect width="3" height="3" fill="#fff"/><rect y="2" width="1" height="1" fill="#000"/><rect x="1" y="1" width="1" height="1" fill="#000"/><rect x="2" width="1" height="1" fill="#000"/></pattern><pattern id="ymd" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#fff"/><rect y="3" width="1" height="1" fill="#000"/><rect x="1" y="2" width="1" height="1" fill="#000"/><rect x="2" y="1" width="1" height="1" fill="#000"/><rect x="3" width="1" height="1" fill="#000"/></pattern>' +
-    '<filter id="ymhalo" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="' + (q * 0.035).toFixed(2) + '" result="d"/><feFlood flood-color="#fff"/><feComposite in2="d" operator="in" result="h"/><feMerge><feMergeNode in="h"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>');
+  out.push('<defs>' + fRim.def + fSq.def + fLm.def + fW.def +
+    '<filter id="ymhalo" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="' + (q * 0.035).toFixed(2) + '" result="d"/><feFlood flood-color="' + Wt + '"/><feComposite in2="d" operator="in" result="h"/><feMerge><feMergeNode in="h"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>');
   out.push('<rect width="' + S + '" height="' + S + '" rx="' + Math.round(m * 0.5) + '" fill="' + rim + '" shape-rendering="geometricPrecision"/>');
-  out.push('<rect x="' + x0 + '" y="' + x0 + '" width="' + B + '" height="' + B + '" fill="#fff"/>');
+  out.push('<rect x="' + x0 + '" y="' + x0 + '" width="' + B + '" height="' + B + '" fill="' + fW.paint + '"/>');
   function pos(idx) { var f = idx % 8, r = Math.floor(idx / 8); if (o.flip) { f = 7 - f; r = 7 - r; } return [x0 + f * q, x0 + r * q]; }
   for (i = 0; i < 64; i++) {
     var p = pos(i);
     if ((i % 8 + Math.floor(i / 8)) % 2 === 1) out.push('<rect x="' + p[0] + '" y="' + p[1] + '" width="' + q + '" height="' + q + '" fill="' + sq + '"/>');
   }
-  // Last move: both squares in a strong tint with an inner frame (distinct from light and dark squares), and an arrow from the
-  // origin to the destination under the pieces, so the move reads at a glance.
-  var tint = o.bits === 1 ? 'url(#ymlm)' : '#777', fw = Math.max(2, Math.round(q * 0.04));
+  // Last move: both squares in a strong tint with an inner frame, distinct from light and dark squares.
+  var tint = fLm.paint, fw = Math.max(2, Math.round(q * 0.04));
   var lm = [o.from, o.to].filter(function (idx) { return idx != null && idx >= 0; });
   lm.forEach(function (idx) {
     var p = pos(idx);
     out.push('<rect x="' + p[0] + '" y="' + p[1] + '" width="' + q + '" height="' + q + '" fill="' + tint + '"/>');
-    out.push('<rect x="' + (p[0] + fw / 2) + '" y="' + (p[1] + fw / 2) + '" width="' + (q - fw) + '" height="' + (q - fw) + '" fill="none" stroke="#000" stroke-width="' + fw + '"/>');
+    out.push('<rect x="' + (p[0] + fw / 2) + '" y="' + (p[1] + fw / 2) + '" width="' + (q - fw) + '" height="' + (q - fw) + '" fill="none" stroke="' + K + '" stroke-width="' + fw + '"/>');
   });
-  if (lm.length === 2) out.push(arrowSvg(pos(o.from), pos(o.to), q, o.bits));
-  out.push('<rect x="' + (x0 - lw) + '" y="' + (x0 - lw) + '" width="' + (B + 2 * lw) + '" height="' + (B + 2 * lw) + '" fill="none" stroke="#fff" stroke-width="' + lw + '"/>');
+  out.push('<rect x="' + (x0 - lw) + '" y="' + (x0 - lw) + '" width="' + (B + 2 * lw) + '" height="' + (B + 2 * lw) + '" fill="none" stroke="' + Wt + '" stroke-width="' + lw + '"/>');
   // 1-bit thresholds thin lines away: keep every piece line at least ~1.5 screen pixels (the set draws 1.5 of 45 units).
   var sw = o.bits === 1 ? 1.15 * 45 / (q * 1.04) : 0;   // 1.15 screen px in piece units
   if (sw > 1.5) out.push('<style>.ymp *{stroke-width:' + sw.toFixed(2) + 'px !important}</style>');
@@ -117,7 +207,7 @@ function boardSvg(o) {
   if (o.coords) {
     var fs = Math.round(m * 0.62), fam = o.font || 'sans-serif';
     for (i = 0; i < 8; i++) {
-      var file = String.fromCharCode(97 + (o.flip ? 7 - i : i)), rank = o.flip ? i + 1 : 8 - i, a = ' font-size="' + fs + '" text-anchor="middle" fill="#fff" font-family="' + fam + '" font-weight="bold"';
+      var file = String.fromCharCode(97 + (o.flip ? 7 - i : i)), rank = o.flip ? i + 1 : 8 - i, a = ' font-size="' + fs + '" text-anchor="middle" fill="' + Wt + '" font-family="' + fam + '" font-weight="bold"';
       out.push('<text x="' + (x0 + (i + 0.5) * q).toFixed(1) + '" y="' + (x0 + B + m * 0.5 + fs * 0.36).toFixed(1) + '"' + a + '>' + file + '</text>');
       out.push('<text x="' + (x0 / 2).toFixed(1) + '" y="' + (x0 + (i + 0.5) * q + fs * 0.36).toFixed(1) + '"' + a + '>' + rank + '</text>');
     }
@@ -127,179 +217,27 @@ function boardSvg(o) {
 }
 
 // ==== PAGE
-// Page script: reads YM (the transform's answer), lays out board and side panel for the view and the screen, draws both.
+// Page script: draws the chessboard into [data-ym-board] (the one part allowed its own SVG). Everything else on the screen is
+// Framework markup in shared.liquid. Runs once the Framework runtime is there: TRMNLPaint gives the board's colours.
 (function () {
-  var root = document.querySelector('[data-ym]');
-  if (!root) return;
-  var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
-  var dark = !!document.querySelector('.screen--dark-mode, .dark-mode') || has('screen--dark-mode'), INK = dark ? '#fff' : '#000', PAPER = dark ? '#000' : '#fff';
-  var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg');
-  var P = YM.puzzle, A = YM.account, T = YM.t, view = YM.view, C = YM.caps || {};
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function rect() { var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root), pl = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight) || 0, pt = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) || 0; return { w: Math.floor(r.width - pl), h: Math.floor(r.height - pt) }; }
-  var R = rect(), W = R.w, H = R.h, gap = Math.round(Math.min(W, H) * 0.035);
-  var row = W >= H * 1.15, small = view === 4 || (view === 2 && H < 300);
-  var wide = view === 1 || view === 2;
-  var q = YM.qrOk;   // QR drawn?
-  // ---- sizes
-  var Sw, S, Q = 0;
-  if (row) {
-    Sw = Math.max(Math.round(W * (view === 1 ? 0.3 : view === 2 ? 0.4 : 0.44)), W - H - gap);   // the board takes the full height when the panel keeps its minimum
-    S = Math.min(H, W - Sw - gap);
-    Sw = W - S - gap;
-  } else {
-    S = Math.min(W, Math.round(H * (view === 3 ? (P.moves && P.moves.length ? 0.6 : 0.68) : 0.7)));   // half vertical: room for the last moves
-    Sw = W;
+  if (!window.TRMNLPaint && document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); return; }
+  main();
+  function main() {
+    var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
+    if (!root || !bd || !YM.puzzle) return;
+    var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
+    var dark = has('screen--dark-mode') || !!document.querySelector('.screen--dark-mode, .dark-mode');
+    var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg'), view = YM.view;
+    var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root);
+    var W = Math.floor(r.width - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
+    var H = Math.floor(r.height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0));
+    // The board's share; the panel (a Framework flex column, grow) takes the rest.
+    var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : Math.min(H, Math.round(W * (view === 1 ? (lg ? 0.6 : 0.55) : view === 2 ? 0.45 : 0.58)));
+    var lab = document.querySelector('[data-ym-panel] .label'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
+    var P = YM.puzzle;
+    bd.innerHTML = boardSvg({ size: S, board: P.board, flip: !YM.white_bottom, from: P.from, to: P.to, coords: YM.coords && S > 150, bits: bits, dark: dark, font: font.replace(/"/g, "'") });
+    root.setAttribute('data-ym-drawn', '1');
   }
-  var ph = row ? H : H - S - 2 * gap;   // below the board: the layout keeps its own gap too
-  // ---- panel pieces
-  function dot(white, r) { return '<svg class="block shrink-0" width="' + r * 2 + '" height="' + r * 2 + '" viewBox="0 0 ' + r * 2 + ' ' + r * 2 + '"><circle cx="' + r + '" cy="' + r + '" r="' + (r - 1.2) + '" fill="' + (white ? '#fff' : '#000') + '" stroke="' + INK + '" stroke-width="2"/></svg>'; }
-  function arrow(up, s) { return '<svg class="block shrink-0" width="' + s + '" height="' + s + '" viewBox="0 0 10 10"><path d="' + (up ? 'M5 1L9.2 8.5H0.8z' : 'M5 9L9.2 1.5H0.8z') + '" fill="' + INK + '"/></svg>'; }
-  function spark(vals, w, h) {
-    if (!vals || vals.length < 2) return '';
-    var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals), n = vals.length, pad = 5, pts = [], span = Math.max(1, hi - lo);
-    vals.forEach(function (v, i) { pts.push([pad + (w - 2 * pad) * i / (n - 1), pad + (h - 2 * pad) * (1 - (v - lo) / span)]); });
-    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join('');
-    var last = pts[n - 1];
-    var area = d + 'L' + last[0].toFixed(1) + ' ' + (h - 1) + 'L' + pts[0][0].toFixed(1) + ' ' + (h - 1) + 'z';
-    return '<svg class="block" data-ym-part="spark" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '"><path d="' + area + '" fill="' + (bits === 1 ? 'none' : (dark ? '#555' : '#cfcfcf')) + '"/><path d="M0 ' + (h - 0.5) + 'H' + w + '" stroke="' + INK + '" stroke-width="1.4"/><path d="' + d + '" fill="none" stroke="' + INK + '" stroke-width="' + Math.max(2.2, h / 18).toFixed(1) + '" stroke-linejoin="round" stroke-linecap="round"/><circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="' + Math.max(3.5, h / 12).toFixed(1) + '" fill="' + INK + '"/></svg>';
-  }
-  // Type roles (owner 2026-11-14: at most 4 sizes, Framework scale only, the same per role in every view): heading, rating, change, labels.
-  var TY_HEAD = small ? 'value value--xsmall' : 'value value--small', TY_RATING = small || !lg ? 'value' : 'value value--large', TY_CHANGE = 'value value--small', TY_LABEL = 'label';
-  var LABEL_PX = (function () {   // the label size, so the chart's text matches every other label
-    var host = document.querySelector('[data-ym-side]') || document.body, e = document.createElement('span');
-    e.className = 'label'; e.textContent = 'M'; host.appendChild(e); var px = parseFloat(window.getComputedStyle(e).fontSize) || 16; host.removeChild(e); return px;
-  })();
-  var DAYS = (T.days || 'S M T W T F S').split(' ');
-  function dayName(i) { var d = new Date(); d.setDate(d.getDate() - (6 - i)); return DAYS[d.getDay()] || ''; }
-  function lbl(s, extra) { return '<span class="' + TY_LABEL + '"' + (extra || '') + '>' + s + '</span>'; }
-  // A cburnett piece as an inline glyph. solid: one colour (the text colour), for the move list as Lichess draws it.
-  function glyph(k, em, solid) {
-    var g = PIECE_SVG[k];
-    if (solid) g = PIECE_SVG['b' + k.charAt(1)].replace(/#f{3}(f{3})?\b/gi, 'none').replace(/#0{3}(0{3})?\b/g, 'currentColor');
-    return '<svg class="ym-fig" viewBox="0 0 45 45" width="' + em + 'em" height="' + em + 'em">' + g + '</svg>';
-  }
-  var CARD = 'outline rounded p--2 lg:p--3 flex flex--col flex--left gap--xsmall shrink-0';
-  // (a) Your turn: the side-to-move king, "Your turn", "Find the best move for black."
-  function turnCard() {
-    var w = P.turn === 'w';
-    return '<div class="' + CARD + '" data-ym-card="turn"><div class="flex flex--row flex--center-y gap--small">' + glyph(w ? 'wK' : 'bK', small ? 1.6 : 2.1) +
-      '<div class="flex flex--col flex--left"><span class="' + TY_HEAD + ' ym-b ym-nw">' + esc(T.your_turn || 'Your turn') + '</span>' +
-      (small ? '' : lbl(esc(w ? (T.find_w || 'Find the best move for white.') : (T.find_b || 'Find the best move for black.')), ' data-ym-find')) + '</div></div></div>';
-  }
-  // (b) The puzzle: number, rating, theme; the game it comes from with both players.
-  function puzzleCard() {
-    if (small) return '';
-    var l1 = esc((T.puzzle_n || 'Puzzle') + ' #' + P.id);
-    var l2 = [];
-    if (P.rating) l2.push((T.difficulty || 'Rating') + ' ' + P.rating);
-    if (P.themes && P.themes.length) l2.push(P.themes[0]);
-    var g = P.game, gl = '';
-    if (g && (g.kind || (g.players && g.players.length))) {
-      gl = '<div class="flex flex--col flex--left" data-ym-game>' + (g.kind ? lbl(esc((T.from_game || 'From game') + ' ' + g.kind)) : '') +
-        (g.players || []).map(function (p) { return '<div class="flex flex--row flex--center-y gap--xsmall">' + dot(p[0] === 'w', Math.round(LABEL_PX * 0.32)) + lbl(esc(p[1]) + (p[2] ? ' (' + p[2] + ')' : '')) + '</div>'; }).join('') + '</div>';
-    }
-    return '<div class="' + CARD + '" data-ym-card="puzzle">' + lbl(l1, ' data-ym-b') + (l2.length ? lbl(esc(l2.join('  ·  ')), ' data-ym-meta') : '') + gl + '</div>';
-  }
-  // The moves that led to the puzzle, the Lichess way: number gutter, two move columns, figurines, the last move as a dark block.
-  function movesHtml(maxPairs) {
-    var list = (P.moves || []).slice(-maxPairs);
-    if (!maxPairs || !list.length) return '';
-    var lastB = !!list[list.length - 1][2];
-    // White's moves with white (outlined) pieces, Black's with black (solid); the last move as a dark block, its piece in the block's text colour.
-    var mv = function (san, white, hl) { return esc(san).replace(/[KQRBN]/g, function (c) { return glyph((white ? 'w' : 'b') + c, 1.15, hl); }); };
-    var cell = function (h, hl) { return '<td><span class="' + TY_LABEL + (hl ? ' ym-hl' : '') + '">' + h + '</span></td>'; };
-    var rows = list.map(function (m, i) {
-      var last = i === list.length - 1, hw = last && !lastB, hb = last && lastB;
-      return '<tr><td class="bg--gray-75 ym-n">' + lbl(String(+m[0] || '')) + '</td>' + cell(mv(m[1] || '...', true, hw), hw) + cell(m[2] ? mv(m[2], false, hb) : '', hb) + '</tr>';
-    }).join('');
-    return '<table data-ym-part="moves" class="table table--small ym-mv"><tbody>' + rows + '</tbody></table>';
-  }
-  // (c) Rating: the number centred, the change, then progress (sparkline, this week line + 7 squares).
-  function week(days, w) {
-    var fs = LABEL_PX, sumS = 0, sumF = 0, out = '', i, st = w / 7, sq = Math.min(Math.round(st * 0.62), Math.round(fs * 1.8));
-    days.forEach(function (d) { sumS += d.s; sumF += d.f; });
-    var H2 = Math.ceil(sq + fs * 1.4);
-    for (i = 0; i < 7; i++) {
-      var x = i * st + (st - sq) / 2, d = days[i], td = i === 6;
-      out += '<rect x="' + (x + 1).toFixed(1) + '" y="1" width="' + (sq - 2) + '" height="' + (sq - 2) + '" rx="3" fill="' + (d.s > 0 ? INK : PAPER) + '" stroke="' + INK + '" stroke-width="' + (td ? 3 : 1.5) + '"/>';
-      out += '<text x="' + (x + sq / 2).toFixed(1) + '" y="' + (sq + fs * 1.05).toFixed(1) + '" class="' + TY_LABEL + '" text-anchor="middle" fill="' + INK + '" font-weight="' + (td ? 'bold' : 'normal') + '">' + dayName(i) + '</text>';
-    }
-    var line = (T.this_week || 'This week') + ': ' + sumS + ' ' + (T.solved_n || 'solved') + ', ' + sumF + ' ' + (T.failed_n || 'failed') + (C.streak && A.streak ? '  ·  ' + T.streak + ' ' + A.streak : '');
-    return '<div class="flex flex--col flex--left gap--xsmall" data-ym-part="bars">' + lbl(esc(line), ' data-ym-wrap') + '<svg class="block" width="' + w + '" height="' + H2 + '" viewBox="0 0 ' + w + ' ' + H2 + '">' + out + '</svg></div>';
-  }
-  function ratingCard() {
-    if (!A) return '';
-    var chg = '';
-    if (A.trend && A.trend !== 'flat') chg = '<span class="flex flex--row flex--center-y gap--xsmall">' + arrow(A.trend === 'up', Math.round(LABEL_PX)) + '<span class="' + TY_CHANGE + '">' + (A.delta > 0 ? '+' : '') + A.delta + '</span></span>';
-    var body = '<div class="flex flex--col flex--center-x ym-stretch" data-ym-part="rating">' + lbl(esc(T.rating_you), ' data-ym-rlabel') +
-      '<div class="flex flex--row flex--center-y gap--small"><span class="' + TY_RATING + '">' + A.rating + '</span>' + chg + '</div></div>';
-    // The last puzzle results as chips, oldest left (Lichess shows the same row under its board): a solve dark, a miss outlined.
-    var rec = (A.recent || []).slice(0, 6).reverse();
-    if (rec.length && !small) body += '<div class="flex flex--row flex--center-x gap--xsmall" data-ym-part="recent">' + rec.map(function (w) { return '<span class="' + TY_LABEL + ' ym-chip' + (w ? ' ym-chip--win' : '') + '">' + (w ? '&#10003;' : '&#10007;') + '</span>'; }).join('') + '</div>';
-    var probs = (YM.problems || []).map(function (s) { return lbl(esc(s), ' data-ym-problem'); }).join('');
-    return '<div class="' + CARD + ' grow ym-rcard" data-ym-card="rating">' + body + probs + '<div data-ym-prog class="flex flex--col flex--left gap--xsmall ym-stretch"></div></div>';
-  }
-  function progHtml(w) {
-    var prog = '';
-    if (small || !A) return '';
-    {
-      if (C.history) prog += spark(A.history, w, Math.max(30, Math.round(LABEL_PX * 2.4)));
-      if (C.solved && A.days) prog += week(A.days, w);
-      else if (C.streak && A.streak) prog += lbl(esc(T.streak + ' ' + A.streak), ' data-ym-part="stats"');   // no week to carry the streak
-    }
-    return prog;
-  }
-  // ---- QR size: whole pixels per module, at least 4 (3 on the 2x X), never a QR a 1-bit panel can not read
-  var qrW = 0, svgQr = document.querySelector('[data-ym-qr] svg'), haveQr = !!svgQr && !small;
-  var pw = row ? Sw : S, phh = row ? S : ph;
-  if (haveQr) {
-    qrW = Math.round(Math.min(pw * (lg ? 0.44 : 0.45), phh * (row ? 0.36 : 0.45)));
-    var vbq = (svgQr.getAttribute('viewBox') || '').split(/[ ,]+/), mods = Math.round((+vbq[2] || +svgQr.getAttribute('width') || 0) / 4);   // modules incl. quiet zone (the filter draws 4 units per module)
-    var px = mods > 8 ? Math.floor(qrW / mods) : 99;
-    if (px < (lg ? 3 : 4)) haveQr = false;
-    else if (mods > 8) qrW = px * mods;
-    if (qrW < 80) haveQr = false;
-  }
-  if (haveQr) {
-    if (!svgQr.getAttribute('viewBox')) svgQr.setAttribute('viewBox', '0 0 ' + (svgQr.getAttribute('width') || qrW) + ' ' + (svgQr.getAttribute('height') || qrW));
-    svgQr.setAttribute('width', qrW); svgQr.setAttribute('height', qrW); svgQr.classList.add('block');
-  }
-  // ---- side panel: exactly as tall as the board (as wide as it below the board), framed cards in a fixed order:
-  // (a) your turn, (b) the puzzle, the moves (only the space left), then the rating card and the QR card side by side at the bottom edge.
-  var extra = '';
-  if (YM.banner) extra += '<div class="' + CARD + ' inverse">' + lbl(esc(YM.banner), ' data-ym-b') + '</div>';
-  if (YM.notice || YM.stale) extra += lbl(esc(YM.notice || T.offline));
-  if (!A && YM.problems) extra += YM.problems.map(function (s) { return lbl(esc(s), ' data-ym-problem'); }).join('');
-  if (!A && !small && P.source === 'lichess' && !C.personal) extra += lbl(esc(T.connect), ' data-ym-part="hint"');
-  var side = document.querySelector('[data-ym-side]'), bd = document.querySelector('[data-ym-board]');
-  side.style.height = phh + 'px'; side.style.width = pw + 'px'; side.style.overflow = 'hidden';
-  side.innerHTML = '<div class="flex flex--col flex--left gap--small lg:gap--medium" data-ym-panel>' +
-    turnCard() + puzzleCard() + extra +
-    '<div data-ym-fill>' + (small ? '' : movesHtml(view === 1 ? 99 : 3)) + '</div>' +
-    '<div class="flex flex--row flex--wrap flex--bottom gap--small lg:gap--medium shrink-0" data-ym-bottom>' + ratingCard() +
-    (haveQr ? '<div class="' + CARD + ' flex--center-x" data-ym-qrbox></div>' : '') + '</div></div>';
-  var panel = side.querySelector('[data-ym-panel]'), qb = side.querySelector('[data-ym-qrbox]');
-  if (qb) { qb.appendChild(svgQr); var cap = document.createElement('span'); cap.className = TY_LABEL; cap.textContent = T.scan; qb.appendChild(cap); }
-  var pg = side.querySelector('[data-ym-prog]');
-  if (pg) { pg.innerHTML = progHtml(Math.max(60, Math.floor(pg.getBoundingClientRect().width))); if (!pg.children.length) pg.parentNode.removeChild(pg); }
-  // Too tall for the board: drop in this order, the QR last (the moves need no rule: they only get the space that is left).
-  function over() { return panel.scrollHeight > panel.clientHeight + 4; }   // a label's line box may hang 1-3 px past the edge
-  function drop(sel) { var n = side.querySelector(sel); if (n) n.parentNode.removeChild(n); }
-  ['[data-ym-part="bars"]', '[data-ym-part="spark"]', '[data-ym-part="recent"]', '[data-ym-game]', '[data-ym-part="hint"]', '[data-ym-meta]', '[data-ym-card="puzzle"]', '[data-ym-rlabel]', '[data-ym-find]', '[data-ym-qrbox]'].forEach(function (sel) { if (over()) drop(sel); });
-  // The moves fill what is left: the newest rows that fit, at least 2 (one pair alone is no list), oldest rows give way.
-  var mt = side.querySelector('[data-ym-part="moves"]');
-  if (mt) {
-    var fillH = side.querySelector('[data-ym-fill]').clientHeight, trs = mt.querySelectorAll('tbody tr');
-    var rowH = trs.length ? trs[trs.length - 1].getBoundingClientRect().height : 0, fit = rowH ? Math.floor((fillH - 2) / (rowH * 1.08)) : 0;   // 8 % for the web font, which can land after this measure
-    if (fit < Math.min(2, trs.length)) mt.parentNode.removeChild(mt);
-    else for (var k = 0; k < trs.length - fit; k++) trs[k].parentNode.removeChild(trs[k]);
-  }
-  // ---- board
-  var lab = side.querySelector('.label'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
-  bd.innerHTML = boardSvg({ size: S, board: P.board, flip: !YM.white_bottom, from: P.from, to: P.to, coords: YM.coords && S > 150, bits: bits, dark: dark, font: font.replace(/"/g, "'") });
-  root.classList.add(row ? 'layout--row' : 'layout--col');
-  root.setAttribute('data-ym-drawn', '1');
 })();
 
 </script>

@@ -3,10 +3,16 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const PARTS = ['vendor/chess.min.js', 'chess.js', 'puzzle.js'];
+const PARTS = ['vendor/chess.min.js', 'chess.js', 'view.js', 'puzzle.js'];
 const rd = (p) => fs.readFileSync(path.join(ROOT, 'source', p), 'utf8');
 function bundle() { return PARTS.map((p) => '// ==== ' + p + '\n' + rd(p)).join('\n'); }
-function page() { return rd('shared.liquid').replace('{{DRAW}}', () => rd('pieces.js') + rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
+// Liquid captures of the cburnett pieces as data URIs (move list figurines, the king in "Your turn"), from source/pieces.js.
+function pieceCaptures() {
+  const ctx = {}; require('vm').runInNewContext(rd('pieces.js') + ';this.P = PIECE_SVG;', ctx);
+  return Object.keys(ctx.P).map((k) => '{%- capture ym_' + k + ' -%}data:image/svg+xml;base64,' + Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 45 45">' + ctx.P[k] + '</svg>').toString('base64') + '{%- endcapture -%}').join('\n');
+}
+function icon() { return fs.readFileSync(path.join(ROOT, 'assets/icon-mono.svg'), 'utf8').trim(); }
+function page() { return rd('shared.liquid').replace('{{ICON}}', icon).replace('{{PIECES}}', pieceCaptures).replace('{{DRAW}}', () => rd('pieces.js') + rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
 module.exports = { bundle, page };
 if (require.main === module) {
   const t = path.join(ROOT, 'plugin/src/transform.js'), s = path.join(ROOT, 'plugin/src/shared.liquid');

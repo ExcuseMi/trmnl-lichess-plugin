@@ -51,12 +51,56 @@ function lichessMoves(j) {
   return pairs.slice(-MOVES_MAX);
 }
 
+// ==== view.js
+// View model: the transform's answer shaped for the Liquid markup (data only, no markup). The panel is plain Framework
+// markup in shared.liquid; only the board is drawn by the page script.
+// Title bar modes: one table, so later modes plug in. instance: what the right side of the title bar says.
+var MODES = {
+  puzzles: { instance: 'Puzzles' },
+  connect: { instance: 'Connect account' },
+  games: { instance: 'Your games' },     // reserved: correspondence games
+  top: { instance: 'Top game' },         // reserved
+  following: { instance: 'Following %s' } // reserved: a followed player, %s = name
+};
+function modeInstance(mode, arg) { var m = MODES[mode] || MODES.puzzles; return m.instance.replace('%s', arg || ''); }
+var DAY_NAMES = 'S M T W T F S'.split(' ');
+function signed(n) { return (n > 0 ? '+' : '') + n; }
+// SAN split for figurines: the piece letter (K Q R B N or '' for a pawn) and the rest, e.g. "Qxe5+" -> ['Q', 'xe5+'].
+function sanParts(san) { var s = String(san || ''), m = /^([KQRBN])(.*)$/.exec(s); return m ? [m[1], m[2]] : ['', s]; }
+function viewModel(out, nowS) {
+  var P = out.puzzle, A = out.account;
+  out.mode = out.connect ? 'connect' : 'puzzles';
+  out.instance = modeInstance(out.mode);
+  out.instance_long = out.instance;
+  if (P && P.themes && P.themes.length) out.instance_long = out.instance + ' · ' + P.themes[0];
+  if (!P) return out;
+  out.turn_w = P.turn === 'w';
+  out.find = out.turn_w ? out.t.find_w : out.t.find_b;
+  var list = (P.moves || []).slice(-8), lastB = list.length ? !!list[list.length - 1][2] : false;
+  out.rows = list.map(function (m, i) {
+    var w = sanParts(m[1] || '...'), b = sanParts(m[2]), last = i === list.length - 1, back = list.length - 1 - i;
+    return { n: +m[0] || 0, wp: w[0], ws: w[1], bp: b[0], bs: b[1], hw: last && !lastB, hb: last && lastB, back: back };
+  });
+  out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : ''].filter(Boolean).join(' · ');
+  if (A) {
+    out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';
+    out.chips = (A.recent || []).slice(0, 6).reverse().map(function (d) { return { text: signed(d), up: d >= 0 }; });
+    if (A.days) {
+      var s = 0, f = 0, d0 = new Date(nowS * 1000).getUTCDay();
+      A.days.forEach(function (x) { s += x.s; f += x.f; });
+      out.week_line = out.t.this_week + ': ' + s + ' ' + out.t.solved_n + ', ' + f + ' ' + out.t.failed_n + (out.caps && out.caps.streak && A.streak ? ' · ' + out.t.streak + ' ' + A.streak : '');
+      out.days = A.days.map(function (x, i) { return { name: DAY_NAMES[(d0 - (6 - i) + 70) % 7], on: x.s > 0, today: i === 6 }; });
+    }
+  }
+  return out;
+}
+
 // ==== puzzle.js
 // Lichess (unofficial) TRMNL plugin: serverless transform (Node). The Lichess daily puzzle; with a Lichess (OAuth)
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Find the best move for white.', find_b: 'Find the best move for black.', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', tokbad: 'Lichess login invalid', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Find the best move for white.', find_b: 'Find the best move for black.', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -129,25 +173,49 @@ var NO_CAPS = { personalPuzzles: false, solvedCheck: false, ratingHistory: false
 
 function authHeader(ctx) { return { Authorization: 'Bearer ' + ctx.token }; }
 var LT = 3500;   // each Lichess call; they run side by side inside TRMNL's 5 s
-// Puzzle activity (newest first). On a failed call the last good activity from the saved state stands in, never "0 solved".
-// ctx.diag.activity says what happened (shown with the Debug setting).
+// The last puzzles (newest first), only for the solved check and the streak: an optional extra (max 20, short timeout),
+// never blocking and never shown as a failure. The week comes from lichessWeek.
 async function lichessActivity(ctx) {
   ctx.diag = ctx.diag || {};
   if (!ctx.cache.activity) {
-    var saved = function (why) {
-      var s = stObj(ctx.state.act), l = s && Array.isArray(s.l) ? s.l : [];
-      ctx.diag.activity = why;
-      ctx.cache.actSaved = true;
-      return l.map(function (x) { return { date: +x[0] || 0, win: !!x[1], puzzle: { id: String(x[2] || '') } }; });
-    };
-    ctx.cache.activity = getRaw('https://lichess.org/api/puzzle/activity?max=100', Object.assign({ Accept: 'application/x-ndjson' }, authHeader(ctx)), LT).then(function (r) {
-      if (r.status !== 200) return saved('HTTP ' + r.status);
-      var l = ndjson(r.text);
-      if (!l.length) ctx.diag.activity = '0 items';
-      return l;
-    }, function (e) { return saved(callError(e)); });
+    ctx.cache.activity = getRaw('https://lichess.org/api/puzzle/activity?max=20', Object.assign({ Accept: 'application/x-ndjson' }, authHeader(ctx)), 2500)
+      .then(function (r) { return r.status === 200 ? ndjson(r.text) : []; }, function () { return []; });
   }
   return ctx.cache.activity;
+}
+// The week, per day: GET /api/user/{name}/activity (public, one small JSON, fast). Each day's puzzles score gives solved,
+// failed and the rating before and after. A failed call reuses the last good week from the saved state and says so on screen.
+async function lichessWeek(ctx, uname) {
+  ctx.diag = ctx.diag || {};
+  var saved = function (why) {
+    var s = stObj(ctx.state.wk);
+    ctx.diag.activity = why; ctx.cache.weekSaved = true;
+    return s && Array.isArray(s.d) ? s.d : [];
+  };
+  try {
+    var j = await getJson('https://lichess.org/api/user/' + uname + '/activity', {}, LT);
+    if (!Array.isArray(j)) return saved('bad answer');
+    var rows = [];
+    j.forEach(function (d) {
+      var sc = d && d.puzzles && d.puzzles.score, st = d && d.interval ? +d.interval.start : 0;
+      if (!st) return;
+      rows.push([st, sc ? +sc.win || 0 : 0, sc ? +sc.loss || 0 : 0, sc && sc.rp ? +sc.rp.before || 0 : 0, sc && sc.rp ? +sc.rp.after || 0 : 0]);
+    });
+    if (!rows.some(function (r) { return r[1] + r[2] > 0; })) ctx.diag.activity = '0 puzzles this week';
+    return rows.slice(0, 10);
+  } catch (e) { return saved(callError(e)); }
+}
+// days[7] (oldest first, today last) from the per-day rows; recent: the rating change of the last days with puzzles, newest first.
+function weekFromDays(rows, nowS) {
+  var days = [], i, d0 = Math.floor(nowS / 86400), recent = [];
+  for (i = 0; i < 7; i++) days.push({ s: 0, f: 0 });
+  rows.slice().sort(function (a, b) { return b[0] - a[0]; }).forEach(function (r) {
+    var d = d0 - Math.floor(r[0] / 86400000);
+    if (d >= 0 && d < 7) { days[6 - d].s += r[1]; days[6 - d].f += r[2]; }
+    if (r[1] + r[2] > 0 && r[3] && r[4] && recent.length < 6) recent.push(r[4] - r[3]);
+  });
+  var week = 0; days.forEach(function (x) { week += x.s; });
+  return { days: days, today: days[6].s, week: week, recent: recent };
 }
 function callError(e) { return e && e.name === 'AbortError' ? 'timeout' : e && e.status ? 'HTTP ' + e.status : 'error ' + String((e && e.message) || e).slice(0, 40); }
 // The scopes the connected token carries (POST /api/token/test); '' when unknown. The answer is keyed by the token: never kept.
@@ -173,7 +241,6 @@ var lichessProvider = {
   capabilities: { personalPuzzles: true, solvedCheck: true, ratingHistory: true, streak: true },
   active: function (ctx) { return ctx.token ? this.capabilities : NO_CAPS; },
   fetchPuzzle: async function (ctx) {
-    if (!ctx.token) return lichessModel(await getJson('https://lichess.org/api/puzzle/daily'));
     if (!ctx.cache.next) ctx.cache.next = getJson('https://lichess.org/api/puzzle/next?difficulty=' + encodeURIComponent(ctx.settings.difficulty || 'normal'), authHeader(ctx), LT);
     return lichessModel(await ctx.cache.next);
   },
@@ -181,33 +248,37 @@ var lichessProvider = {
     if (!ctx.token) return null;
     var acct = await lichessAccountInfo(ctx);   // throws with .status 401 on a bad token
     var uname = /^[A-Za-z0-9_-]{2,30}$/.test(acct.username || '') ? acct.username : '';
-    var got = await Promise.allSettled([lichessActivity(ctx), uname ? getJson('https://lichess.org/api/user/' + uname + '/rating-history', authHeader(ctx), LT) : Promise.reject(new Error('no user'))]);
-    var act = got[0].status === 'fulfilled' ? got[0].value : [], hist = [];
+    var got = await Promise.allSettled([uname ? lichessWeek(ctx, uname) : Promise.resolve([]), uname ? getJson('https://lichess.org/api/user/' + uname + '/rating-history', authHeader(ctx), LT) : Promise.reject(new Error('no user')), lichessActivity(ctx)]);
+    var rows = got[0].status === 'fulfilled' ? got[0].value : [], hist = [];
+    ctx.cache.weekRows = rows;
     if (got[1].status === 'rejected' && uname) ctx.diag.history = callError(got[1].reason);
     if (got[1].status === 'fulfilled' && Array.isArray(got[1].value)) {
       var pz = got[1].value.filter(function (x) { return x && x.name === 'Puzzles'; })[0];
       if (pz && Array.isArray(pz.points)) hist = pz.points.slice(-30).map(function (q) { return +q[3] || 0; }).filter(Boolean);
     }
     var rating = acct.perfs && acct.perfs.puzzle ? +acct.perfs.puzzle.rating || 0 : 0;
-    var recent = act.slice(0, 6).map(function (a) { return a.win ? 1 : 0; });   // the last puzzle results, newest first
-    return Object.assign(accountFromActivity(act, ctx.nowS), { rating: rating, label: 'rating_you', history: hist, name: uname, recent: recent });
+    var act = got[2].status === 'fulfilled' ? got[2].value : [], streak = 0;
+    for (var i = 0; i < act.length && act[i].win; i++) streak++;
+    var wk = weekFromDays(rows, ctx.nowS);
+    return Object.assign(wk, { rating: rating, label: 'rating_you', history: hist, name: uname, streak: act.length ? streak : 0 });
   },
   isSolved: async function (id, ctx) { return (await lichessActivity(ctx)).some(function (a) { return a.win && a.puzzle && a.puzzle.id === id; }); }
 };
 var PROVIDERS = { lichess: lichessProvider };
 
 function slim(m) { return { source: m.source, id: m.id, url: m.url, board: m.board, turn: m.turn, from: m.from, to: m.to, rating: m.rating, themes: m.themes, title: m.title, moves: m.moves || [], plays: m.plays || 0, game: m.game || null }; }
-function fitState(st) { if (JSON.stringify(st).length > ST_MAX && st.act) st.act.l = st.act.l.slice(0, 20); if (JSON.stringify(st).length > ST_MAX) delete st.last; return st; }
+function fitState(st) { if (JSON.stringify(st).length > ST_MAX) delete st.last; return st; }
 
 async function run(input) {
   var nowS = nowSec(input), st0 = stObj((((input || {}).trmnl || {}).state)) || {};
-  var orient = String(field(input, 'orientation', 'side')), coords = String(field(input, 'coordinates', 'show')) !== 'hide';
+  var orient = 'side', coords = true;   // fixed (owner 2026-11-14): side to move at the bottom, coordinates shown
   var oauth = stObj(((input || {}).trmnl || {}).oauth) || {}, token = String(oauth.access_token || '').trim();   // Lichess login: OAuth only
   var which = 'lichess';
+  if (!token) return viewModel({ t: T_EN, connect: true, none: true, trmnl_state: fitState(stObj(st0.wk) ? { v: 1, rating: +st0.rating || 0, wk: st0.wk } : { v: 1, rating: +st0.rating || 0 }) }, nowS);   // OAuth is required (owner 2026-11-14)
   var prov = PROVIDERS[which];
   var ctx = { settings: { difficulty: String(field(input, 'difficulty', 'normal')) }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
   if (ctx.token) {   // every Lichess call starts now, side by side: activity, scopes, account and a next puzzle in case it is needed
-    lichessActivity(ctx); lichessScopes(ctx); lichessAccountInfo(ctx).catch(function () {});
+    lichessActivity(ctx); lichessScopes(ctx); lichessAccountInfo(ctx).catch(function () {});   // the week follows the account (it needs the name)
     ctx.cache.next = getJson('https://lichess.org/api/puzzle/next?difficulty=' + encodeURIComponent(ctx.settings.difficulty || 'normal'), authHeader(ctx), LT);
     ctx.cache.next.catch(function (e) { ctx.diag.next = callError(e); });
   }
@@ -232,9 +303,9 @@ async function run(input) {
     catch (e) {
       if (e && e.status === 401) { notice = 'tokbad'; caps = NO_CAPS; progress = null; }
       model = null;
-      if (ctx.token) { ctx.token = ''; try { model = await prov.fetchPuzzle(ctx); } catch (e2) { model = null; } }   // a personal puzzle that fails: the daily one
     }
   }
+  if (notice === 'tokbad') return viewModel({ t: T_EN, connect: true, none: true, notice: T_EN.tokbad, trmnl_state: fitState({ v: 1, rating: rating || 0 }) }, nowS);   // a rejected login: reconnect
   if (!model && last0 && last0.board) { model = last0; stale = true; }
   var flip = orient === 'black' ? true : orient === 'white' ? false : !!(model && model.turn === 'b');
   if (ctx.token || ctx.cache.scopes) {
@@ -246,16 +317,14 @@ async function run(input) {
   var st = { v: 1, rating: rating || 0 };
   if (model && !stale) st.last = slim(model); else if (last0) st.last = last0;
   if (cur) st.cur = cur;
-  if (ctx.cache.activity && !ctx.cache.actSaved) {   // keep the last good activity (compact, newest 60) for a failed call next time
-    var al = await ctx.cache.activity;
-    st.act = { t: nowS, l: al.slice(0, 60).map(function (a) { return [+a.date || 0, a.win ? 1 : 0, String((a.puzzle && a.puzzle.id) || '').slice(0, 12)]; }) };
-  } else if (stObj(st0.act)) st.act = st0.act;
+  if (ctx.cache.weekRows && ctx.cache.weekRows.length && !ctx.cache.weekSaved) st.wk = { t: nowS, d: ctx.cache.weekRows };   // the last good week, for a failed call
+  else if (stObj(st0.wk)) st.wk = st0.wk;
   // A Lichess call that failed is said on screen, always (owner 2026-11-14): "Lichess activity: timeout", "HTTP 429", "0 items".
   var problems = [];
   if (ctx.diag.activity) problems.push('Lichess activity: ' + ctx.diag.activity);
   ['account', 'history', 'next'].forEach(function (k) { if (ctx.diag[k]) problems.push('Lichess ' + k + ': ' + ctx.diag[k]); });
   if (problems.length) out.problems = problems;
   out.trmnl_state = fitState(st);
-  return out;
+  return viewModel(out, nowS);
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, shortThemes: shortThemes };
+if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, weekFromDays: weekFromDays, shortThemes: shortThemes };

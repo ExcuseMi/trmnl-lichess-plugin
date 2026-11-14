@@ -36,28 +36,6 @@ custom_fields:
   - Harder: harder
   - Hardest: hardest
   default: normal
-- keyname: orientation
-  group: Board
-  field_type: select
-  name: Board orientation
-  options:
-  - Side to move at the bottom: side
-  - White at the bottom: white
-  - Black at the bottom: black
-  default: side
-- keyname: coordinates
-  group: Board
-  field_type: select
-  name: Coordinates
-  options:
-  - Show: show
-  - Hide: hide
-  default: show
-- keyname: hide_title_bar
-  group: Board
-  field_type: boolean
-  name: Hide title bar
-  default: false
 name: Lichess
 description: ''
 refresh_interval: 60
