@@ -1,0 +1,28 @@
+{
+ "nbMyTurn": 1,
+ "nowPlaying": [
+  {
+   "gameId": "aB3dE5fG",
+   "fullId": "aB3dE5fGabcd",
+   "color": "white",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": true,
+   "lastMove": "f8e8",
+   "opponent": {
+    "id": "magnus_c",
+    "username": "Magnus_C",
+    "rating": 1812
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 187000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  }
+ ]
+}

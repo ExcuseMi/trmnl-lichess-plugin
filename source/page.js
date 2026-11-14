@@ -29,6 +29,28 @@
   // Still too tall (a half or quadrant view): the optional parts give way in this order, with the Framework's hidden class.
   // The Framework's hidden class, minus any size-prefixed display class (lg:flex, lg:visible) that would show it again.
   function hide(n) { n.setAttribute('class', (n.getAttribute('class') || '').replace(/(^|\s)(sm|md|lg):(flex|visible|block|grid|table-row|inline-block)(?=\s|$)/g, ' ') + ' hidden'); }
+  // A text that needs more than one line (not a deliberate <br> list, not the move table).
+  function wraps(n) {
+    if (!n.getClientRects().length || n.querySelector('br') || n.closest('[data-ym-part="moves"]')) return false;
+    var cs = window.getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
+    return n.offsetHeight > lh * 1.6;
+  }
+  function quadrantFit() {
+    var opt = '[data-ym-opp], [data-ym-part="more"], [data-ym-meta]', n;
+    for (var w = 0; w < 60; w++) {
+      n = Array.prototype.filter.call(document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value'), wraps);
+      if (!n.length) return;
+      var o = n.filter(function (x) { return x.closest(opt); })[0];
+      if (o) hide(o.closest(opt));
+      else {
+        var v = Array.prototype.filter.call(document.querySelectorAll(opt), function (x) { return x.getClientRects().length; })[0];
+        if (v) hide(v);   // optional lines go before the board gives up any height
+        else if (S > H * 0.9) draw(S -= 1);
+        else return;
+      }
+    }
+  }
+  function anyWrap() { return Array.prototype.some.call(document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value'), wraps); }
   function fitParts() {
     var panel = document.querySelector('[data-ym-panel]');
     if (!panel) return;
@@ -36,6 +58,8 @@
       if (panel.scrollHeight > panel.clientHeight + 1 || root.scrollHeight > root.clientHeight + 1 || root.scrollWidth > root.clientWidth + 1) return true;
       return Array.prototype.some.call(panel.querySelectorAll('[data-ym-card]'), function (c) { return c.getClientRects().length && c.scrollHeight > c.clientHeight + 1; });
     };
+    // An optional label that wraps (a long theme) goes before it makes the panel taller.
+    Array.prototype.forEach.call(panel.querySelectorAll('[data-ym-meta]'), function (n) { if (wraps(n)) hide(n); });
     ['[data-ym-part="spark"]', '[data-ym-part="bars"]', '[data-ym-part="recent"]', '[data-ym-meta]', '[data-ym-game]'].forEach(function (sel) {
       var n = panel.querySelector(sel);
       if (n && over()) hide(n);
@@ -52,7 +76,7 @@
     var H = Math.floor(r.height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0));
     // The board's share; the panel (a Framework flex column, grow) takes the rest.
     // The board takes the full content height when the panel keeps its minimum width (as in c828281); the panel takes the rest.
-    var gap = parseFloat(cs.columnGap || cs.gap) || 0, minPanel = Math.round(W * (view === 1 ? (lg ? 0.28 : 0.3) : view === 2 ? 0.45 : 0.4));
+    var gap = parseFloat(cs.columnGap || cs.gap) || 0, minPanel = Math.round(W * (view === 1 ? (lg ? 0.28 : 0.3) : view === 2 ? 0.45 : view === 4 ? 0.1 : 0.4));
     var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : Math.min(H, W - minPanel - gap);
     var lab = document.querySelector('[data-ym-panel] .label'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
     var P = YM.puzzle;
@@ -61,6 +85,9 @@
     // Once the web fonts are in, if the panel's content needs more room than its share (the row overflows), the board
     // gives way by that much; then the page counts as drawn.
     var settle = function () {
+      // Quadrant: the board takes the full height first; a text that would wrap in the narrow panel is dropped if it is optional
+      // (sub line, "+N waiting", name), and only a required one gives the board a step back.
+      if (view === 4) quadrantFit();
       for (var k = 0, s = S; k < 3; k++) {
         var over = view === 3 ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
         if (over <= 0) break;

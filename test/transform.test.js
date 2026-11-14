@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, modeInstance, MODES, shortThemes };', ctx);
+  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -276,4 +276,98 @@ test('title bar modes come from one table: Puzzles (with the theme), Connect acc
   assert.strictEqual(o.instance, 'Puzzles'); assert.strictEqual(o.instance_long, 'Puzzles · Mate in 3');
   const c = await load(account({})).run(input({}));
   assert.strictEqual(c.instance, 'Connect account');
+});
+
+// ==== "Your games" mode (mode = games, source/games.js)
+const GFX = (n) => FX(n);
+const GAME_EXPORT = GFX('games_export.json');
+const LAST = fs.readFileSync(path.join(__dirname, '../plugin/tests/fixtures/games_last.ndjson'), 'utf8');
+function games(extra, calls, playing) {
+  return router({ 'https://lichess.org/api/account/playing': resp(200, GFX(playing || 'games_playing_one.json')), 'https://lichess.org/api/account': resp(200, ACCOUNT),
+    'https://lichess.org/game/export/': resp(200, GAME_EXPORT), 'https://lichess.org/api/games/user/Demo': resp(200, LAST), ...extra }, calls);
+}
+const gin = (extra) => input({ lichess_token: 'SECRET', mode: 'games', ...(extra || {}) });
+
+test('games: your turn: the game, the user side, opponent, time left, the moves, the QR target; no puzzle calls', async () => {
+  const calls = [], seen = [];
+  const f = async (url, opt) => { seen.push([url, (opt.headers || {}).Authorization, opt.body]); return games({}, calls, 'games_playing_one.json')(url, opt); };
+  const o = await load(f).run(gin());
+  assert.strictEqual(o.mode, 'games'); assert.strictEqual(o.instance, 'Your games'); assert.strictEqual(o.none, false);
+  assert.strictEqual(o.puzzle.id, 'aB3dE5fG'); assert.strictEqual(o.puzzle.url, 'https://lichess.org/aB3dE5fG'); assert.strictEqual(o.puzzle.turn, 'w'); assert.strictEqual(o.white_bottom, true);
+  assert.strictEqual(o.puzzle.to, 4, 'last move f8e8 outlined on e8'); assert.strictEqual(o.puzzle.game.opp, 'Magnus_C'); assert.strictEqual(o.puzzle.game.opp_rating, 1812);
+  assert.strictEqual(o.puzzle.game.left, '2d 3h'); assert.strictEqual(o.time_value_short, '2d'); assert.strictEqual(o.opp_line, 'Magnus_C (1812)'); assert.strictEqual(o.find, 'Play white');
+  assert.strictEqual(o.rows.length, 8); assert.strictEqual(o.rows[7].n, 12); assert.ok(o.rows[7].hb, 'the last move (black) is the marked one');
+  assert.strictEqual(o.more_line, ''); assert.strictEqual(o.problems, undefined); assert.strictEqual(o.t.scan, 'Scan to move');
+  assert.ok(!calls.some((u) => /puzzle|rating-history|activity|token\/test/.test(u)), 'no puzzle calls in games mode: ' + calls.join(' '));
+  seen.forEach(([u, a, b]) => { assert.ok(!u.includes('SECRET') && !String(b || '').includes('SECRET')); assert.strictEqual(a, 'Bearer SECRET'); });
+  assert.ok(!JSON.stringify(o).includes('SECRET'));
+});
+
+test('games: several: least time left first, only correspondence, "N more games waiting"; played as black turns the board', async () => {
+  const o = await load(games({}, [], 'games_playing_many.json')).run(gin());
+  assert.strictEqual(o.puzzle.id, 'aB3dE5fG'); assert.strictEqual(o.puzzle.game.left, '8h 20m'); assert.strictEqual(o.white_bottom, false); assert.strictEqual(o.puzzle.turn, 'b');
+  assert.strictEqual(o.more_line, '2 more games waiting'); assert.strictEqual(o.more_short, '+2 waiting');
+  const api = load(async () => resp(599, {}));
+  const live = { ...GFX('games_playing_many.json').nowPlaying[0], speed: 'blitz', secondsLeft: 5 };
+  assert.deepStrictEqual(Array.from(api.gamesToMove([live, ...GFX('games_playing_many.json').nowPlaying]).map((g) => g.gameId)), ['aB3dE5fG', 'zZ9yY8xX', 'kK1jJ2iI'], 'blitz is not a game to move on; the rest sorted by time left');
+  const noClock = { ...GFX('games_playing_one.json').nowPlaying[0], secondsLeft: undefined };
+  assert.strictEqual(api.gamesToMove([noClock, GFX('games_playing_many.json').nowPlaying[0]])[1].secondsLeft === undefined, true, 'no clock last');
+  const one = await load(games({}, [], 'games_playing_one.json')).run(gin()); assert.strictEqual(one.more_line, '');
+});
+
+test('games: opponent to move: the first such game like the normal view, "Their turn", N waiting for opponents; no ongoing game: the last finished game with its result; nothing at all: calm', async () => {
+  const w = await load(games({}, [], 'games_playing_none.json')).run(gin());
+  assert.strictEqual(w.none, false); assert.strictEqual(w.puzzle.game.phase, 'wait'); assert.strictEqual(w.heading, 'Their turn'); assert.strictEqual(w.find, 'Waiting for Bob_W');
+  assert.strictEqual(w.more_line, '1 game waiting for opponents'); assert.strictEqual(w.more_short, '1 waiting'); assert.strictEqual(w.t.scan, 'Scan to view'); assert.strictEqual(w.puzzle.moves.length, 12);
+  assert.strictEqual(w.time_label, 'Waiting for'); assert.strictEqual(w.time_value, 'Bob_W'); assert.strictEqual(w.time_value_short, 'Bob_W'); assert.strictEqual(w.puzzle.url, 'https://lichess.org/mM4nN5oO');
+  const turn = await load(games({}, [], 'games_playing_many.json')).run(gin()); assert.strictEqual(turn.puzzle.game.phase, 'turn', 'a game to move on comes before one the opponent is to move in');
+  const l = await load(games({}, [], 'games_playing_empty.json')).run(gin());
+  assert.strictEqual(l.none, false); assert.strictEqual(l.puzzle.game.phase, 'last'); assert.strictEqual(l.heading, 'Last game'); assert.strictEqual(l.find, 'vs Rival_X (1720)'); assert.strictEqual(l.time_sub, 'in 12 moves'); assert.strictEqual(l.show_info, false, 'no vs/kind card repeating the header'); assert.strictEqual(l.puzzle.game.result_line, 'Won against Rival_X');
+  assert.strictEqual(l.puzzle.url, 'https://lichess.org/'); assert.strictEqual(l.t.scan, 'Start a new game'); assert.strictEqual(l.time_value, 'Won'); assert.strictEqual(l.puzzle.moves.length, 12); assert.strictEqual(l.trmnl_state.gm, undefined, 'a finished game is never saved as the game to show offline');
+  const none = await load(games({ 'https://lichess.org/api/games/user/Demo': resp(200, '') }, [], 'games_playing_empty.json')).run(gin());
+  assert.strictEqual(none.none, true); assert.strictEqual(none.calm, true); assert.strictEqual(none.t.none, 'No games waiting for you'); assert.strictEqual(none.calm_line, 'Start a game on lichess.org.'); assert.strictEqual(none.instance, 'Your games');
+  const noRep = await load(games({ 'https://lichess.org/api/games/user/Demo': resp(200, JSON.stringify({ status: 'resign', winner: 'black', moves: 'e4 e4', players: { white: { user: { name: 'Demo' } }, black: { user: { name: 'Bob' } } } })) }, [], 'games_playing_empty.json')).run(gin());
+  assert.strictEqual(noRep.none, true, 'a game chess.js cannot replay shows no board');
+  const api = load(async () => resp(599, {}));
+  const g = (wn, status) => ({ status, winner: wn, players: { white: { user: { name: 'Demo' } }, black: { user: { name: 'Bob' } } } });
+  assert.strictEqual(api.lastGameLine(g('black', 'mate'), 'demo'), 'Lost to Bob'); assert.strictEqual(api.lastGameLine(g(undefined, 'draw'), 'Demo'), 'Drew with Bob');
+  assert.strictEqual(api.lastGameLine(g(undefined, 'started'), 'Demo'), '', 'an unfinished game says nothing');
+  const down = await load(games({ 'https://lichess.org/api/games/user/Demo': resp(500, '') }, [], 'games_playing_empty.json')).run(gin());
+  assert.ok(Array.from(down.problems).includes('Lichess last game: HTTP 500'), 'a failed optional call is said on screen'); assert.strictEqual(down.calm, true);
+});
+
+test('games: failures are said on screen: API down, timeout, bad answer; the last game stays (stale) when there is one; a 401 or 403 asks to reconnect', async () => {
+  const down = await load(games({ 'https://lichess.org/api/account/playing': resp(503, {}) })).run(gin());
+  assert.strictEqual(down.none, true); assert.strictEqual(down.calm, true); assert.deepStrictEqual(Array.from(down.problems), ['Lichess games: HTTP 503']); assert.strictEqual(down.calm_line, 'Could not reach Lichess. Showing again at the next refresh.');
+  const slow = await load(games({ 'https://lichess.org/api/account/playing': () => { const e = new Error('x'); e.name = 'AbortError'; throw e; } })).run(gin());
+  assert.deepStrictEqual(Array.from(slow.problems), ['Lichess games: timeout']);
+  const bad = await load(games({ 'https://lichess.org/api/account/playing': resp(200, { nbMyTurn: 1 }) })).run(gin());
+  assert.deepStrictEqual(Array.from(bad.problems), ['Lichess games: bad answer']);
+  const ok = await load(games({})).run(gin());
+  assert.ok(ok.trmnl_state.gm && ok.trmnl_state.gm.id === 'aB3dE5fG');
+  const stale = await load(games({ 'https://lichess.org/api/account/playing': resp(503, {}) })).run(input({ lichess_token: 'T', mode: 'games' }, ok.trmnl_state));
+  assert.strictEqual(stale.stale, true); assert.strictEqual(stale.puzzle.id, 'aB3dE5fG'); assert.deepStrictEqual(Array.from(stale.problems), ['Lichess games: HTTP 503']); assert.strictEqual(stale.t.offline, 'Offline, last game');
+  const none = await load(games({}, [], 'games_playing_empty.json')).run(input({ lichess_token: 'T', mode: 'games' }, ok.trmnl_state));
+  assert.notStrictEqual((none.trmnl_state.gm || {}).id, 'aB3dE5fG', 'a good answer without that game drops the saved game');
+  const r401 = await load(games({ 'https://lichess.org/api/account/playing': resp(401, {}) })).run(gin());
+  assert.strictEqual(r401.connect, true); assert.strictEqual(r401.notice, r401.t.tokbad); assert.strictEqual(r401.instance, 'Connect account');
+  const r403 = await load(games({ 'https://lichess.org/api/account/playing': resp(403, {}) })).run(gin());
+  assert.strictEqual(r403.connect, true); assert.strictEqual(r403.notice, 'Reconnect Lichess: missing game permission');
+});
+
+test('games: no moves list when the moves call fails or the game is a variant chess.js cannot replay; the board still shows', async () => {
+  const bad = await load(games({ 'https://lichess.org/game/export/': resp(500, {}) })).run(gin());
+  assert.strictEqual(bad.puzzle.moves.length, 0); assert.ok(Array.from(bad.problems).includes('Lichess moves: HTTP 500')); assert.strictEqual(bad.none, false);
+  const wrong = await load(games({ 'https://lichess.org/game/export/': resp(200, { moves: 'e4 e5 Nf3' }) })).run(gin());
+  assert.strictEqual(wrong.puzzle.moves.length, 0, 'moves that do not reach the board are never shown'); assert.strictEqual(wrong.problems, undefined);
+});
+
+test('games: the mode is the one setting; anything else is puzzles, which are unchanged', async () => {
+  for (const m of [undefined, '', 'puzzles', 'top', 'GAMES']) { const o = await load(account({})).run(input({ lichess_token: 't', ...(m === undefined ? {} : { mode: m }) })); assert.strictEqual(o.mode, 'puzzles', String(m)); assert.strictEqual(o.puzzle.id, 'u3zfD'); }
+  const calls = []; await load(games({}, calls)).run(input({ mode: 'games' })); assert.strictEqual(calls.length, 0, 'no login: the connect screen, no call');
+  const api = load(async () => resp(599, {}));
+  assert.deepStrictEqual(['0', '59', '60', '3599', '3600', '5400', '86400', '187000'].map((s) => api.timeLeft(+s)), ['<1m', '<1m', '1m', '59m', '1h', '1h 30m', '1d', '2d 3h']);
+  assert.strictEqual(api.timeLeft(null), 'No limit');
+  const big = await load(games({}, [], 'games_playing_many.json')).run(input({ lichess_token: 't', mode: 'games' }, { v: 1, rating: 1500, wk: { t: 1, d: LIST(10).map((i) => [i, 1, 1, 1, 1]) }, last: GFX('games_playing_many.json') }));
+  assert.ok(JSON.stringify(big.trmnl_state).length < 7500, 'state stays under the TRMNL limit');
 });

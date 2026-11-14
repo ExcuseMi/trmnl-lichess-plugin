@@ -1,12 +1,12 @@
 # Handoff notes
 
-Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`).
+Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). One setting `mode`: Puzzles (default) or Your games (`field(input, 'mode')`; anything but `games` is puzzles).
 
 ## Source and build
 
 | Path | What |
 |---|---|
-| `source/chess.js`, `source/puzzle.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, view model for Liquid |
+| `source/chess.js`, `source/puzzle.js`, `source/games.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, "Your games" mode, view model for Liquid |
 | `source/shared.liquid` | All markup: layout, panels, move list, QR, connect screen, title bar (Framework classes only) |
 | `source/draw.js`, `source/pieces.js` | The board SVG (the only custom drawing); `pieces.js` is generated |
 | `source/page.js` | Page script: draws the board, settles its size, fits the panel, draws the rating chart |
@@ -42,7 +42,23 @@ Rendered checks on every case: no overflow, no page errors, at most 4 text sizes
 
 ## Title bar modes
 
-One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account"; reserved `games` "Your games", `top` "Top game", `following` "Following %s".
+One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games"; reserved `top` "Top game", `following` "Following %s".
+
+## Your games mode (`source/games.js`)
+
+| State | Shown |
+|---|---|
+| A correspondence game to move on | The one with least time left, from your side, last move outlined, opponent, time left, moves, QR "Scan to move"; "N more games waiting" |
+| Only games where the opponent is to move | The first of them: "Their turn", "Waiting for X", moves, QR; "N games waiting for opponents" (their clock is not in the API: `secondsLeft` is yours) |
+| No ongoing game | Last finished correspondence game: "Last game", "vs X (rating)", "Won" + "in N moves", QR "Start a new game" (https://lichess.org/) |
+| Nothing, or a failed call with no saved game | Calm screen (icon, title, one line, failure line) |
+| 401 / 403 | Connect screen: reconnect |
+
+The moves call (`/game/export`) and the last-game call run after the playing list with a deadline inside TRMNL's 5 s. The shown game is saved as `gm` for an "Offline, last game" screen. The playing list needs no scope beyond a valid token, so `oauth_scopes` stays `puzzle:read` (unproven live: tests use mocks).
+
+## Quadrant
+
+The board takes the full content height (check >= 97 %); the panel gets the rest. Short texts (`heading_short`, `time_value_short`, `+N waiting`), p--1 cards and no wide gap; optional lines (`data-ym-opp`, `more`, `meta`) are dropped before the board gives up any height (`quadrantFit` in `page.js`). One ladder in every view and mode: heading `value value--small`, figure `value`, rest `label`.
 
 ## Lichess endpoints
 
@@ -52,6 +68,9 @@ One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "P
 | `GET /api/puzzle/next?difficulty=` | puzzle:read | 3.5 s | the puzzle (started at once, used unless the current one is kept) |
 | `GET /api/user/{name}/rating-history` | token sent, public | 3.5 s | rating chart |
 | `GET /api/user/{name}/activity` | public | 3.5 s | week: solved, failed, rating change per day; failure reuses the saved week |
+| `GET /api/account/playing?nb=50` | valid token | 3.5 s | Your games: ongoing games |
+| `GET /game/export/{id}?moves=true` | token sent | <= 2.2 s | Your games: move list |
+| `GET /api/games/user/{name}?max=1&perfType=correspondence&moves=true` | token sent | <= 2.2 s | Your games: last finished game |
 | `GET /api/puzzle/activity?max=20` | puzzle:read | 2.5 s | solved check and streak only; never shown as a failure |
 | `POST /api/token/test` (body: token) | none | 3.5 s | scopes; without `puzzle:read` the screen says "Reconnect Lichess" |
 
@@ -59,5 +78,4 @@ All calls start side by side at the top of `run()` (TRMNL's 5 s cap). A failed c
 
 ## Open items
 
-- X quadrant: the board does not fill the content height (about 140 px empty under it), and "Best move for white" wraps.
-- OG half_vertical: the rating panel area is underused; the QR could sit beside the rating.
+- Your games is unproven against live Lichess (mocked): check `/api/account/playing` with the real token after the push.

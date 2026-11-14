@@ -4,7 +4,7 @@
 var MODES = {
   puzzles: { instance: 'Puzzles' },
   connect: { instance: 'Connect account' },
-  games: { instance: 'Your games' },     // reserved: correspondence games
+  games: { instance: 'Your games' },     // the user's correspondence games (source/games.js)
   top: { instance: 'Top game' },         // reserved
   following: { instance: 'Following %s' } // reserved: a followed player, %s = name
 };
@@ -15,18 +15,38 @@ function signed(n) { return (n > 0 ? '+' : '') + n; }
 function sanParts(san) { var s = String(san || ''), m = /^([KQRBN])(.*)$/.exec(s); return m ? [m[1], m[2]] : ['', s]; }
 function viewModel(out, nowS) {
   var P = out.puzzle, A = out.account;
-  out.mode = out.connect ? 'connect' : 'puzzles';
+  out.mode = out.connect ? 'connect' : out.mode || 'puzzles';   // 'games' is set by runGames
   out.instance = modeInstance(out.mode);
   out.instance_long = out.instance;
   if (P && P.themes && P.themes.length) out.instance_long = out.instance + ' · ' + P.themes[0];
   if (!P) return out;
   out.turn_w = P.turn === 'w';
-  out.find = out.turn_w ? out.t.find_w : out.t.find_b;
+  var games = out.mode === 'games';
+  out.find = games ? (out.turn_w ? out.t.play_w : out.t.play_b) : out.turn_w ? out.t.find_w : out.t.find_b;
   var list = (P.moves || []).slice(-8), lastB = list.length ? !!list[list.length - 1][2] : false;
   out.rows = list.map(function (m, i) {
     var w = sanParts(m[1] || '...'), b = sanParts(m[2]), last = i === list.length - 1, back = list.length - 1 - i;
     return { n: +m[0] || 0, wp: w[0], ws: w[1], bp: b[0], bs: b[1], hw: last && !lastB, hb: last && lastB, back: back };
   });
+  if (games) {
+    var G = P.game || {}, ph = G.phase || 'turn', t = out.t, tl = G.left;
+    out.opp_line = G.opp ? (G.opp.length > 16 ? G.opp.slice(0, 15) + '…' : G.opp) + (G.opp_rating ? ' (' + G.opp_rating + ')' : '') : '';
+    out.opp_short = G.opp ? (G.opp.length > 10 ? G.opp.slice(0, 9) + '…' : G.opp) : '';   // the quadrant has no room for the rating
+    out.meta = G.kind || '';
+    out.heading = ph === 'wait' ? t.their_turn : ph === 'last' ? t.last_game : t.your_turn;
+    out.heading_short = ph === 'wait' ? t.waiting_short : ph === 'last' ? t.finished_short : t.your_turn;
+    if (ph === 'wait') out.find = t.waiting_for + ' ' + out.opp_short;
+    if (ph === 'last') out.find = t.vs + ' ' + out.opp_line;
+    out.time_label = ph === 'wait' ? t.waiting_for : ph === 'last' ? '' : t.time_left;
+    out.time_value = ph === 'wait' ? out.opp_line.replace(/ \(\d+\)$/, '') : ph === 'last' ? G.res : tl;
+    out.time_small = ph === 'wait';
+    out.time_value_short = ph === 'turn' && tl ? (tl === t.no_limit ? '-' : String(tl).split(' ')[0]) : out.time_value;   // the quadrant: the largest unit only ("8h")
+    out.time_sub = ph === 'wait' ? (G.opp_rating ? '(' + G.opp_rating + ')' : '') : ph === 'last' ? t.in_moves + ' ' + G.n_moves + ' ' + t.moves_w : out.opp_line;
+    out.time_sub_short = ph === 'wait' ? '' : ph === 'last' ? G.n_moves + ' ' + t.moves_w : out.opp_short;
+    out.time_sub_all = ph === 'last';
+    out.show_info = ph !== 'last' || !!(out.problems && out.problems.length) || !!out.stale || !!out.notice;
+    return out;
+  }
   out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : ''].filter(Boolean).join(' · ');
   if (A) {
     out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';

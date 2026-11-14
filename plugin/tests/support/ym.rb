@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # Shared by plugin/tests/*_spec.rb (trmnlp test) and tools/render_sheet_spec.rb (review sheets): fixtures, Lichess mocks,
 # the OAuth seed and ym_render(trmnl, case). A case: {name, view, device, dark, palette, scenario, puzzle, checks}.
-# Scenarios: account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
+# Scenarios: games_one, games_many, games_none, games_fail, games_scope (mode Your games), account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
 require 'json'
 require 'fileutils'
 require 'time'
@@ -50,6 +50,14 @@ def lichess_mocks(rating: 1873, solved: nil, puzzle: 'lichess_daily.json')
     'https://lichess.org/api/puzzle/next*' => { json: JSON.parse(fx(puzzle)) },
     'https://lichess.org/api/token/test' => { json: { 'tok' => { scopes: 'puzzle:read', userId: 'demo' } } },
     'https://lichess.org/api/user/Demo/activity' => { json: WEEK } }
+end
+# "Your games" mode (mode = games): the playing list, the top game's moves, the last finished game.
+def games_mocks(playing: 'games_playing_one.json', status: 200, export: true, last: true)
+  m = { 'https://lichess.org/api/account' => { json: { username: 'Demo', perfs: { puzzle: { rating: 1470 } } } },
+        'https://lichess.org/api/account/playing*' => { status: status, json: status == 200 ? JSON.parse(fx(playing)) : {} } }
+  m['https://lichess.org/game/export/*'] = { json: JSON.parse(fx('games_export.json')) } if export
+  m['https://lichess.org/api/games/user/Demo*'] = { body: fx('games_last.ndjson') } if last
+  m
 end
 PANEL_OVERLAP_JS = <<~JS.freeze
   (function () {
@@ -103,11 +111,20 @@ def ym_render(trmnl, c)
   when 'owner'   # the owner's real case of 2026-11-14: puzzle uBhLF (public), rating 1470
     mocks = lichess_mocks(rating: 1470, puzzle: 'lichess_uBhLF.json').merge(mocks); login = 'tok'
     state = { 'rating' => 1470, 'cur' => nil, 'last' => nil }
+  when 'games_one' then mocks = games_mocks; login = 'tok'
+  when 'games_many' then mocks = games_mocks(playing: 'games_playing_many.json'); login = 'tok'
+  when 'games_none' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
+  when 'games_wait' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
+  when 'games_last' then mocks = games_mocks(playing: 'games_playing_empty.json'); login = 'tok'
+  when 'games_nothing' then mocks = games_mocks(playing: 'games_playing_empty.json', last: false).merge('https://lichess.org/api/games/user/Demo*' => { body: '' }); login = 'tok'
+  when 'games_fail' then mocks = games_mocks(status: 503); login = 'tok'
+  when 'games_scope' then mocks = games_mocks(status: 403); login = 'tok'
   when 'offline'
     mocks = { 'https://lichess.org/api/puzzle/daily' => { status: 503, json: {} } }
     state = { 'rating' => 0, 'last' => { 'source' => 'lichess', 'id' => 'u3zfD', 'url' => 'https://lichess.org/training/u3zfD', 'board' => '...k....' + '...b.p..' + '.p.P.p.p' + '....Q...' + '....B...' + '....qP.P' + 'P.p...PK' + '........', 'turn' => 'w', 'from' => 4, 'to' => 3, 'rating' => 1874, 'themes' => ['Mate in 3'], 'title' => '' } }
   end
   fields['orientation'] = c['orientation'] if c['orientation']
+  fields['mode'] = 'games' if sc.start_with?('games')
   dev = c['device'].is_a?(Hash) ? c['device'].transform_keys(&:to_sym) : (c['device'] || 'v2')
   opts = { view: c['view'], device: dev, mocks: mocks, custom_fields: fields, now: NOW.iso8601, wait_for: "document.querySelector('[data-ym-drawn],[data-ym-none]') !== null || document.querySelector('.layout') !== null" }
   opts[:dark_mode] = true if c['dark']
@@ -126,6 +143,9 @@ def ym_checks(s, c)
   # The side panel's blocks never overlap (a flex column that shrinks or stretches its cards drew the moves over the rating).
   overlaps = s.evaluate(PANEL_OVERLAP_JS)
   expect(overlaps).to be_empty, "#{c['name']}: panel blocks overlap: #{overlaps.inspect}"
+  # a panel with nothing in it is a bug (an empty card once drew a bare grey bar between two panels)
+  empty = s.evaluate("Array.prototype.filter.call(document.querySelectorAll('[data-ym-card]'),function(e){return e.getClientRects().length&&!e.textContent.trim()&&!e.querySelector('img,svg')}).map(function(e){return e.getAttribute('data-ym-card')})")
+  expect(empty).to be_empty, "#{c['name']}: empty panel(s): #{empty.inspect}"
   sizes = s.evaluate(FONT_SIZES_JS)
   expect(sizes.length).to be <= 4, "#{c['name']}: #{sizes.length} text sizes in the panel: #{sizes.inspect}"
 end

@@ -1,0 +1,97 @@
+{
+ "nbMyTurn": 3,
+ "nowPlaying": [
+  {
+   "gameId": "zZ9yY8xX",
+   "fullId": "zZ9yY8xXabcd",
+   "color": "white",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": true,
+   "lastMove": "c1d2",
+   "opponent": {
+    "id": "slowpoke",
+    "username": "SlowPoke",
+    "rating": 1650
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 250000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  },
+  {
+   "gameId": "aB3dE5fG",
+   "fullId": "aB3dE5fGabcd",
+   "color": "black",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": true,
+   "lastMove": "f8e8",
+   "opponent": {
+    "id": "magnus_c",
+    "username": "Magnus_C",
+    "rating": 1812
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 30000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  },
+  {
+   "gameId": "kK1jJ2iI",
+   "fullId": "kK1jJ2iIabcd",
+   "color": "white",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": true,
+   "lastMove": "a2a3",
+   "opponent": {
+    "id": "third",
+    "username": "Third",
+    "rating": 1500
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 500000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  },
+  {
+   "gameId": "mM4nN5oO",
+   "fullId": "mM4nN5oOabcd",
+   "color": "white",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": false,
+   "lastMove": "e2e4",
+   "opponent": {
+    "id": "bob_w",
+    "username": "Bob_W",
+    "rating": 1700
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 90000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  }
+ ]
+}

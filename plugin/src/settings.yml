@@ -36,6 +36,15 @@ custom_fields:
   - Harder: harder
   - Hardest: hardest
   default: normal
+- keyname: mode
+  group: Lichess
+  field_type: select
+  name: Mode
+  description: What the screen shows. Your games shows your correspondence games where it is your turn (connect Lichess with the OAuth button above).
+  options:
+  - Puzzles: puzzles
+  - Your games: games
+  default: puzzles
 name: Lichess
 description: ''
 refresh_interval: 60

@@ -2,7 +2,7 @@
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Best move for white', find_b: 'Best move for black', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -170,7 +170,7 @@ var lichessProvider = {
 var PROVIDERS = { lichess: lichessProvider };
 
 function slim(m) { return { source: m.source, id: m.id, url: m.url, board: m.board, turn: m.turn, from: m.from, to: m.to, rating: m.rating, themes: m.themes, title: m.title, moves: m.moves || [], plays: m.plays || 0, game: m.game || null }; }
-function fitState(st) { if (JSON.stringify(st).length > ST_MAX) delete st.last; return st; }
+function fitState(st) { if (JSON.stringify(st).length > ST_MAX) { delete st.last; if (JSON.stringify(st).length > ST_MAX) delete st.wk; } return st; }
 
 async function run(input) {
   var nowS = nowSec(input), st0 = stObj((((input || {}).trmnl || {}).state)) || {};
@@ -178,6 +178,7 @@ async function run(input) {
   var oauth = stObj(((input || {}).trmnl || {}).oauth) || {}, token = String(oauth.access_token || '').trim();   // Lichess login: OAuth only
   var which = 'lichess';
   if (!token) return viewModel({ t: T_EN, connect: true, none: true, trmnl_state: fitState(stObj(st0.wk) ? { v: 1, rating: +st0.rating || 0, wk: st0.wk } : { v: 1, rating: +st0.rating || 0 }) }, nowS);   // OAuth is required (owner 2026-11-14)
+  if (String(field(input, 'mode', 'puzzles')) === 'games') return runGames(input, token, nowS, st0);   // "Your games" (source/games.js)
   var prov = PROVIDERS[which];
   var ctx = { settings: { difficulty: String(field(input, 'difficulty', 'normal')) }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
   if (ctx.token) {   // every Lichess call starts now, side by side: activity, scopes, account and a next puzzle in case it is needed

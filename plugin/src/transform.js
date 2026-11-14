@@ -58,7 +58,7 @@ function lichessMoves(j) {
 var MODES = {
   puzzles: { instance: 'Puzzles' },
   connect: { instance: 'Connect account' },
-  games: { instance: 'Your games' },     // reserved: correspondence games
+  games: { instance: 'Your games' },     // the user's correspondence games (source/games.js)
   top: { instance: 'Top game' },         // reserved
   following: { instance: 'Following %s' } // reserved: a followed player, %s = name
 };
@@ -69,18 +69,38 @@ function signed(n) { return (n > 0 ? '+' : '') + n; }
 function sanParts(san) { var s = String(san || ''), m = /^([KQRBN])(.*)$/.exec(s); return m ? [m[1], m[2]] : ['', s]; }
 function viewModel(out, nowS) {
   var P = out.puzzle, A = out.account;
-  out.mode = out.connect ? 'connect' : 'puzzles';
+  out.mode = out.connect ? 'connect' : out.mode || 'puzzles';   // 'games' is set by runGames
   out.instance = modeInstance(out.mode);
   out.instance_long = out.instance;
   if (P && P.themes && P.themes.length) out.instance_long = out.instance + ' · ' + P.themes[0];
   if (!P) return out;
   out.turn_w = P.turn === 'w';
-  out.find = out.turn_w ? out.t.find_w : out.t.find_b;
+  var games = out.mode === 'games';
+  out.find = games ? (out.turn_w ? out.t.play_w : out.t.play_b) : out.turn_w ? out.t.find_w : out.t.find_b;
   var list = (P.moves || []).slice(-8), lastB = list.length ? !!list[list.length - 1][2] : false;
   out.rows = list.map(function (m, i) {
     var w = sanParts(m[1] || '...'), b = sanParts(m[2]), last = i === list.length - 1, back = list.length - 1 - i;
     return { n: +m[0] || 0, wp: w[0], ws: w[1], bp: b[0], bs: b[1], hw: last && !lastB, hb: last && lastB, back: back };
   });
+  if (games) {
+    var G = P.game || {}, ph = G.phase || 'turn', t = out.t, tl = G.left;
+    out.opp_line = G.opp ? (G.opp.length > 16 ? G.opp.slice(0, 15) + '…' : G.opp) + (G.opp_rating ? ' (' + G.opp_rating + ')' : '') : '';
+    out.opp_short = G.opp ? (G.opp.length > 10 ? G.opp.slice(0, 9) + '…' : G.opp) : '';   // the quadrant has no room for the rating
+    out.meta = G.kind || '';
+    out.heading = ph === 'wait' ? t.their_turn : ph === 'last' ? t.last_game : t.your_turn;
+    out.heading_short = ph === 'wait' ? t.waiting_short : ph === 'last' ? t.finished_short : t.your_turn;
+    if (ph === 'wait') out.find = t.waiting_for + ' ' + out.opp_short;
+    if (ph === 'last') out.find = t.vs + ' ' + out.opp_line;
+    out.time_label = ph === 'wait' ? t.waiting_for : ph === 'last' ? '' : t.time_left;
+    out.time_value = ph === 'wait' ? out.opp_line.replace(/ \(\d+\)$/, '') : ph === 'last' ? G.res : tl;
+    out.time_small = ph === 'wait';
+    out.time_value_short = ph === 'turn' && tl ? (tl === t.no_limit ? '-' : String(tl).split(' ')[0]) : out.time_value;   // the quadrant: the largest unit only ("8h")
+    out.time_sub = ph === 'wait' ? (G.opp_rating ? '(' + G.opp_rating + ')' : '') : ph === 'last' ? t.in_moves + ' ' + G.n_moves + ' ' + t.moves_w : out.opp_line;
+    out.time_sub_short = ph === 'wait' ? '' : ph === 'last' ? G.n_moves + ' ' + t.moves_w : out.opp_short;
+    out.time_sub_all = ph === 'last';
+    out.show_info = ph !== 'last' || !!(out.problems && out.problems.length) || !!out.stale || !!out.notice;
+    return out;
+  }
   out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : ''].filter(Boolean).join(' · ');
   if (A) {
     out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';
@@ -102,7 +122,7 @@ function viewModel(out, nowS) {
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Best move for white', find_b: 'Best move for black', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -270,7 +290,7 @@ var lichessProvider = {
 var PROVIDERS = { lichess: lichessProvider };
 
 function slim(m) { return { source: m.source, id: m.id, url: m.url, board: m.board, turn: m.turn, from: m.from, to: m.to, rating: m.rating, themes: m.themes, title: m.title, moves: m.moves || [], plays: m.plays || 0, game: m.game || null }; }
-function fitState(st) { if (JSON.stringify(st).length > ST_MAX) delete st.last; return st; }
+function fitState(st) { if (JSON.stringify(st).length > ST_MAX) { delete st.last; if (JSON.stringify(st).length > ST_MAX) delete st.wk; } return st; }
 
 async function run(input) {
   var nowS = nowSec(input), st0 = stObj((((input || {}).trmnl || {}).state)) || {};
@@ -278,6 +298,7 @@ async function run(input) {
   var oauth = stObj(((input || {}).trmnl || {}).oauth) || {}, token = String(oauth.access_token || '').trim();   // Lichess login: OAuth only
   var which = 'lichess';
   if (!token) return viewModel({ t: T_EN, connect: true, none: true, trmnl_state: fitState(stObj(st0.wk) ? { v: 1, rating: +st0.rating || 0, wk: st0.wk } : { v: 1, rating: +st0.rating || 0 }) }, nowS);   // OAuth is required (owner 2026-11-14)
+  if (String(field(input, 'mode', 'puzzles')) === 'games') return runGames(input, token, nowS, st0);   // "Your games" (source/games.js)
   var prov = PROVIDERS[which];
   var ctx = { settings: { difficulty: String(field(input, 'difficulty', 'normal')) }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
   if (ctx.token) {   // every Lichess call starts now, side by side: activity, scopes, account and a next puzzle in case it is needed
@@ -331,3 +352,128 @@ async function run(input) {
   return viewModel(out, nowS);
 }
 if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, weekFromDays: weekFromDays, shortThemes: shortThemes };
+
+// ==== games.js
+// "Your games" mode: the user's correspondence games where it is their turn (GET /api/account/playing, no scope needed beyond a
+// valid token). The most urgent game (least time left) is shown; the others are only counted. Same view model as a puzzle:
+// out.puzzle is the position to draw (board, last move, QR target), out.game the opponent and the time left.
+var G_EN = { play_w: 'Play white', play_b: 'Play black', scan: 'Scan to move', time_left: 'Time to move', time_short: 'Time left', more_one: 'more game waiting', more_n: 'more games waiting',
+  none: 'No games waiting for you', in_moves: 'in', moves_w: 'moves', none_new: 'Start a game on lichess.org.', their_turn: 'Their turn', waiting_short: 'Waiting', finished_short: 'Finished', last_game: 'Last game', waiting_for: 'Waiting for', result: 'Result', scan_view: 'Scan to view', scan_new: 'Start a new game', won_w: 'Won', lost_w: 'Lost', drew_w: 'Draw', won_l: 'Won against', lost_l: 'Lost to', drew_l: 'Drew with', wait_one: 'game waiting for opponents', wait_n: 'games waiting for opponents', none2: 'Could not reach Lichess. Showing again at the next refresh.', offline: 'Offline, last game', scope_games: 'Reconnect Lichess: missing game permission',
+  won: 'Last game: won against', lost: 'Last game: lost to', drew: 'Last game: drew with', opp_wait_one: '1 game waits for the opponent', opp_wait_n: ' games wait for the opponent', no_limit: 'No limit' };
+var GAME_ID = /^[A-Za-z0-9]{8}$/;
+function timeLeft(sec) {   // "2d 4h", "5h 20m", "12m", "<1m"; null: a game without a clock
+  if (sec == null || !isFinite(sec)) return G_EN.no_limit;
+  sec = Math.max(0, Math.floor(sec));
+  var d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60);
+  if (d) return d + 'd' + (h ? ' ' + h + 'h' : '');
+  if (h) return h + 'h' + (m ? ' ' + m + 'm' : '');
+  return m ? m + 'm' : '<1m';
+}
+// The games to move on: correspondence only, valid id and position, least time left first (no clock last).
+function gamesToMove(list) {
+  var mine = (Array.isArray(list) ? list : []).filter(function (g) { return g && g.isMyTurn && g.speed === 'correspondence' && GAME_ID.test(g.gameId || '') && typeof g.fen === 'string' && (g.color === 'white' || g.color === 'black'); });
+  var key = function (g) { return g.secondsLeft == null || !isFinite(g.secondsLeft) ? Infinity : +g.secondsLeft; };
+  return mine.sort(function (a, b) { return key(a) - key(b); });
+}
+function gameModel(g, nowS, sans, phase) {
+  var turn = g.color === 'white' ? 'w' : 'b', fen = g.fen.indexOf(' ') < 0 ? g.fen + ' ' + turn : g.fen, q = parseFen(fen), last = String(g.lastMove || '');
+  var opp = g.opponent || {}, name = clean(opp.username || opp.id || (opp.ai ? 'Computer' : 'Anonymous')).slice(0, 24);
+  return { source: 'game', id: g.gameId, url: 'https://lichess.org/' + g.gameId, board: q.board, turn: turn, from: sqIndex(last.slice(0, 2)), to: sqIndex(last.slice(2, 4)),
+    rating: 0, themes: [], title: '', moves: sans ? sanPairs(sans, q.board) : [], plays: 0,
+    game: { opp: name, opp_rating: +opp.rating || 0, due: g.secondsLeft == null ? 0 : nowS + Math.floor(+g.secondsLeft), kind: g.rated ? 'Correspondence, rated' : 'Correspondence', phase: phase || 'turn' } };
+}
+// SAN list -> move pairs [number, white, black] (last MOVES_MAX), only when chess.js replays it to the board shown (variants do not: no list).
+function sanPairs(sans, board) {
+  var ch = new CHESSJS.Chess(), out = [];
+  try { sans.forEach(function (s) { out.push(ch.move(s).san); }); } catch (e) { return []; }
+  if (parseFen(ch.fen()).board !== board) return [];
+  var pairs = [];
+  for (var k = 0; k < out.length; k += 2) pairs.push([k / 2 + 1, out[k], out[k + 1] || '']);
+  return pairs.slice(-MOVES_MAX);
+}
+// A finished game from its SAN list: board, last move and the move pairs; null when chess.js cannot replay it (variants).
+function replayGame(sans) {
+  var ch = new CHESSJS.Chess(), last = null, out = [];
+  try { sans.forEach(function (s) { last = ch.move(s); out.push(last.san); }); } catch (e) { return null; }
+  var pairs = [];
+  for (var k = 0; k < out.length; k += 2) pairs.push([k / 2 + 1, out[k], out[k + 1] || '']);
+  return { board: parseFen(ch.fen()).board, from: last ? sqIndex(last.from) : -1, to: last ? sqIndex(last.to) : -1, moves: pairs.slice(-MOVES_MAX) };
+}
+function slimGame(m) { return { source: m.source, id: m.id, url: m.url, board: m.board, turn: m.turn, from: m.from, to: m.to, rating: 0, themes: [], title: '', moves: m.moves || [], plays: 0, game: m.game }; }
+// A finished game row of GET /api/games/user (ndjson): { res: won|lost|drew, color: white|black, opp, opp_rating } or null.
+function lastGameInfo(g, me) {
+  if (!g || !g.players || !g.winner && g.status !== 'draw' && g.status !== 'stalemate') return null;
+  var w = g.players.white || {}, b = g.players.black || {}, mine = ((w.user || {}).name || '').toLowerCase() === me.toLowerCase() ? 'white' : 'black', o = mine === 'white' ? b : w;
+  return { res: g.winner ? (g.winner === mine ? 'won' : 'lost') : 'drew', color: mine, opp: clean(((o.user || {}).name) || (o.aiLevel ? 'Computer' : 'Anonymous')).slice(0, 24), opp_rating: +o.rating || 0 };
+}
+function lastGameLine(g, me) { var i = lastGameInfo(g, me); return i ? G_EN[i.res + '_l'] + ' ' + i.opp : ''; }
+
+async function runGames(input, token, nowS, st0) {
+  var t0 = Date.now(), ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
+  var playing = getJson('https://lichess.org/api/account/playing?nb=50', H, LT);
+  var acct = getJson('https://lichess.org/api/account', H, LT); acct.catch(function () {});
+  var data = null, mine = [], theirs = [], model = null, stale = false, line = '', phase = '', moreLine = '', moreShort = '';
+  var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
+  try { data = await playing; } catch (e) {
+    if (e && e.status === 401) return viewModel({ t: T, connect: true, none: true, notice: T.tokbad, trmnl_state: fitState(keep({ v: 1 })) }, nowS);
+    if (e && e.status === 403) return viewModel({ t: T, connect: true, none: true, notice: T.scope_games, trmnl_state: fitState(keep({ v: 1 })) }, nowS);
+    diag.games = callError(e);
+  }
+  if (data) {
+    var list = Array.isArray(data.nowPlaying) ? data.nowPlaying : null;
+    if (!list) diag.games = 'bad answer';
+    else {
+      mine = gamesToMove(list);
+      theirs = list.filter(function (g) { return g && g.speed === 'correspondence' && !g.isMyTurn && GAME_ID.test(g.gameId || '') && typeof g.fen === 'string' && (g.color === 'white' || g.color === 'black'); });
+    }
+  }
+  var left = function () { return Math.max(400, Math.min(2200, 4800 - (Date.now() - t0))); };   // inside TRMNL's 5 s
+  var shown = mine[0] || theirs[0];   // my turn: the most urgent; else the first game the opponent is to move in (the API lists the most urgent first)
+  if (shown) {
+    phase = mine.length ? 'turn' : 'wait';
+    var sans = null;
+    try {
+      var j = await getJson('https://lichess.org/game/export/' + shown.gameId + '?moves=true&tags=false&clocks=false&evals=false&opening=false', H, left());
+      sans = typeof j.moves === 'string' ? j.moves.split(/\s+/).filter(Boolean) : null;
+    } catch (e) { diag.moves = callError(e); }
+    model = gameModel(shown, nowS, sans, phase);
+    if (phase === 'turn' && mine.length > 1) { var m = mine.length - 1; moreLine = m + ' ' + (m === 1 ? T.more_one : T.more_n); moreShort = '+' + m + ' waiting'; }
+    if (phase === 'wait') { var n = theirs.length; moreLine = n + ' ' + (n === 1 ? T.wait_one : T.wait_n); moreShort = n + ' waiting'; }
+  } else if (diag.games && saved && saved.board) { model = saved; phase = (saved.game || {}).phase || 'turn'; stale = true; }
+  else if (!diag.games) {   // no ongoing game at all: the last finished correspondence game, with its result
+    try {
+      var a = await acct, un = /^[A-Za-z0-9_-]{2,30}$/.test(a.username || '') ? a.username : '';
+      if (un) {
+        var r = await getRaw('https://lichess.org/api/games/user/' + un + '?max=1&perfType=correspondence&ongoing=false&moves=true&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), left());
+        if (r.status !== 200) throw Object.assign(new Error('http'), { status: r.status });
+        var row = ndjson(r.text)[0], info = lastGameInfo(row, un);
+        if (info) {
+          line = G_EN[info.res + '_l'] + ' ' + info.opp;
+          var rp = typeof row.moves === 'string' ? replayGame(row.moves.split(/\s+/).filter(Boolean)) : null;
+          if (rp) {
+            phase = 'last';
+            model = { source: 'game', id: String(row.id || ''), url: 'https://lichess.org/', board: rp.board, turn: info.color === 'white' ? 'w' : 'b', from: rp.from, to: rp.to, rating: 0, themes: [], title: '', moves: rp.moves, plays: 0,
+              game: { opp: info.opp, opp_rating: info.opp_rating, due: 0, kind: 'Correspondence', phase: 'last', res: G_EN[info.res + '_w'], result_line: line, n_moves: Math.ceil(row.moves.split(/\s+/).filter(Boolean).length / 2) } };
+          }
+        }
+      }
+    } catch (e) { diag.last = callError(e); }
+  }
+  var out = { t: T, mode: 'games', none: !model, calm: !model, stale: stale, notice: '', banner: '', account: null, show_account: false, caps: {}, coords: true, white_bottom: true, lines: line ? [line] : [] };
+  if (model) {
+    model.game = Object.assign({}, model.game);   // time left now, from the deadline
+    model.game.left = model.game.due ? timeLeft(model.game.due - nowS) : timeLeft(null);
+    out.puzzle = model; out.more_line = stale ? '' : moreLine; out.more_short = stale ? '' : moreShort;
+    out.to_move = model.turn === 'w' ? T.white : T.black; out.white_bottom = model.turn === 'w';
+    out.phase = phase; out.t = Object.assign({}, T, { scan: phase === 'last' ? T.scan_new : phase === 'wait' ? T.scan_view : T.scan });
+  } else out.calm_line = diag.games ? T.none2 : T.none_new;
+  var st = keep({ v: 1 });
+  if (model && !stale && phase !== 'last') st.gm = slimGame(model); else if (stale) st.gm = saved;
+  var problems = [];
+  if (diag.games) problems.push('Lichess games: ' + diag.games);
+  if (diag.moves) problems.push('Lichess moves: ' + diag.moves);
+  if (diag.last) problems.push('Lichess last game: ' + diag.last);
+  if (problems.length) out.problems = problems;
+  out.trmnl_state = fitState(st);
+  return viewModel(out, nowS);
+}
