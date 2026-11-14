@@ -21,10 +21,25 @@
   function fitMoves() {
     var panel = document.querySelector('[data-ym-panel]'), card = document.querySelector('[data-ym-card="moves"]');
     if (!panel || !card) return;
-    var rows = card.querySelectorAll('tr'), i = 0, tb = card.querySelector('table'), cs = window.getComputedStyle(card),
-      over = function () { return panel.scrollHeight > panel.clientHeight + 1 || tb.getBoundingClientRect().bottom > card.getBoundingClientRect().bottom - (parseFloat(cs.paddingBottom) || 0) + 1; };
-    while (over() && i < rows.length - 2) rows[i++].classList.add('hidden');
-    if (over()) { card.classList.add('hidden'); var b = document.querySelector('[data-ym-bottom]'); if (b) { b.classList.remove('shrink-0'); b.classList.add('grow'); } }
+    var root = document.querySelector('[data-ym]'), rows = card.querySelectorAll('tr'), i = 0, tb = card.querySelector('table'), cs = window.getComputedStyle(card),
+      over = function () { return panel.scrollHeight > panel.clientHeight + 1 || root.scrollHeight > root.clientHeight + 1 || tb.getBoundingClientRect().bottom > card.getBoundingClientRect().bottom - (parseFloat(cs.paddingBottom) || 0) + 1; };
+    while (over() && i < rows.length - 2) hide(rows[i++]);
+    if (over()) hide(card);
+  }
+  // Still too tall (a half or quadrant view): the optional parts give way in this order, with the Framework's hidden class.
+  // The Framework's hidden class, minus any size-prefixed display class (lg:flex, lg:visible) that would show it again.
+  function hide(n) { n.setAttribute('class', (n.getAttribute('class') || '').replace(/(^|\s)(sm|md|lg):(flex|visible|block|grid|table-row|inline-block)(?=\s|$)/g, ' ') + ' hidden'); }
+  function fitParts() {
+    var panel = document.querySelector('[data-ym-panel]');
+    if (!panel) return;
+    var root = document.querySelector('[data-ym]'), over = function () {
+      if (panel.scrollHeight > panel.clientHeight + 1 || root.scrollHeight > root.clientHeight + 1 || root.scrollWidth > root.clientWidth + 1) return true;
+      return Array.prototype.some.call(panel.querySelectorAll('[data-ym-card]'), function (c) { return c.getClientRects().length && c.scrollHeight > c.clientHeight + 1; });
+    };
+    ['[data-ym-part="spark"]', '[data-ym-part="bars"]', '[data-ym-part="recent"]', '[data-ym-meta]', '[data-ym-game]'].forEach(function (sel) {
+      var n = panel.querySelector(sel);
+      if (n && over()) hide(n);
+    });
   }
   function main() {
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
@@ -52,6 +67,7 @@
         draw(s -= over); (window.Highcharts && window.Highcharts.charts || []).forEach(function (c) { if (c) c.reflow(); });
       }
       fitMoves();
+      fitParts();
       spark();   // after the board settled: the chart takes the card's final width
       root.setAttribute('data-ym-drawn', '1');
     };
