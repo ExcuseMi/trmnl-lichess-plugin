@@ -99,9 +99,8 @@ function liveOut(T, mode, model, o) {
 }
 
 async function runTop(input, token, nowS, st0) {
-  var t0 = Date.now(), H = authHeader({ token: token }), T = Object.assign({}, T_EN, LV_EN), diag = {}, saved = stObj(st0.tg), noop = function () {};
+  H = authHeader({ token: token }), T = Object.assign({}, T_EN, LV_EN), diag = {}, saved = stObj(st0.tg), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
-  var left = function () { return Math.max(400, Math.min(2200, 4800 - (Date.now() - t0))); };   // inside TRMNL's 5 s
   var topP = getJson('https://lichess.org/api/broadcast/top', H, LT), tvP = getJson('https://lichess.org/api/tv/channels', H, LT);   // the TV answer is the fallback, asked at once
   topP.catch(noop); tvP.catch(noop);
   var model = null, arg = '', finished = null, stale = false, top = null;
@@ -110,7 +109,7 @@ async function runTop(input, token, nowS, st0) {
   if (top) {
     var cands = top.active.filter(function (a) { return a && a.round && a.round.ongoing && GAME_ID.test(a.round.id || '') && a.tour; })
       .map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (+y.a.tour.tier || 0) - (+x.a.tour.tier || 0) || x.i - y.i; }).slice(0, BC_TOP_MAX).map(function (x) { return x.a; });
-    var ms = left(), got = await Promise.allSettled(cands.map(function (a) { return getJson('https://lichess.org/api/broadcast/-/-/' + a.round.id, H, ms); }));
+    var ms = runLeft(2200), got = await Promise.allSettled(cands.map(function (a) { return getJson('https://lichess.org/api/broadcast/-/-/' + a.round.id, H, ms); }));
     var pick = null;
     got.forEach(function (r, i) {
       if (r.status === 'rejected') { diag.round = callError(r.reason); return; }
@@ -121,7 +120,7 @@ async function runTop(input, token, nowS, st0) {
     if (pick) {
       var g = pick.b.g, round = Object.assign({}, pick.a.round, pick.j.round || {}), tour = Object.assign({}, pick.a.tour, pick.j.tour || {}), sans = null;
       try {
-        var pr = await getRaw('https://lichess.org/api/study/' + round.id + '/' + g.id + '.pgn', Object.assign({}, H, { Accept: 'application/x-chess-pgn' }), left());
+        var pr = await getRaw('https://lichess.org/api/study/' + round.id + '/' + g.id + '.pgn', Object.assign({}, H, { Accept: 'application/x-chess-pgn' }), runLeft(2200));
         if (pr.status !== 200) throw Object.assign(new Error('http'), { status: pr.status });
         sans = pgnSans(pr.text);
       } catch (e) { diag.moves = callError(e); }
@@ -132,7 +131,7 @@ async function runTop(input, token, nowS, st0) {
     try {
       var ch = await tvP, c = ch && ch.classical && +ch.classical.rating >= 2000 ? ch.classical : ch && ch.best;
       if (c && GAME_ID.test(c.gameId || '')) {
-        var j = await getJson('https://lichess.org/game/export/' + c.gameId + '?moves=true&clocks=true&tags=false&evals=false&opening=false', H, left());
+        var j = await getJson('https://lichess.org/game/export/' + c.gameId + '?moves=true&clocks=true&tags=false&evals=false&opening=false', H, runLeft(2200));
         model = lichessLiveModel(j, { event: LV_EN.tv_long, round: '' });
         if (model) { model.game.round = model.game.kind; arg = LV_EN.tv; }
       }

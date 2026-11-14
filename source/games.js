@@ -53,7 +53,7 @@ function lastGameInfo(g, me) {
 function lastGameLine(g, me) { var i = lastGameInfo(g, me); return i ? G_EN[i.res + '_l'] + ' ' + i.opp : ''; }
 
 async function runGames(input, token, nowS, st0) {
-  var t0 = Date.now(), ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
+  ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
   var playing = getJson('https://lichess.org/api/account/playing?nb=50', H, LT);
   var acct = getJson('https://lichess.org/api/account', H, LT); acct.catch(function () {});
   var data = null, mine = [], theirs = [], model = null, stale = false, line = '', phase = '', moreLine = '', moreShort = '';
@@ -71,13 +71,12 @@ async function runGames(input, token, nowS, st0) {
       theirs = list.filter(function (g) { return g && g.speed === 'correspondence' && !g.isMyTurn && GAME_ID.test(g.gameId || '') && typeof g.fen === 'string' && (g.color === 'white' || g.color === 'black'); });
     }
   }
-  var left = function () { return Math.max(400, Math.min(2200, 4800 - (Date.now() - t0))); };   // inside TRMNL's 5 s
   var shown = mine[0] || theirs[0];   // my turn: the most urgent; else the first game the opponent is to move in (the API lists the most urgent first)
   if (shown) {
     phase = mine.length ? 'turn' : 'wait';
     var sans = null;
     try {
-      var j = await getJson('https://lichess.org/game/export/' + shown.gameId + '?moves=true&tags=false&clocks=false&evals=false&opening=false', H, left());
+      var j = await getJson('https://lichess.org/game/export/' + shown.gameId + '?moves=true&tags=false&clocks=false&evals=false&opening=false', H, runLeft(2200));
       sans = typeof j.moves === 'string' ? j.moves.split(/\s+/).filter(Boolean) : null;
     } catch (e) { diag.moves = callError(e); }
     model = gameModel(shown, nowS, sans, phase);
@@ -88,7 +87,7 @@ async function runGames(input, token, nowS, st0) {
     try {
       var a = await acct, un = /^[A-Za-z0-9_-]{2,30}$/.test(a.username || '') ? a.username : '';
       if (un) {
-        var r = await getRaw('https://lichess.org/api/games/user/' + un + '?max=1&perfType=correspondence&ongoing=false&moves=true&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), left());
+        var r = await getRaw('https://lichess.org/api/games/user/' + un + '?max=1&perfType=correspondence&ongoing=false&moves=true&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), runLeft(2200));
         if (r.status !== 200) throw Object.assign(new Error('http'), { status: r.status });
         var row = ndjson(r.text)[0], info = lastGameInfo(row, un);
         if (info) {

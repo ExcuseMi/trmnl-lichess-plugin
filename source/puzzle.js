@@ -8,13 +8,26 @@ function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settin
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
 function stObj(x) { return x && typeof x === 'object' && !Array.isArray(x) ? x : null; }
 
+// One budget per run (TRMNL stops a transform at 5 s, VM start included): run() sets the deadline, every call's timeout is
+// min(its own cap, time left), a call that cannot start with RUN_MIN ms left is a timeout, and every call is raced against
+// the deadline so one that ignores its abort cannot hold the run.
+var RUN_MS = 3500, RUN_MIN = 300, RUN = { end: 0 };
+function runStart() { RUN.end = Date.now() + RUN_MS; }
+function runLeft(cap) { return Math.min(cap || 2500, RUN.end ? RUN.end - Date.now() : 1e9); }
+function timeoutError() { return Object.assign(new Error('timeout'), { name: 'AbortError' }); }
 async function getRaw(url, headers, ms, opts) {
-  var ctl = typeof AbortController === 'function' ? new AbortController() : null, to = setTimeout(function () { if (ctl) ctl.abort(); }, ms || 2500);
+  ms = runLeft(ms);
+  if (ms < RUN_MIN) throw timeoutError();
+  var ctl = typeof AbortController === 'function' ? new AbortController() : null, to, dl;
+  var guard = new Promise(function (_, rej) { to = setTimeout(function () { if (ctl) ctl.abort(); rej(timeoutError()); }, ms); dl = RUN.end ? setTimeout(function () { rej(timeoutError()); }, Math.max(0, RUN.end - Date.now())) : null; });
+  guard.catch(function () {});
   try {
-    var r = await fetch(url, Object.assign({ headers: Object.assign({ 'User-Agent': UA, 'Accept': 'application/json' }, headers || {}), signal: ctl ? ctl.signal : undefined }, opts || {}));
-    var text = await r.text();
-    return { status: r.status, text: text };
-  } finally { clearTimeout(to); }
+    return await Promise.race([guard, (async function () {
+      var r = await fetch(url, Object.assign({ headers: Object.assign({ 'User-Agent': UA, 'Accept': 'application/json' }, headers || {}), signal: ctl ? ctl.signal : undefined }, opts || {}));
+      var text = await r.text();
+      return { status: r.status, text: text };
+    })()]);
+  } finally { clearTimeout(to); clearTimeout(dl); }
 }
 async function getJson(url, headers, ms) {
   var r = await getRaw(url, headers, ms);
@@ -203,6 +216,7 @@ function slim(m) { return { source: m.source, id: m.id, url: m.url, board: m.boa
 function fitState(st) { if (JSON.stringify(st).length > ST_MAX) { delete st.last; if (JSON.stringify(st).length > ST_MAX) delete st.wk; } return st; }
 
 async function run(input) {
+  runStart();
   var nowS = nowSec(input), st0 = stObj((((input || {}).trmnl || {}).state)) || {};
   var orient = 'side', coords = true;   // fixed (owner 2026-11-14): side to move at the bottom, coordinates shown
   var oauth = stObj(((input || {}).trmnl || {}).oauth) || {}, token = String(oauth.access_token || '').trim();   // Lichess login: OAuth only

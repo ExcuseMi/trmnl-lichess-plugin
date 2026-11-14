@@ -93,9 +93,8 @@ function weekFor(recent, nowS, hero) {
     streak: run >= 2 && word ? run + ' ' + word[1] + ' ' + PF_EN.in_row : '' };
 }
 async function runProfile(input, token, nowS, st0) {
-  var t0 = Date.now(), H = authHeader({ token: token }), T = Object.assign({}, T_EN, PF_EN), diag = {}, saved = stObj(st0.pf), noop = function () {};
+  H = authHeader({ token: token }), T = Object.assign({}, T_EN, PF_EN), diag = {}, saved = stObj(st0.pf), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
-  var left = function () { return Math.max(400, Math.min(3500, 4800 - (Date.now() - t0))); };   // inside TRMNL's 5 s
   var acctP = getJson('https://lichess.org/api/account', H, LT); acctP.catch(noop);
   var start = function (u, ms) {   // rating history and the last games, side by side
     var h = getJson('https://lichess.org/api/user/' + u + '/rating-history', H, ms), g = getRaw('https://lichess.org/api/games/user/' + u + '?max=' + PF_RECENT_MAX + '&rated=true&ongoing=false&moves=false&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), Math.min(ms, 2200))
@@ -111,7 +110,7 @@ async function runProfile(input, token, nowS, st0) {
   var pf = null, stale = false, problems = [];
   if (acct && !USER_RE.test(acct.username || '')) { diag.account = 'bad answer'; acct = null; }
   if (acct) {
-    if (!calls || calls.u.toLowerCase() !== acct.username.toLowerCase()) calls = start(acct.username, left());   // no saved name (or a renamed account): after the account
+    if (!calls || calls.u.toLowerCase() !== acct.username.toLowerCase()) calls = start(acct.username, runLeft(3500));   // no saved name (or a renamed account): after the account
     var hist = null, games = null;
     try { hist = await calls.h; if (!Array.isArray(hist)) { hist = null; diag.history = 'bad answer'; } } catch (e) { diag.history = callError(e); }
     try { games = await calls.g; } catch (e) { diag.games = callError(e); }

@@ -44,6 +44,10 @@ Rendered checks on every case: no overflow, no page errors, at most 4 text sizes
 
 One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games", `profile` "Profile", `top` "Top game · <event short name>" (or "Top game · TV"), `following` "Following <name>".
 
+## Run budget (`source/puzzle.js`)
+
+TRMNL stops a transform at 5 s. `run()` calls `runStart()` (RUN_MS 3500); `getRaw` clamps every call to `runLeft(cap)`, skips a call with under 300 ms left as a timeout, and races each call against the deadline (a fetch deaf to its abort cannot hold the run). A timeout shows the saved fallback and the line "Lichess ...: timeout". Guard: `test/budget.test.js` (never answers, deaf, 2.5 s per call, 1.2 s chain; every mode).
+
 ## Your games mode (`source/games.js`)
 
 | State | Shown |
