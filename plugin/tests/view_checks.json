@@ -7,6 +7,7 @@
   "checks": {
    "rating, recent results, week, moves and QR": "!!document.querySelector('[data-ym-part=rating]') && !!document.querySelector('[data-ym-part=recent]') && !!document.querySelector('[data-ym-part=bars]') && !!document.querySelector('[data-ym-part=moves]') && !!document.querySelector('[data-ym-qrbox] svg')",
    "no connect hint": "!document.querySelector('[data-ym-part=hint]') && !document.querySelector('[data-ym-connect]')",
+   "last move: both squares marked, origin dashed, destination solid": "(function(){var f=document.querySelectorAll('[data-ym-drawn] [data-ym-board] svg > rect[fill=none][stroke-width]:not([stroke-dasharray])'), d=document.querySelectorAll('[data-ym-drawn] [data-ym-board] svg > rect[stroke-dasharray]'); return d.length===1 && f.length>=1;})()",
    "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
    "newest move at the bottom, the last move a dark block": "(function(){var r=document.querySelectorAll('[data-ym-part=moves] tr'), last=r[r.length-1]; var n=Array.prototype.map.call(r,function(x){return parseInt(x.textContent,10)}); return n.every(function(v,i){return !i||v>n[i-1]}) && !!last.querySelector('.label--inverted');})()",
    "title bar says the mode": "/^Puzzles/.test(document.querySelector('[data-ym-instance]').textContent.trim())",

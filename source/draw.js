@@ -45,12 +45,16 @@ function boardSvg(o) {
     var p = pos(i);
     if ((i % 8 + Math.floor(i / 8)) % 2 === 1) out.push('<rect x="' + p[0] + '" y="' + p[1] + '" width="' + q + '" height="' + q + '" fill="' + sq + '"/>');
   }
-  // Last move: an outline only (owner 2026-11-14, variant A): a thick dark frame inside the destination square, no fill.
+  // Last move (owner 2026-11-14, R7): both squares, no arrow. The destination gets a thick dark frame inside the square;
+  // the origin gets a thinner dashed frame.
   var fw = Math.max(3, Math.round(q * 0.07));
-  if (o.to != null && o.to >= 0) {
-    var pt = pos(o.to);
-    out.push('<rect x="' + (pt[0] + fw / 2) + '" y="' + (pt[1] + fw / 2) + '" width="' + (q - fw) + '" height="' + (q - fw) + '" fill="none" stroke="' + K + '" stroke-width="' + fw + '"/>');
+  function frame(idx, w, dash) {
+    var pf = pos(idx);
+    out.push('<rect x="' + (pf[0] + w / 2) + '" y="' + (pf[1] + w / 2) + '" width="' + (q - w) + '" height="' + (q - w) + '" fill="none" stroke="' + K + '" stroke-width="' + w + '"' + (dash ? ' stroke-dasharray="' + dash + '"' : '') + '/>');
   }
+  var hasFrom = o.from != null && o.from >= 0 && o.from !== o.to, hasTo = o.to != null && o.to >= 0;
+  if (hasFrom) { var tw = Math.max(2, Math.round(fw * 0.6)); frame(o.from, tw, (tw * 2.2).toFixed(1) + ' ' + (tw * 1.6).toFixed(1)); }
+  if (hasTo) frame(o.to, fw);
   out.push('<rect x="' + (x0 - lw) + '" y="' + (x0 - lw) + '" width="' + (B + 2 * lw) + '" height="' + (B + 2 * lw) + '" fill="none" stroke="' + Wt + '" stroke-width="' + lw + '"/>');
   // 1-bit thresholds thin lines away: keep every piece line at least ~1.5 screen pixels (the set draws 1.5 of 45 units).
   var sw = o.bits === 1 ? 1.15 * 45 / (q * 1.04) : 0;   // 1.15 screen px in piece units

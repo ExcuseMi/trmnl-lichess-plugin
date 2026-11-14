@@ -33,6 +33,12 @@ test('the board takes its colours from the Framework resolver (no hard-coded gre
   assert.ok(['white', 'gray-55', 'gray-30', 'black'].every((k) => asked.includes(k)), 'light and dark squares, rim and ink asked: ' + asked.join(','));
   // the last move is an outline only (owner 2026-11-14): a black frame in the destination square, no fill
   assert.ok(/<rect[^>]*fill="none" stroke="rgb\(black\)"/.test(svg), 'last-move outline');
+  // R7: the origin square is marked too, a thinner dashed frame; no origin (-1) or origin = destination gives one frame
+  const frames = (o) => ctx.boardSvg(Object.assign({ size: 400, board: BOARD, flip: false, from: 52, to: 36, coords: true, bits: 4, dark: false, font: 'x' }, o)).match(/<rect[^>]*fill="none" stroke="rgb\(black\)"[^>]*>/g) || [];
+  assert.equal(frames({}).filter((r) => /stroke-dasharray/.test(r)).length, 1, 'dashed origin frame');
+  assert.equal(frames({}).length, 2, 'two frames');
+  assert.equal(frames({ from: -1 }).length, 1, 'no origin: one frame');
+  assert.equal(frames({ from: 36 }).length, 1, 'origin = destination: one frame');
   asked.length = 0;
   ctx.boardSvg({ size: 400, board: BOARD, flip: false, from: 52, to: 36, coords: true, bits: 4, dark: true, font: 'x' });
   assert.ok(asked.includes('black') && asked.includes('gray-30'), 'dark mode asks the inverse tokens so the board stays light: ' + asked.join(','));

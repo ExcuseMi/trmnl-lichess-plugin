@@ -38,7 +38,7 @@ Rendered checks on every case: no overflow, no page errors, at most 4 text sizes
 
 - Panels and the move-number gutter are white on 1-bit (no dither behind small text).
 - Move list figurines on 1-bit: separate bold black-outline glyphs (`ym_1*` captures), no image stroke.
-- Board colours come from `TRMNLPaint.bg()` tokens (dither tiles become SVG patterns); dark mode asks the inverse token so the board stays light. Last move: outline on the destination square only.
+- Board colours come from `TRMNLPaint.bg()` tokens (dither tiles become SVG patterns); dark mode asks the inverse token so the board stays light. Last move: thick frame on the destination square, thinner dashed frame on the origin square (R7).
 
 ## Title bar modes
 
@@ -48,7 +48,7 @@ One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "P
 
 | State | Shown |
 |---|---|
-| A correspondence game to move on | The one with least time left, from your side, last move outlined, opponent, time left, moves, QR "Scan to move"; "N more games waiting" |
+| A correspondence game to move on | The one with least time left, from your side, last move framed, opponent, time left, moves, QR "Scan to move"; "N more games waiting" |
 | Only games where the opponent is to move | The first of them: "Their turn", "Waiting for X", moves, QR; "N games waiting for opponents" (their clock is not in the API: `secondsLeft` is yours) |
 | No ongoing game | Last finished correspondence game: "Last game", "vs X (rating)", "Won" + "in N moves", QR "Start a new game" (https://lichess.org/) |
 | Nothing, or a failed call with no saved game | Calm screen (icon, title, one line, failure line) |
