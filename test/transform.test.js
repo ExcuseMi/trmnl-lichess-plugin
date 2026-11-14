@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, chesscomModel, accountFromActivity, shortThemes };', ctx);
+  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, shortThemes };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -22,9 +22,28 @@ function router(map, calls) {
     return resp(599, {});
   };
 }
-const input = (fields, state) => ({ trmnl: { system: { timestamp_utc: NOW }, state, plugin_settings: { custom_fields_values: fields } } });
-const DAILY = FX('lichess_daily.json'), CC = FX('chesscom_daily.json');
+// A Lichess login is the OAuth connection only: `lichess_token` here is test shorthand for trmnl.oauth.access_token, never a field.
+const input = (fields, state) => {
+  const { lichess_token: tok, ...rest } = fields || {};
+  return { trmnl: { system: { timestamp_utc: NOW }, state, plugin_settings: { custom_fields_values: rest }, ...(tok ? { oauth: { access_token: tok } } : {}) } };
+};
+const DAILY = FX('lichess_daily.json');
 const LIST = (n) => Array.from({ length: n }, (_, i) => i);
+
+test('daily model: Lichess', () => {
+  const api = load(async () => resp(599, {}));
+  const m = api.lichessModel(DAILY);
+  assert.strictEqual(m.url, 'https://lichess.org/training/u3zfD'); assert.strictEqual(m.from, 12); assert.strictEqual(m.to, 3);
+  assert.deepStrictEqual(Array.from(m.themes), ['Mate in 3', 'Exposed king']);
+});
+
+test('run without a login: the Lichess daily puzzle; old Chess.com settings are ignored', async () => {
+  const calls = [];
+  const api = load(router({ 'https://lichess.org/api/puzzle/daily': resp(200, DAILY) }, calls));
+  const o = await api.run(input({ source: 'chesscom', chesscom_user: 'demo' }));
+  assert.strictEqual(o.puzzle.source, 'lichess'); assert.strictEqual(o.account, null);
+  assert.ok(calls.every((u) => u.startsWith('https://lichess.org/')));
+});
 
 test('parseFen reads the start position and refuses bad input', () => {
   const api = load(async () => resp(599, {}));
@@ -44,26 +63,33 @@ test('PGN replay (chess.js) reaches the same position as the puzzle fen, last mo
   assert.throws(() => api.lichessPosition(j));   // an illegal move ends in an error, not a wrong board
 });
 
-test('daily models: Lichess and Chess.com', () => {
+test('moves before the puzzle: pairs from the PGN up to initialPly, ending with the move shown on the board', () => {
   const api = load(async () => resp(599, {}));
-  const m = api.lichessModel(DAILY);
-  assert.strictEqual(m.url, 'https://lichess.org/training/u3zfD'); assert.strictEqual(m.from, 12); assert.strictEqual(m.to, 3);
-  assert.deepStrictEqual(Array.from(m.themes), ['Mate in 3', 'Exposed king']);
-  const c = api.chesscomModel(CC);
-  assert.strictEqual(c.turn, 'b'); assert.strictEqual(c.title, 'Shocking Reveal'); assert.strictEqual(c.url, 'https://www.chess.com/daily/2026-11-13');
-  assert.throws(() => api.chesscomModel({ ...CC, url: 'https://evil.example/x' }));
+  const m = api.lichessMoves(DAILY);
+  assert.strictEqual(m.length, 30);   // the last 30 pairs only
+  assert.deepStrictEqual(Array.from(m[m.length - 1]), [38, 'd6+', 'Kd8']);   // Kd8 is e7d8, the highlighted last move
+  assert.deepStrictEqual(Array.from(m[0]), [9, 'Bc2', 'b5']);
+  const odd = JSON.parse(JSON.stringify(DAILY)); odd.puzzle.initialPly = 4; delete odd.puzzle.fen;
+  assert.deepStrictEqual(Array.from(api.lichessMoves(odd), (x) => Array.from(x)), [[1, 'd4', 'Nf6'], [2, 'Nf3', 'e6'], [3, 'Bg5', '']]);
+  // never a list that does not match the board: a fen from another position, an illegal move, no PGN
+  const other = JSON.parse(JSON.stringify(DAILY)); other.puzzle.initialPly = 73;
+  assert.deepStrictEqual(Array.from(api.lichessMoves(other)), []);
+  const bad = JSON.parse(JSON.stringify(DAILY)); bad.game.pgn = 'e4 e5 Ke2 Qxx9'; bad.puzzle.initialPly = 3; delete bad.puzzle.fen;
+  assert.deepStrictEqual(Array.from(api.lichessMoves(bad)), []);
+  assert.deepStrictEqual(Array.from(api.lichessMoves({ puzzle: { initialPly: 3 }, game: {} })), []);
+  assert.deepStrictEqual(Array.from(api.lichessModel(DAILY).moves).length, 30);
 });
 
-test('run: Lichess daily, Chess.com daily, alternate by day', async () => {
-  const f = router({ 'https://lichess.org/api/puzzle/daily': resp(200, DAILY), 'https://api.chess.com/pub/puzzle': resp(200, CC) });
-  const api = load(f);
-  assert.strictEqual((await api.run(input({ source: 'lichess' }))).puzzle.source, 'lichess');
-  assert.strictEqual((await api.run(input({ source: 'chesscom' }))).puzzle.source, 'chesscom');
-  const day = Math.floor(NOW / 86400) % 2 === 0 ? 'lichess' : 'chesscom';
-  assert.strictEqual((await api.run(input({ source: 'alternate' }))).puzzle.source, day);
-  const o = await api.run(input({ source: 'lichess', orientation: 'side' }));
-  assert.strictEqual(o.white_bottom, true);
-  assert.strictEqual((await api.run(input({ source: 'chesscom' }))).white_bottom, false);   // black to move: black at the bottom
+test('the game a puzzle comes from: clock and kind, both players white first, cleaned; nothing from a bad game', () => {
+  const api = load(async () => resp(599, {}));
+  const g = api.lichessModel(DAILY).game;
+  assert.strictEqual(g.kind, '3+0 Blitz');
+  assert.deepStrictEqual(Array.from(g.players, (x) => Array.from(x)), [['w', 'w', 2064], ['b', 'b', 2049]]);
+  const j = JSON.parse(JSON.stringify(DAILY)); j.game.players.reverse(); j.game.players[0].name = '<b>x</b>\u0007'; j.game.clock = 'evil';
+  const h = api.lichessModel(j).game;
+  assert.strictEqual(h.players[0][0], 'w'); assert.strictEqual(h.players[1][1], '<b>x</b>');   // control characters go; markup is escaped by the page assert.strictEqual(h.kind, 'Blitz');
+  const k = JSON.parse(JSON.stringify(DAILY)); k.game = 'x';
+  assert.strictEqual(api.lichessModel(k).game, null);
 });
 
 test('run: service down keeps the last good puzzle (stale), or says there is none', async () => {
@@ -83,22 +109,32 @@ const NEXT = DAILY, NEXT2 = { ...DAILY, puzzle: { ...DAILY.puzzle, id: 'zzz99' }
 const act = (rows) => rows.map((r) => JSON.stringify(r)).join('\n');
 function account(extra, calls) {
   return router({ 'https://lichess.org/api/account': resp(200, ACCOUNT), 'https://lichess.org/api/puzzle/activity': resp(200, act([])), 'https://lichess.org/api/user/Demo/rating-history': resp(200, [{ name: 'Puzzles', points: LIST(5).map((i) => [2026, 10, 1 + i, 1800 + i]) }]),
-    'https://lichess.org/api/puzzle/next': resp(200, NEXT), 'https://lichess.org/api/puzzle/daily': resp(200, DAILY), ...extra }, calls);
+    'https://lichess.org/api/puzzle/next': resp(200, NEXT), 'https://lichess.org/api/puzzle/daily': resp(200, DAILY),
+    'https://lichess.org/api/token/test': resp(200, { t: { scopes: 'puzzle:read', userId: 'demo', expires: null } }), ...extra }, calls);
 }
 
 test('token: next puzzle at the user level, progress, token never in output or calls other than the header', async () => {
   const seen = [];
-  const f = async (url, opt) => { seen.push([url, (opt.headers || {}).Authorization]); return account({})(url, opt); };
+  const f = async (url, opt) => { seen.push([url, (opt.headers || {}).Authorization, opt.body]); return account({})(url, opt); };
   const api = load(f);
   const o = await api.run(input({ lichess_token: 'SECRET', difficulty: 'harder' }));
   assert.strictEqual(o.puzzle.id, 'u3zfD'); assert.strictEqual(o.account.rating, 1873); assert.strictEqual(o.account.history.length, 5);
   assert.ok(seen.some(([u]) => u.includes('puzzle/next?difficulty=harder')));
-  assert.ok(seen.every(([u, a]) => !u.includes('SECRET') && a === 'Bearer SECRET'));
+  // the token only in the Authorization header, or as the body of the scope check (POST /api/token/test), never in a URL
+  assert.ok(seen.every(([u, a, b]) => !u.includes('SECRET') && (u === 'https://lichess.org/api/token/test' ? b === 'SECRET' && !a : a === 'Bearer SECRET')));
   assert.ok(!JSON.stringify(o).includes('SECRET'));
   assert.strictEqual(o.trmnl_state.cur.id, 'u3zfD'); assert.strictEqual(o.trmnl_state.cur.r0, 1873);
 });
 
-test('token from the OAuth connection works like the pasted token', async () => {
+test('a token in the settings is ignored: the login is the OAuth connection only', async () => {
+  const seen = [];
+  const f = async (url, opt) => { seen.push((opt.headers || {}).Authorization); return account({})(url, opt); };
+  const i = { trmnl: { system: { timestamp_utc: NOW }, plugin_settings: { custom_fields_values: { lichess_token: 'PASTED' } } } };
+  const o = await load(f).run(i);
+  assert.ok(!o.account); assert.ok(!seen.some(Boolean));
+});
+
+test('token from the OAuth connection: progress and personal puzzle', async () => {
   const seen = [];
   const f = async (url, opt) => { seen.push((opt.headers || {}).Authorization); return account({})(url, opt); };
   const i = input({}); i.trmnl.oauth = { access_token: 'OAUTHTOK' };
@@ -112,7 +148,8 @@ test('the shown puzzle stays until solved, then Solved + change and the next puz
   const withLast = { ...st, last: first.trmnl_state.last };
   const calls = [];
   const kept = await load(account({}, calls)).run(input({ lichess_token: 't' }, withLast));
-  assert.strictEqual(kept.puzzle.id, 'u3zfD'); assert.ok(!calls.some((u) => u.includes('puzzle/next'))); assert.strictEqual(kept.banner, '');
+  // the next puzzle is asked for side by side with the solved check (TRMNL's 5 s leave no time for one after the other); the kept one shows
+  assert.strictEqual(kept.puzzle.id, 'u3zfD'); assert.strictEqual(kept.trmnl_state.cur.id, 'u3zfD'); assert.strictEqual(kept.banner, '');
   assert.strictEqual(kept.account.trend, 'up'); assert.strictEqual(kept.account.delta, 12);
   const solved = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act([{ date: NOW * 1000, win: true, puzzle: { id: 'u3zfD' } }])), 'https://lichess.org/api/puzzle/next': resp(200, NEXT2) }))
     .run(input({ lichess_token: 't' }, withLast));
@@ -137,15 +174,6 @@ test('token path with the account service down still shows a puzzle', async () =
   assert.ok(o.puzzle && !o.none);
 });
 
-test('Chess.com username adds the tactics rating; a bad name or a failed call adds nothing', async () => {
-  const f = router({ 'https://api.chess.com/pub/puzzle': resp(200, CC), 'https://api.chess.com/pub/player/demo/stats': resp(200, { tactics: { highest: { rating: 1456 } } }) });
-  const o = await load(f).run(input({ source: 'chesscom', chesscom_user: 'Demo' }));
-  assert.strictEqual(o.account.rating, 1456);
-  const f2 = router({ 'https://api.chess.com/pub/puzzle': resp(200, CC), 'https://api.chess.com/pub/player/': resp(404, {}) });
-  assert.strictEqual((await load(f2).run(input({ source: 'chesscom', chesscom_user: 'Demo' }))).account, null);
-  assert.strictEqual((await load(f2).run(input({ source: 'chesscom', chesscom_user: '../x' }))).account, null);
-});
-
 test('activity: today, week, streak, seven day bars', () => {
   const api = load(async () => resp(599, {}));
   const t = NOW * 1000, d = 86400000;
@@ -157,10 +185,11 @@ test('activity: today, week, streak, seven day bars', () => {
 test('state stays under TRMNL limit', async () => {
   const o = await load(account({})).run(input({ lichess_token: 't' }));
   assert.ok(JSON.stringify(o.trmnl_state).length < 8000);
+  assert.strictEqual(o.trmnl_state.last.moves.length, 30);   // the moves survive in the saved puzzle (offline shows them too)
 });
 
 // ---- providers, one by one, with fixture JSON through a mocked fetch
-const ctxOf = (api, extra) => ({ settings: { difficulty: 'normal', chesscom_user: '' }, token: '', state: {}, nowS: NOW, cache: {}, ...extra });
+const ctxOf = (api, extra) => ({ settings: { difficulty: 'normal' }, token: '', state: {}, nowS: NOW, cache: {}, diag: {}, ...extra });
 
 test('provider lichess: capabilities follow the login; daily without, personal with', async () => {
   const api = load(account({}));
@@ -183,25 +212,47 @@ test('provider lichess: progress, solved check, one activity call per run', asyn
   await assert.rejects(load(account({ 'https://lichess.org/api/account': resp(401, {}) })).PROVIDERS.lichess.fetchProgress(ctxOf(api, { token: 'bad' })), (e) => e.status === 401);
 });
 
-test('provider chess.com: no personal features, tactics and rush from public stats only', async () => {
-  const stats = { tactics: { highest: { rating: 1456 }, lowest: { rating: 800 } }, puzzle_rush: { best: { score: 31 } }, chess_daily: { last: { rating: 1500 } } };
-  const f = router({ 'https://api.chess.com/pub/puzzle': resp(200, CC), 'https://api.chess.com/pub/player/demo/stats': resp(200, stats) });
-  const api = load(f), p = api.PROVIDERS.chesscom;
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.capabilities)), { personalPuzzles: false, solvedCheck: false, ratingHistory: false, streak: false });
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(p.active(ctxOf(api)))), JSON.parse(JSON.stringify(p.capabilities)));
-  assert.strictEqual((await p.fetchPuzzle(ctxOf(api))).source, 'chesscom');
-  const pr = await p.fetchProgress(ctxOf(api, { settings: { chesscom_user: 'Demo' } }));
-  assert.strictEqual(pr.rating, 1456); assert.strictEqual(pr.rush, 31); assert.strictEqual(pr.label, 'tactics'); assert.strictEqual(pr.history, undefined); assert.strictEqual(pr.streak, undefined);
-  assert.strictEqual(await p.isSolved('x', ctxOf(api)), false);
-  assert.strictEqual(await p.fetchProgress(ctxOf(api)), null);
-  const o = await load(f).run(input({ source: 'chesscom', chesscom_user: 'demo' }));
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(o.caps)), { personal: false, solved: false, history: false, streak: false });
-});
-
 test('run hands the view the capability flags: all with a login, none without', async () => {
   const withTok = await load(account({})).run(input({ lichess_token: 't' }));
   assert.deepStrictEqual(JSON.parse(JSON.stringify(withTok.caps)), { personal: true, solved: true, history: true, streak: true });
   const without = await load(account({})).run(input({}));
   assert.deepStrictEqual(JSON.parse(JSON.stringify(without.caps)), { personal: false, solved: false, history: false, streak: false });
   assert.strictEqual(without.account, null);
+});
+
+test('Lichess calls start side by side: activity, scopes, account and the next puzzle are all asked before any answers', async () => {
+  const started = [], waiters = [];
+  const base = account({});
+  const f = (url, opt) => { started.push(url.split('?')[0]); return new Promise((res) => waiters.push(() => res(base(url, opt)))); };
+  const p = load(f).run(input({ lichess_token: 't' }));
+  await new Promise((r) => setTimeout(r, 20));
+  for (const u of ['https://lichess.org/api/puzzle/activity', 'https://lichess.org/api/token/test', 'https://lichess.org/api/account', 'https://lichess.org/api/puzzle/next']) assert.ok(started.includes(u), u + ' started at once');
+  const flush = setInterval(() => { while (waiters.length) waiters.shift()(); }, 5);
+  const o = await p; clearInterval(flush);
+  assert.strictEqual(o.puzzle.id, 'u3zfD');
+});
+
+test('activity: a failed or slow call reuses the last good activity from the state, never 0 solved; the failure is said on screen', async () => {
+  const lines = [{ date: NOW * 1000 - 3600e3, win: true, puzzle: { id: 'a1' } }, { date: NOW * 1000 - 7200e3, win: false, puzzle: { id: 'a2' } }];
+  const good = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act(lines)) })).run(input({ lichess_token: 't' }));
+  assert.strictEqual(good.account.days[6].s, 1); assert.deepStrictEqual(Array.from(good.account.recent), [1, 0]);
+  assert.strictEqual(good.trmnl_state.act.l.length, 2); assert.strictEqual(good.problems, undefined);
+  const down = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(429, '') })).run(input({ lichess_token: 't' }, good.trmnl_state));
+  assert.strictEqual(down.account.days[6].s, 1, 'saved activity, not 0'); assert.deepStrictEqual(Array.from(down.problems), ['Lichess activity: HTTP 429']);
+  assert.deepStrictEqual(down.trmnl_state.act, good.trmnl_state.act, 'the saved activity is kept, not overwritten by nothing');
+  const thrown = await load(account({ 'https://lichess.org/api/puzzle/activity': () => { throw Object.assign(new Error('aborted'), { name: 'AbortError' }); } })).run(input({ lichess_token: 't' }, good.trmnl_state));
+  assert.strictEqual(thrown.account.days[6].s, 1); assert.deepStrictEqual(Array.from(thrown.problems), ['Lichess activity: timeout']);
+  const empty = await load(account({})).run(input({ lichess_token: 't' }));
+  assert.deepStrictEqual(Array.from(empty.problems), ['Lichess activity: 0 items']);
+  const acctDown = await load(account({ 'https://lichess.org/api/account': resp(500, {}) })).run(input({ lichess_token: 't' }));
+  assert.ok(Array.from(acctDown.problems).includes('Lichess account: HTTP 500'));
+});
+
+test('a token without puzzle:read says so on screen: Reconnect Lichess', async () => {
+  const o = await load(account({ 'https://lichess.org/api/token/test': resp(200, { t: { scopes: 'email:read', userId: 'demo' } }) })).run(input({ lichess_token: 't' }));
+  assert.strictEqual(o.notice, 'Reconnect Lichess: missing puzzle permission');
+  const ok = await load(account({})).run(input({ lichess_token: 't' }));
+  assert.strictEqual(ok.notice, '');
+  const unknown = await load(account({ 'https://lichess.org/api/token/test': resp(500, '') })).run(input({ lichess_token: 't' }));
+  assert.strictEqual(unknown.notice, '', 'no scope answer: no claim');
 });

@@ -1,6 +1,28 @@
 {% template main %}
-{%- capture ym_icon -%}<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64"><path d="M29.5 3h5v5h5v5h-5v4h-5v-4h-5V8h5z"/><path d="M12 23c6-3 13-4.500 20-4.500S46 20 52 23l-6 23H18z"/><rect x="13" y="49" width="38" height="9" rx="3"/><circle cx="49" cy="47" r="14" fill="#fff"/><circle cx="49" cy="47" r="11"/><path d="M43.500 47.500l4 4 7.500-8" fill="none" stroke="#fff" stroke-width="3.600" stroke-linecap="round" stroke-linejoin="round"/></svg>{%- endcapture -%}
+{%- capture ym_icon -%}<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="4 3 37 39"><defs><mask id="ck" maskUnits="userSpaceOnUse" x="0" y="0" width="45" height="45"><rect width="45" height="45" fill="#fff"/><path d="M 16.5,29.5 L 20.5,33.5 L 28.5,25.5" fill="none" stroke="#000" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></mask></defs><g mask="url(#ck)"><g fill="none" fill-rule="evenodd" stroke="#000000" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M 22.5,11.63 L 22.5,5" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 22.5,25 C 22.5,25 27,17.5 25.5,14.5 C 25.5,14.5 24.5,12 22.5,12 C 20.5,12 19.5,14.5 19.5,14.5 C 18,17.5 22.5,25 22.5,25" fill="#000000" stroke-linecap="butt" stroke-linejoin="miter"/><path d="M 12.5,37 C 18,40.5 27,40.5 32.5,37 L 32.5,30 C 32.5,30 41.5,25.5 38.5,19.5 C 34.5,13 25,16 22.5,23.5 L 22.5,27 L 22.5,23.5 C 20,16 10.5,13 6.5,19.5 C 3.5,25.5 12.5,30 12.5,30 L 12.5,37" fill="#000000" stroke="#000000"/><path d="M 19.5,8 L 25.5,8" fill="none" stroke="#000000" stroke-width="3.2" stroke-linejoin="miter"/><path d="M 32,29.5 C 32,29.5 40.5,25.5 38.03,19.85 C 34.15,14 25,18 22.5,24.5 L 22.5,26.6 L 22.5,24.5 C 20,18 10.85,14 6.97,19.85 C 4.5,25.5 13,29.5 13,29.5" fill="none" stroke="#000000"/><path d="M 12.5,30 C 18,27 27,27 32.5,30 M 12.5,33.5 C 18,30.5 27,30.5 32.5,33.5 M 12.5,37 C 18,34 27,34 32.5,37" fill="none" stroke="#000000"/></g></g></svg>{%- endcapture -%}
 {%- assign cf = trmnl.plugin_settings.custom_fields_values -%}
+<style>
+[data-ym-panel]{height:100%;width:100%;min-height:0;align-items:stretch;justify-content:flex-start;text-align:left}
+[data-ym-fill]{flex:1 1 0;min-height:0;overflow:hidden;align-self:stretch}
+[data-ym-bottom]{align-items:stretch;align-self:stretch}
+[data-ym-qrbox]{align-items:center;justify-content:center}
+[data-ym-b],.ym-b{font-weight:700}
+.ym-nw{white-space:nowrap}
+[data-ym-wrap]{white-space:normal}
+.ym-stretch{align-self:stretch}
+.ym-rcard{min-width:9em;flex-basis:0;overflow:hidden}
+[data-ym-bottom]{flex-wrap:wrap}
+.screen--lg .ym-rcard{min-width:13em}
+.ym-fig{display:inline-block;vertical-align:-0.22em}
+.ym-mv{width:100%;border-collapse:collapse}
+.ym-mv td{padding:0.12em 0.4em}
+.ym-mv td.ym-n{width:2.6em;text-align:right;padding:0.12em 0.5em}
+.ym-hl{display:block;border-radius:3px;padding:0 0.3em;background:#000;color:#fff}
+.screen--dark-mode .ym-hl{background:#fff;color:#000}
+.ym-chip{display:inline-block;border:2px solid currentColor;border-radius:6px;padding:0 0.35em}
+.ym-chip--win{background:#000;color:#fff;border-color:#000}
+.screen--dark-mode .ym-chip--win{background:#fff;color:#000;border-color:#fff}
+</style>
 <div class="layout gap--small" data-ym>
 {%- if none %}
   <div class="flex flex--col flex--center-x gap--small">
@@ -19,13 +41,13 @@
 {%- unless ym_hide == 'true' or ym_hide == 'yes' or view != 1 %}
 <div class="title_bar">
   <img class="image image--adaptive w--[28px] h--[28px]" src="data:image/svg+xml;base64,{{ ym_icon | base64_encode }}" alt="">
-  <span class="title">{{ trmnl.plugin_settings.instance_name | default: "Your Move" }}</span>
-  {%- if puzzle.source == 'chesscom' %}<span class="instance">Chess.com</span>{% elsif puzzle %}<span class="instance">Lichess</span>{% endif %}
+  <span class="title">{{ trmnl.plugin_settings.instance_name | default: "Lichess" }}</span>
+  {%- if puzzle %}<span class="instance">Puzzles</span>{% endif %}
 </div>
 {%- endunless %}
 {%- unless none %}
 <script type="text/javascript">
-var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, account: {{ account | json }}, caps: {{ caps | json }}, t: {{ t | json }}, to_move: {{ to_move | json }}, banner: {{ banner | json }}, notice: {{ notice | json }}, stale: {{ stale | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, account: {{ account | json }}, caps: {{ caps | json }}, t: {{ t | json }}, to_move: {{ to_move | json }}, banner: {{ banner | json }}, notice: {{ notice | json }}, problems: {{ problems | json }}, stale: {{ stale | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 {{DRAW}}
 // ==== PAGE

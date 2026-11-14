@@ -1,45 +1,34 @@
 ---
-strategy: static
+strategy: polling
 no_screen_padding: 'no'
 dark_mode: 'no'
 static_data: ''
 polling_verb: get
 framework_version: 3.4.6
 serverless_language: node
-refresh_interval_floor:
+refresh_interval_floor: ''
 polling_url: ''
 polling_headers: ''
-polling_body:
-oauth_enabled: 'false'
-oauth_pkce_enabled: 'no'
+polling_body: ''
+id: 540460
+oauth_enabled: 'true'
+oauth_pkce_enabled: 'yes'
+oauth_authorize_url: https://lichess.org/oauth
+oauth_token_url: https://lichess.org/api/token
+oauth_scopes: puzzle:read
+oauth_auth_params: '{"code_challenge_method":"S256"}'
 custom_fields:
 - keyname: author_info
   name: About This Plugin
   field_type: author_bio
-  description: 'Chess puzzles at your level, from Lichess and Chess.com. A crisp e-ink chessboard with the puzzle to solve, a QR code that opens exactly this puzzle on your phone, and with a Lichess login your rating, streak and week at a glance. Without a login it shows the daily puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) and <strong>Chess.com</strong> (chess.com) public APIs. Pieces drawn for this plugin.'
+  description: 'Unofficial. Lichess puzzles at your level on your TRMNL. A crisp e-ink chessboard with the puzzle to solve and the moves that led to it, and a QR code that opens exactly this puzzle on your phone. Connect Lichess with the OAuth button above for unseen puzzles at your rating, your rating, streak and week. Without a login it shows the Lichess daily puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) API. Pieces: Colin M.L. Burnett (Cburnett), BSD licence. Not affiliated with or endorsed by Lichess.org.'
   github_url: https://github.com/ExcuseMi/trmnl-your-move-plugin
   category: games
-- keyname: source
-  group: Puzzle
-  field_type: select
-  name: Puzzle source
-  description: Which daily puzzle to show. With a Lichess login the Lichess choice shows puzzles at your level instead.
-  options:
-  - Lichess daily: lichess
-  - Chess.com daily: chesscom
-  - Alternate by day: alternate
-  default: lichess
-- keyname: lichess_token
-  group: Lichess
-  field_type: password
-  name: Lichess API token
-  description: 'Optional. Create one at https://lichess.org/account/oauth/token/create with only the scope "Read puzzle activity" (puzzle:read). With it you get unseen puzzles at your rating and your progress.'
-  optional: true
 - keyname: difficulty
   group: Lichess
   field_type: select
   name: Difficulty
-  description: Puzzle difficulty relative to your puzzle rating (needs the Lichess token).
+  description: Puzzle difficulty relative to your puzzle rating. Connect Lichess with the OAuth button above to get puzzles at your level.
   options:
   - Easiest: easiest
   - Easier: easier
@@ -47,12 +36,6 @@ custom_fields:
   - Harder: harder
   - Hardest: hardest
   default: normal
-- keyname: chesscom_user
-  group: Chess.com
-  field_type: string
-  name: Chess.com username
-  description: 'Optional. Shows your best tactics rating. Chess.com has no public per-user puzzle feed, so the puzzle itself stays the daily one.'
-  optional: true
 - keyname: orientation
   group: Board
   field_type: select
@@ -75,5 +58,6 @@ custom_fields:
   field_type: boolean
   name: Hide title bar
   default: false
-name: Your Move
+name: Lichess
+description: ''
 refresh_interval: 60

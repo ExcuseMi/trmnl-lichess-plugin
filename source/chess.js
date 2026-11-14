@@ -30,3 +30,16 @@ function lichessPosition(j) {
   r.last = last ? last.from + last.to : '';
   return r;
 }
+// The moves that led to a Lichess puzzle, as move pairs [number, white SAN, black SAN] (last MOVES_MAX pairs), SAN from chess.js.
+// Empty when the PGN does not replay, or its position is not the puzzle's: never a list that does not match the board.
+var MOVES_MAX = 30;
+function lichessMoves(j) {
+  var p = j.puzzle || {}, g = j.game || {}, toks = String(g.pgn || '').split(/\s+/).filter(Boolean);
+  var n = p.initialPly == null ? toks.length : +p.initialPly + 1, sans = [], ch = new CHESSJS.Chess();
+  if (!(n > 0) || n > toks.length) return [];
+  try { for (var i = 0; i < n; i++) sans.push(ch.move(toks[i]).san); } catch (e) { return []; }
+  if (p.fen && parseFen(ch.fen()).board !== parseFen(p.fen).board) return [];
+  var pairs = [];
+  for (var k = 0; k < sans.length; k += 2) pairs.push([k / 2 + 1, sans[k], sans[k + 1] || '']);
+  return pairs.slice(-MOVES_MAX);
+}

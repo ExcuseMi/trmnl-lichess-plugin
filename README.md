@@ -1,22 +1,19 @@
-# Your Move
+# Lichess
 
-Chess puzzles at your level, from Lichess and Chess.com, for [TRMNL](https://trmnl.com) e-paper displays.
+Unofficial. Lichess puzzles at your level for [TRMNL](https://trmnl.com) e-paper displays. Not affiliated with or endorsed by Lichess.org.
 
-- A crisp board drawn for e-ink: dark squares are grey on 2-bit and 4-bit screens and hatched on 1-bit, last move framed, coordinates, own piece set.
-- A QR code that opens exactly the shown puzzle (`https://lichess.org/training/<id>` or the Chess.com daily page).
-- With a Lichess login: puzzles at your rating, kept on screen until you solve them, then "Solved! +N"; your rating with its change, a rating history, solved today and this week, streak and a 7-day bar row.
-- Without a login: the daily puzzle and a hint to connect Lichess.
-- Offline: the last good puzzle stays, marked; with nothing saved a clear "No puzzle" screen.
+- The puzzle position on a framed board (cburnett pieces), the last move tinted, framed and drawn as an arrow.
+- Side panel cards: Your turn, the puzzle and the game it comes from, the moves that led to it (Lichess-style list), your rating with the last results, sparkline and week, and a QR code that opens exactly this puzzle.
+- Without a login: the Lichess daily puzzle. Connect Lichess with the OAuth button (scope `puzzle:read`): unseen puzzles at your rating, kept until solved, then "Solved! +N".
+- A failed Lichess call is said on screen ("Lichess activity: timeout"); the last good activity from the saved state stands in.
 - All four views, 1-bit, greyscale and dark mode. Texts are English for now.
 
 ## Settings
 
 | Setting | What it does |
 |---|---|
-| Puzzle source | Lichess daily, Chess.com daily, or alternate by day |
-| Lichess API token | Optional. Create at <https://lichess.org/account/oauth/token/create> with only `puzzle:read`. Never shown or logged |
-| Difficulty | Easiest to hardest, relative to your puzzle rating (needs the token) |
-| Chess.com username | Optional. Shows your best tactics rating. Chess.com has no public per-user puzzle feed, so the puzzle stays the daily one |
+| Lichess (OAuth button) | Optional login, scope `puzzle:read` only. The token is never shown or logged |
+| Difficulty | Easiest to hardest, relative to your puzzle rating (needs the login) |
 | Board orientation, Coordinates, Hide title bar | As named |
 
 ## Build and test
@@ -24,21 +21,23 @@ Chess puzzles at your level, from Lichess and Chess.com, for [TRMNL](https://trm
 | What | Command |
 |---|---|
 | Build `plugin/src/transform.js` and `shared.liquid` from `source/` | `node tools/build.js` |
-| Logic tests (FEN, PGN replay, sources, token, solved detection, 401, offline, state size) | `node --test test/` |
-| Review renders (needs trmnl.com for the framework CSS) | `cd plugin && YM_CASES="$(cat <cases.json>)" YM_OUT=<dir> trmnlp test ../tools/render_sheet_spec.rb` |
+| Regenerate `source/pieces.js` from `assets/pieces/cburnett` | `node tools/pieces.js` |
+| Logic and view tests | `node --test test/` |
+| Review renders (needs trmnl.com for the Framework; checks at most 4 text sizes in the panel) | `cd plugin && YM_CASES="$(cat <cases.json>)" YM_OUT=<dir> trmnlp test ../tools/render_sheet_spec.rb` |
+| Lint | `cd plugin && trmnlp lint` |
 
-Edit `source/`, never the files in `plugin/src/` that the build writes.
+Edit `source/`, never the files in `plugin/src/` that the build writes. `settings.yml` is not built: it comes from `trmnlp pull`.
 
 ## Choices
 
 | Topic | Choice |
 |---|---|
-| Position | The puzzle's own FEN. When an answer has none, the game's PGN is replayed with chess.js (vendored, minified, in the transform: serverless has no npm) |
-| Board | Drawn as SVG in the page script (needs hatching and e-ink tuning no board library offers) |
-| Pieces | Drawn for this plugin. Checked and not used: Lichess sets (GPL, CC BY-SA or NC), Wikimedia cburnett (CC BY-SA / GPL) |
-| QR | Platform `qr_code` Liquid filter |
-| Board CSS | Exception approved by the owner, 2026-11-14: a board library's own CSS would be allowed. None is used so far |
+| Position and moves | The puzzle's FEN; the moves before it from the game PGN up to `initialPly`, replayed with chess.js (vendored) and dropped if they do not reach the FEN |
+| Lichess calls | Activity, token scopes, account and the next puzzle start side by side (3.5 s each, inside TRMNL's 5 s) |
+| Board | Drawn as SVG in the page script |
+| Pieces | cburnett (Colin M.L. Burnett) from Wikimedia Commons, under the BSD option the files offer; see LICENSES/pieces.md |
+| QR | Platform `qr_code` Liquid filter, whole pixels per module, never one a 1-bit panel cannot read |
 
 ## Licence
 
-All rights reserved, as the other plugins of this account. chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform; its licence is in [LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt). Puzzles belong to Lichess (CC0 database) and Chess.com; data comes from their public APIs.
+All rights reserved, as the other plugins of this account. chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform ([LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt)); the cburnett pieces are BSD ([LICENSES/cburnett-BSD-3.txt](LICENSES/cburnett-BSD-3.txt)). Puzzles belong to Lichess (CC0 database); data comes from its public API.

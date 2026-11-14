@@ -6,7 +6,7 @@ const ROOT = path.join(__dirname, '..');
 const PARTS = ['vendor/chess.min.js', 'chess.js', 'puzzle.js'];
 const rd = (p) => fs.readFileSync(path.join(ROOT, 'source', p), 'utf8');
 function bundle() { return PARTS.map((p) => '// ==== ' + p + '\n' + rd(p)).join('\n'); }
-function page() { return rd('shared.liquid').replace('{{DRAW}}', () => rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
+function page() { return rd('shared.liquid').replace('{{DRAW}}', () => rd('pieces.js') + rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
 module.exports = { bundle, page };
 if (require.main === module) {
   const t = path.join(ROOT, 'plugin/src/transform.js'), s = path.join(ROOT, 'plugin/src/shared.liquid');
