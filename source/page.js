@@ -3,6 +3,11 @@
 (function () {
   if (!window.TRMNLPaint && document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); return; }
   main();
+  // Profile chart: a calm y range of at least 100 rating points around the data, three light gridlines with their numbers.
+  function profileY(h) {
+    var lo = Math.min.apply(null, h), hi = Math.max.apply(null, h), span = Math.max(100, Math.ceil((hi - lo) * 1.4 / 10) * 10), mid = (lo + hi) / 2, min = Math.floor((mid - span / 2) / 10) * 10, max = min + span;
+    return { visible: true, min: min, max: max, tickPositions: [min, min + span / 2, max], title: { text: null }, gridLineWidth: window.TRMNLPaint.px(1, { el: YM.chart }), endOnTick: false, startOnTick: false };
+  }
   // The rating history as a Framework chart (TRMNLCharts over Highcharts), only where its container shows (lg full view).
   function spark() {
     var id = YM.chart || 'ym-spark', el = document.getElementById(id), h = YM.history || [];
@@ -10,7 +15,8 @@
     window.TRMNLCharts.watch(id, function () {
       return window.Highcharts.chart(id, window.TRMNLCharts.merge(window.TRMNLCharts.options({ el: id }), {
         chart: { type: 'line', height: el.clientHeight - 6, spacing: [10, 10, 10, 10] },   // room for the last point's marker inside the container
-        xAxis: { visible: false }, yAxis: { visible: false }, legend: { enabled: false }, tooltip: { enabled: false }, accessibility: { enabled: false }, credits: { enabled: false },
+        xAxis: YM.profile ? { visible: true, labels: { enabled: false }, tickLength: 0, gridLineWidth: 0, lineWidth: window.TRMNLPaint.px(1, { el: id }) } : { visible: false },
+        yAxis: YM.profile ? profileY(h) : { visible: false }, legend: { enabled: false }, tooltip: { enabled: false }, accessibility: { enabled: false }, credits: { enabled: false },
         plotOptions: { series: { animation: false, enableMouseTracking: false, lineWidth: window.TRMNLPaint.px(3, { el: id }), marker: { enabled: false } } },
         series: [{ data: h.map(function (v, i) { return i === h.length - 1 ? { y: v, marker: { enabled: true, radius: window.TRMNLPaint.px(4, { el: id }) } } : v; }), color: window.TRMNLCharts.series(0, 1, { el: id }) }]
       }));
@@ -65,7 +71,41 @@
       if (n && over()) hide(n);
     });
   }
+  // Profile (no board): what does not fit goes, in this order: the chart (its box under 64 px), the ratings header, the least played
+  // ratings, the last stats. Whatever is left fills its column: the card that gave way to the chart (lg:grow-0) grows again.
+  function profileMain() {
+    var root = document.querySelector('[data-ym]');
+    if (!root) return;
+    var q = function (sel) { return Array.prototype.filter.call(document.querySelectorAll(sel), function (n) { return n.getClientRects().length; }); };
+    var over = function () {
+      if (root.scrollHeight > root.clientHeight + 1 || root.scrollWidth > root.clientWidth + 1) return true;
+      return q('[data-ym-col]').some(function (c) { return c.scrollHeight > c.clientHeight + 1; }) || q('[data-ym-card]').some(function (c) { return c.scrollHeight > c.clientHeight + 1; }) || q('[data-ym-panel] .label, [data-ym-panel] .value').some(wraps);
+    };
+    var fit = function () {
+      var el = document.querySelector('[data-ym-part="spark"]'), ch = document.querySelector('[data-ym-part="chart"]');
+      var rc = document.querySelector('[data-ym-card="ratings"]');
+      // Chart and ratings in one column (half vertical): the least played ratings (down to 4) give way before the chart does.
+      if (ch && el && rc && ch.parentNode === rc.parentNode && ch.getClientRects().length) { var rr = q('[data-ym-row]'); while (el.clientHeight < 90 && rr.length > 4) hide(rr.pop()); }
+      if (ch && ch.getClientRects().length && (!el || el.clientHeight < 64 || el.clientWidth < 120)) {
+        hide(ch); if (ch.closest('[data-ym-part="chartcol"]')) hide(ch.closest('[data-ym-part="chartcol"]'));
+        // the chart's column keeps only the form: it takes the height the chart gave up
+        q('[data-ym-card="form"]').forEach(function (f) { if (f.parentNode === ch.parentNode) f.setAttribute('class', f.getAttribute('class').replace('shrink-0', 'grow')); });
+        Array.prototype.forEach.call(document.querySelectorAll('[class*="lg:grow-0"]'), function (n) { n.setAttribute('class', n.getAttribute('class').replace(' lg:grow-0', '')); });
+      }
+      var hd = q('[data-ym-part="rhead"]')[0], rows, stats;
+      if (over() && hd) hide(hd);
+      rows = q('[data-ym-row]'); stats = q('[data-ym-stat]');
+      // Ratings are the main thing: rows and stats lines give way by turns, the last stats lines and rows last.
+      while (over() && rows.length > 3) hide(rows.pop());
+      while (over() && stats.length > 3) hide(stats.pop());
+      while (over() && rows.length > 1) hide(rows.pop());
+      while (over() && stats.length > 2) hide(stats.pop());
+    };
+    var settle = function () { fit(); spark(); root.setAttribute('data-ym-drawn', '1'); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle, settle); else settle();
+  }
   function main() {
+    if (YM.profile) return profileMain();
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
     if (!root || !bd || !YM.puzzle) return;
     var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };

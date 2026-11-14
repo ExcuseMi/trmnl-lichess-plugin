@@ -1,12 +1,12 @@
 # Handoff notes
 
-Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). One setting `mode`: Puzzles (default) or Your games (`field(input, 'mode')`; anything but `games` is puzzles).
+Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). One setting `mode`: Puzzles (default), Your games or Profile (`field(input, 'mode')`; anything but `games` or `profile` is puzzles).
 
 ## Source and build
 
 | Path | What |
 |---|---|
-| `source/chess.js`, `source/puzzle.js`, `source/games.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, "Your games" mode, view model for Liquid |
+| `source/chess.js`, `source/puzzle.js`, `source/games.js`, `source/profile.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, "Your games" mode, view model for Liquid |
 | `source/shared.liquid` | All markup: layout, panels, move list, QR, connect screen, title bar (Framework classes only) |
 | `source/draw.js`, `source/pieces.js` | The board SVG (the only custom drawing); `pieces.js` is generated |
 | `source/page.js` | Page script: draws the board, settles its size, fits the panel, draws the rating chart |
@@ -42,7 +42,7 @@ Rendered checks on every case: no overflow, no page errors, at most 4 text sizes
 
 ## Title bar modes
 
-One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games"; reserved `top` "Top game", `following` "Following %s".
+One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games", `profile` "Profile"; reserved `top` "Top game", `following` "Following %s".
 
 ## Your games mode (`source/games.js`)
 
@@ -55,6 +55,22 @@ One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "P
 | 401 / 403 | Connect screen: reconnect |
 
 The moves call (`/game/export`) and the last-game call run after the playing list with a deadline inside TRMNL's 5 s. The shown game is saved as `gm` for an "Offline, last game" screen. The playing list needs no scope beyond a valid token, so `oauth_scopes` stays `puzzle:read` (unproven live: tests use mocks).
+
+## Profile mode (`source/profile.js`)
+
+| Part | Source | Rule |
+|---|---|---|
+| Header | `/api/account` | name, title chip, "Member since Mon YYYY" |
+| Ratings | account perfs + `/api/user/{u}/rating-history` | perfs with games > 0, most played first, max 8; `?` in its own column when provisional; change = rating now minus the last point on or before day -30 |
+| Few ratings (1-2) | same | hero card (perf, big rating, change, games) instead of the table |
+| Chart | rating history | most played rating perf (puzzles only if alone), last 90 days, max 45 points; y range >= 100, 3 gridlines; X only, hidden when its box is under 64 px |
+| Stats | account count, playTime, puzzle, storm | games, won/lost/drawn, time played, puzzles (if played), storm best |
+| Form | `/api/games/user/{u}?max=10&rated=true` | W/L/D chips, oldest left; W black, L outline, D grey box (white on 1-bit) |
+
+- Calls: account, history and games start side by side (all at once when the name is saved in `pf`; else history and games right after the account). Failures are said on screen ("Lichess history: HTTP 503"); the saved `pf` stands in per part; account 401/403 = connect screen; no account and no saved profile = calm screen.
+- Layout rules: lists are packed (row pitch <= 1.6x line height, checked); never spread to fill. Spare height goes to the chart (X) or the packed group sits as one block; the ratings table is top-aligned. Full view has two arrangements (OG: head+ratings | stats+form; X: head+ratings+stats | chart+form). The page script hides, in order: chart, ratings header, least played ratings, last stats lines.
+- Quadrant: username, top 3 ratings, form chips only.
+- Fixtures `plugin/tests/fixtures/profile_*`; scenarios `profile_many`, `profile_new`, `profile_fail`, `profile_partial`; unit tests `test/profile.test.js`; renders `renders/design-r3.png`.
 
 ## Quadrant
 

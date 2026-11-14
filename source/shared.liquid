@@ -20,6 +20,136 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
     <span class="description text--center">{{ calm_line | default: t.none2 }}</span>
     {%- for pr in problems %}<span class="label text--center" data-ym-problem>{{ pr }}</span>{% endfor %}
   </div>
+{%- elsif mode == "profile" %}
+  {%- comment -%} Profile: no board. Blocks are captured once and placed per view. One panel style, one gap. Lists are packed (normal row
+  spacing, never spread); spare height goes to the chart (X) or the packed group is centred in its panel as one block. The page script
+  hides what does not fit: the chart, the ratings header, the least played ratings, the last stats. {%- endcomment -%}
+  {%- if view == 4 %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--1" %}{% else %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--2" %}{% endif %}
+  {%- assign ym_chart_on = false %}{% if pf.chart and view != 4 %}{% assign ym_chart_on = true %}{% endif %}
+  {%- assign ym_few = false %}{% if pf.rows.size < 3 and view != 4 %}{% assign ym_few = true %}{% endif %}
+  {%- comment -%} One or two ratings: a hero card (perf, big rating, change, games) instead of a table; in the full view everything but the chart sits in the left column. {%- endcomment -%}
+  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock = " lg:grow-0" %}{% else %}{% assign ym_unlock = "" %}{% endif %}
+  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock_r = " lg:grow-0" %}{% else %}{% assign ym_unlock_r = "" %}{% endif %}
+  {%- if view == 1 and ym_few %}{% assign ym_stats_grow = "" %}{% else %}{% assign ym_stats_grow = " grow" %}{% endif %}
+  {%- capture ym_b_head %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="header">
+      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]" src="{{ ym_wK }}" alt="">
+      <div class="flex flex--col flex--left text--left">
+        <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="value value--small font--bold">{{ pf.name }}</span></div>
+        {%- if pf.since != "" %}<span class="label">{{ t.member }} {{ pf.since }}</span>{% endif %}
+      </div>
+    </div>
+  {%- endcapture %}
+  {%- capture ym_b_rat %}
+    {%- if view == 4 %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--col flex--stretch-x gap--xsmall lg:gap--medium" data-ym-card="ratings">
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="label font--bold">{{ pf.name }}</span></div>
+      {%- for r in pf.rows %}{% if forloop.index > 3 %}{% break %}{% endif %}
+      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
+        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
+        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
+        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
+        <span class="label w--[56px] flex--end">{{ r.change }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- elsif ym_few %}
+    <div class="{{ ym_pp }} flex flex--row flex--center-x flex--center-y gap--medium grow" data-ym-card="ratings">
+      {%- for r in pf.rows %}
+      <div class="flex flex--col flex--center-x gap--xsmall" data-ym-row data-games="{{ r.games }}">
+        <span class="label">{{ r.name }}</span>
+        <div class="flex flex--row flex--center-y gap--small"><span class="value lg:value--large font--bold">{{ r.rating }}</span>{% if r.prov %}<span class="label">?</span>{% endif %}{% if r.change != "" %}<span class="value value--xsmall">{{ r.change }}</span>{% endif %}</div>
+        <span class="label">{{ r.games_text }} {{ t.games_w }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- else %}
+    <div class="{{ ym_pp }} flex flex--col flex--stretch-x gap--small lg:gap--medium grow{{ ym_unlock_r }}" data-ym-card="ratings">
+      <div class="flex flex--row flex--center-y gap--small" data-ym-part="rhead">
+        <span class="label font--bold grow">{{ t.ratings }}</span>
+        <span class="label w--[72px] flex--end">{{ t.rating_h }}</span>
+        <span class="label w--[14px]"></span>
+        <span class="label w--[72px] flex--end">{{ t.change_h }}</span>
+        <span class="label w--[64px] flex--end">{{ t.games_h }}</span>
+      </div>
+      {%- for r in pf.rows %}
+      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
+        {%- if view == 3 %}
+        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
+        {%- else %}
+        <span class="label grow">{{ r.name }}</span>
+        {%- endif %}
+        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
+        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
+        <span class="label w--[72px] flex--end">{{ r.change }}</span>
+        <span class="label w--[64px] flex--end">{{ r.games_text }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- capture ym_b_chart %}
+    {%- if ym_chart_on %}
+    <div class="{{ ym_pp }} hidden lg:flex lg:grow flex--col flex--stretch-x gap--small" data-ym-card="chart" data-ym-part="chart">
+      <div class="flex flex--row flex--between gap--small"><span class="label font--bold">{{ pf.chart.name }}, {{ t.chart_h }}</span><span class="label">{{ t.low }} {{ pf.chart.lo }} · {{ t.high }} {{ pf.chart.hi }}</span></div>
+      <div class="w--full grow" id="{{ ym_chart }}" data-ym-part="spark"></div>
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- assign ym_stats_grow_keep = ym_stats_grow %}{% assign ym_stats_grow = "" %}
+  {%- capture ym_b_stats_x %}
+    {%- if pf.stats.size > 0 %}
+    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small" data-ym-card="stats">
+      {%- for s in pf.stats %}
+      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- assign ym_stats_grow = ym_stats_grow_keep %}
+  {%- capture ym_b_stats %}
+    {%- if pf.stats.size > 0 %}
+    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small{{ ym_stats_grow }}{{ ym_unlock }}" data-ym-card="stats">
+      {%- for s in pf.stats %}
+      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- capture ym_b_form %}
+    <div class="{{ ym_pp }} flex flex--col flex--left gap--small{% if view == 4 %} grow flex--center-y{% else %} shrink-0{% endif %}" data-ym-card="form">
+      {%- if view != 4 %}<span class="label">{{ t.recent }}</span>{% endif %}
+      {%- if pf.form.size > 0 %}
+      <div class="flex flex--row{% if view != 4 %} flex--wrap{% else %} w--full{% endif %} flex--center-y gap--xsmall" data-ym-part="form">
+        {%- for c in pf.form %}<span class="label label--outline{% if c.c == "W" %} label--inverted{% elsif c.c == "D" %} bg--gray-60 1bit:bg--white{% endif %} flex--center w--[{% if view == 4 %}30{% else %}26{% endif %}px]" data-ym-chip="{{ c.c }}">{{ c.c }}</span>{% endfor %}
+      </div>
+      {%- else %}<span class="label">{{ t.no_recent }}</span>{% endif %}
+      {%- if stale %}<span class="label">{{ t.offline_pf }}</span>{% endif %}
+      {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
+    </div>
+  {%- endcapture %}
+  {%- assign ym_col = "flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" %}
+  {%- if view == 1 and ym_few %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
+  {%- elsif view == 1 %}
+  {%- comment -%} Two arrangements, one per device size: OG (no chart) head and ratings | stats and form; X: head, ratings and stats | chart and form. {%- endcomment -%}
+  {%- if ym_chart_on %}{% assign ym_og = " lg:hidden" %}{% else %}{% assign ym_og = "" %}{% endif %}
+  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
+  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- if ym_chart_on %}
+  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats_x }}</div>
+  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_chart }}{{ ym_b_form }}</div>
+  {%- endif %}
+  {%- elsif view == 2 %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
+  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- elsif view == 3 %}
+  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_chart }}{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- else %}
+  <div class="flex flex--col flex--stretch-x gap--small grow" data-ym-panel data-ym-col>{{ ym_b_rat }}{{ ym_b_form }}</div>
+  {%- endif %}
 {%- else %}
   <div class="flex flex-none" data-ym-board></div>
   <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel>
@@ -143,7 +273,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 <script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
 <script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {{ account.history | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {% if mode == "profile" and pf.chart %}{{ pf.chart.pts | json }}{% else %}{{ account.history | json }}{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 {{DRAW}}
 // ==== PAGE

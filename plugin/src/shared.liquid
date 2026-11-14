@@ -43,6 +43,136 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
     <span class="description text--center">{{ calm_line | default: t.none2 }}</span>
     {%- for pr in problems %}<span class="label text--center" data-ym-problem>{{ pr }}</span>{% endfor %}
   </div>
+{%- elsif mode == "profile" %}
+  {%- comment -%} Profile: no board. Blocks are captured once and placed per view. One panel style, one gap. Lists are packed (normal row
+  spacing, never spread); spare height goes to the chart (X) or the packed group is centred in its panel as one block. The page script
+  hides what does not fit: the chart, the ratings header, the least played ratings, the last stats. {%- endcomment -%}
+  {%- if view == 4 %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--1" %}{% else %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--2" %}{% endif %}
+  {%- assign ym_chart_on = false %}{% if pf.chart and view != 4 %}{% assign ym_chart_on = true %}{% endif %}
+  {%- assign ym_few = false %}{% if pf.rows.size < 3 and view != 4 %}{% assign ym_few = true %}{% endif %}
+  {%- comment -%} One or two ratings: a hero card (perf, big rating, change, games) instead of a table; in the full view everything but the chart sits in the left column. {%- endcomment -%}
+  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock = " lg:grow-0" %}{% else %}{% assign ym_unlock = "" %}{% endif %}
+  {%- if ym_chart_on and view == 3 %}{% assign ym_unlock_r = " lg:grow-0" %}{% else %}{% assign ym_unlock_r = "" %}{% endif %}
+  {%- if view == 1 and ym_few %}{% assign ym_stats_grow = "" %}{% else %}{% assign ym_stats_grow = " grow" %}{% endif %}
+  {%- capture ym_b_head %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="header">
+      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]" src="{{ ym_wK }}" alt="">
+      <div class="flex flex--col flex--left text--left">
+        <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="value value--small font--bold">{{ pf.name }}</span></div>
+        {%- if pf.since != "" %}<span class="label">{{ t.member }} {{ pf.since }}</span>{% endif %}
+      </div>
+    </div>
+  {%- endcapture %}
+  {%- capture ym_b_rat %}
+    {%- if view == 4 %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--col flex--stretch-x gap--xsmall lg:gap--medium" data-ym-card="ratings">
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall" data-ym-part="name">{% if pf.title != "" %}<span class="label label--inverted">{{ pf.title }}</span>{% endif %}<span class="label font--bold">{{ pf.name }}</span></div>
+      {%- for r in pf.rows %}{% if forloop.index > 3 %}{% break %}{% endif %}
+      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
+        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
+        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
+        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
+        <span class="label w--[56px] flex--end">{{ r.change }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- elsif ym_few %}
+    <div class="{{ ym_pp }} flex flex--row flex--center-x flex--center-y gap--medium grow" data-ym-card="ratings">
+      {%- for r in pf.rows %}
+      <div class="flex flex--col flex--center-x gap--xsmall" data-ym-row data-games="{{ r.games }}">
+        <span class="label">{{ r.name }}</span>
+        <div class="flex flex--row flex--center-y gap--small"><span class="value lg:value--large font--bold">{{ r.rating }}</span>{% if r.prov %}<span class="label">?</span>{% endif %}{% if r.change != "" %}<span class="value value--xsmall">{{ r.change }}</span>{% endif %}</div>
+        <span class="label">{{ r.games_text }} {{ t.games_w }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- else %}
+    <div class="{{ ym_pp }} flex flex--col flex--stretch-x gap--small lg:gap--medium grow{{ ym_unlock_r }}" data-ym-card="ratings">
+      <div class="flex flex--row flex--center-y gap--small" data-ym-part="rhead">
+        <span class="label font--bold grow">{{ t.ratings }}</span>
+        <span class="label w--[72px] flex--end">{{ t.rating_h }}</span>
+        <span class="label w--[14px]"></span>
+        <span class="label w--[72px] flex--end">{{ t.change_h }}</span>
+        <span class="label w--[64px] flex--end">{{ t.games_h }}</span>
+      </div>
+      {%- for r in pf.rows %}
+      <div class="flex flex--row flex--center-y gap--small shrink-0" data-ym-row data-games="{{ r.games }}">
+        {%- if view == 3 %}
+        <span class="label grow lg:hidden">{{ r.short }}</span><span class="label grow hidden lg:visible">{{ r.name }}</span>
+        {%- else %}
+        <span class="label grow">{{ r.name }}</span>
+        {%- endif %}
+        <span class="value value--small font--bold w--[72px] text--right">{{ r.rating }}</span>
+        <span class="label w--[14px]">{% if r.prov %}?{% endif %}</span>
+        <span class="label w--[72px] flex--end">{{ r.change }}</span>
+        <span class="label w--[64px] flex--end">{{ r.games_text }}</span>
+      </div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- capture ym_b_chart %}
+    {%- if ym_chart_on %}
+    <div class="{{ ym_pp }} hidden lg:flex lg:grow flex--col flex--stretch-x gap--small" data-ym-card="chart" data-ym-part="chart">
+      <div class="flex flex--row flex--between gap--small"><span class="label font--bold">{{ pf.chart.name }}, {{ t.chart_h }}</span><span class="label">{{ t.low }} {{ pf.chart.lo }} · {{ t.high }} {{ pf.chart.hi }}</span></div>
+      <div class="w--full grow" id="{{ ym_chart }}" data-ym-part="spark"></div>
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- assign ym_stats_grow_keep = ym_stats_grow %}{% assign ym_stats_grow = "" %}
+  {%- capture ym_b_stats_x %}
+    {%- if pf.stats.size > 0 %}
+    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small" data-ym-card="stats">
+      {%- for s in pf.stats %}
+      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- assign ym_stats_grow = ym_stats_grow_keep %}
+  {%- capture ym_b_stats %}
+    {%- if pf.stats.size > 0 %}
+    <div class="{{ ym_pp }} flex flex--col flex--center-y flex--stretch-x gap--xsmall lg:gap--small{{ ym_stats_grow }}{{ ym_unlock }}" data-ym-card="stats">
+      {%- for s in pf.stats %}
+      <div class="flex flex--row flex--center-y flex--between gap--small shrink-0" data-ym-stat><span class="label">{{ s[0] }}</span><span class="label font--bold">{{ s[1] }}</span></div>
+      {%- endfor %}
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- capture ym_b_form %}
+    <div class="{{ ym_pp }} flex flex--col flex--left gap--small{% if view == 4 %} grow flex--center-y{% else %} shrink-0{% endif %}" data-ym-card="form">
+      {%- if view != 4 %}<span class="label">{{ t.recent }}</span>{% endif %}
+      {%- if pf.form.size > 0 %}
+      <div class="flex flex--row{% if view != 4 %} flex--wrap{% else %} w--full{% endif %} flex--center-y gap--xsmall" data-ym-part="form">
+        {%- for c in pf.form %}<span class="label label--outline{% if c.c == "W" %} label--inverted{% elsif c.c == "D" %} bg--gray-60 1bit:bg--white{% endif %} flex--center w--[{% if view == 4 %}30{% else %}26{% endif %}px]" data-ym-chip="{{ c.c }}">{{ c.c }}</span>{% endfor %}
+      </div>
+      {%- else %}<span class="label">{{ t.no_recent }}</span>{% endif %}
+      {%- if stale %}<span class="label">{{ t.offline_pf }}</span>{% endif %}
+      {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
+    </div>
+  {%- endcapture %}
+  {%- assign ym_col = "flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" %}
+  {%- if view == 1 and ym_few %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
+  {%- elsif view == 1 %}
+  {%- comment -%} Two arrangements, one per device size: OG (no chart) head and ratings | stats and form; X: head, ratings and stats | chart and form. {%- endcomment -%}
+  {%- if ym_chart_on %}{% assign ym_og = " lg:hidden" %}{% else %}{% assign ym_og = "" %}{% endif %}
+  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
+  <div class="{{ ym_col }}{{ ym_og }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- if ym_chart_on %}
+  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_stats_x }}</div>
+  <div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col>{{ ym_b_chart }}{{ ym_b_form }}</div>
+  {%- endif %}
+  {%- elsif view == 2 %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}</div>
+  {%- if ym_chart_on %}<div class="hidden lg:flex flex--col flex--stretch-x gap--small lg:gap--medium grow w--[0px]" data-ym-panel data-ym-col data-ym-part="chartcol">{{ ym_b_chart }}</div>{% endif %}
+  <div class="{{ ym_col }}" data-ym-panel data-ym-col>{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- elsif view == 3 %}
+  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel data-ym-col>{{ ym_b_head }}{{ ym_b_rat }}{{ ym_b_chart }}{{ ym_b_stats }}{{ ym_b_form }}</div>
+  {%- else %}
+  <div class="flex flex--col flex--stretch-x gap--small grow" data-ym-panel data-ym-col>{{ ym_b_rat }}{{ ym_b_form }}</div>
+  {%- endif %}
 {%- else %}
   <div class="flex flex-none" data-ym-board></div>
   <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel>
@@ -166,7 +296,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 <script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
 <script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {{ account.history | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {% if mode == "profile" and pf.chart %}{{ pf.chart.pts | json }}{% else %}{{ account.history | json }}{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 // Generated by tools/pieces.js from assets/pieces/cburnett (Colin M.L. Burnett, BSD licence). Do not edit.
 var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#fff\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#fff\" d=\"M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7\"/><path d=\"M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0\"/></g>",
@@ -263,6 +393,11 @@ function boardSvg(o) {
 (function () {
   if (!window.TRMNLPaint && document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); return; }
   main();
+  // Profile chart: a calm y range of at least 100 rating points around the data, three light gridlines with their numbers.
+  function profileY(h) {
+    var lo = Math.min.apply(null, h), hi = Math.max.apply(null, h), span = Math.max(100, Math.ceil((hi - lo) * 1.4 / 10) * 10), mid = (lo + hi) / 2, min = Math.floor((mid - span / 2) / 10) * 10, max = min + span;
+    return { visible: true, min: min, max: max, tickPositions: [min, min + span / 2, max], title: { text: null }, gridLineWidth: window.TRMNLPaint.px(1, { el: YM.chart }), endOnTick: false, startOnTick: false };
+  }
   // The rating history as a Framework chart (TRMNLCharts over Highcharts), only where its container shows (lg full view).
   function spark() {
     var id = YM.chart || 'ym-spark', el = document.getElementById(id), h = YM.history || [];
@@ -270,7 +405,8 @@ function boardSvg(o) {
     window.TRMNLCharts.watch(id, function () {
       return window.Highcharts.chart(id, window.TRMNLCharts.merge(window.TRMNLCharts.options({ el: id }), {
         chart: { type: 'line', height: el.clientHeight - 6, spacing: [10, 10, 10, 10] },   // room for the last point's marker inside the container
-        xAxis: { visible: false }, yAxis: { visible: false }, legend: { enabled: false }, tooltip: { enabled: false }, accessibility: { enabled: false }, credits: { enabled: false },
+        xAxis: YM.profile ? { visible: true, labels: { enabled: false }, tickLength: 0, gridLineWidth: 0, lineWidth: window.TRMNLPaint.px(1, { el: id }) } : { visible: false },
+        yAxis: YM.profile ? profileY(h) : { visible: false }, legend: { enabled: false }, tooltip: { enabled: false }, accessibility: { enabled: false }, credits: { enabled: false },
         plotOptions: { series: { animation: false, enableMouseTracking: false, lineWidth: window.TRMNLPaint.px(3, { el: id }), marker: { enabled: false } } },
         series: [{ data: h.map(function (v, i) { return i === h.length - 1 ? { y: v, marker: { enabled: true, radius: window.TRMNLPaint.px(4, { el: id }) } } : v; }), color: window.TRMNLCharts.series(0, 1, { el: id }) }]
       }));
@@ -325,7 +461,41 @@ function boardSvg(o) {
       if (n && over()) hide(n);
     });
   }
+  // Profile (no board): what does not fit goes, in this order: the chart (its box under 64 px), the ratings header, the least played
+  // ratings, the last stats. Whatever is left fills its column: the card that gave way to the chart (lg:grow-0) grows again.
+  function profileMain() {
+    var root = document.querySelector('[data-ym]');
+    if (!root) return;
+    var q = function (sel) { return Array.prototype.filter.call(document.querySelectorAll(sel), function (n) { return n.getClientRects().length; }); };
+    var over = function () {
+      if (root.scrollHeight > root.clientHeight + 1 || root.scrollWidth > root.clientWidth + 1) return true;
+      return q('[data-ym-col]').some(function (c) { return c.scrollHeight > c.clientHeight + 1; }) || q('[data-ym-card]').some(function (c) { return c.scrollHeight > c.clientHeight + 1; }) || q('[data-ym-panel] .label, [data-ym-panel] .value').some(wraps);
+    };
+    var fit = function () {
+      var el = document.querySelector('[data-ym-part="spark"]'), ch = document.querySelector('[data-ym-part="chart"]');
+      var rc = document.querySelector('[data-ym-card="ratings"]');
+      // Chart and ratings in one column (half vertical): the least played ratings (down to 4) give way before the chart does.
+      if (ch && el && rc && ch.parentNode === rc.parentNode && ch.getClientRects().length) { var rr = q('[data-ym-row]'); while (el.clientHeight < 90 && rr.length > 4) hide(rr.pop()); }
+      if (ch && ch.getClientRects().length && (!el || el.clientHeight < 64 || el.clientWidth < 120)) {
+        hide(ch); if (ch.closest('[data-ym-part="chartcol"]')) hide(ch.closest('[data-ym-part="chartcol"]'));
+        // the chart's column keeps only the form: it takes the height the chart gave up
+        q('[data-ym-card="form"]').forEach(function (f) { if (f.parentNode === ch.parentNode) f.setAttribute('class', f.getAttribute('class').replace('shrink-0', 'grow')); });
+        Array.prototype.forEach.call(document.querySelectorAll('[class*="lg:grow-0"]'), function (n) { n.setAttribute('class', n.getAttribute('class').replace(' lg:grow-0', '')); });
+      }
+      var hd = q('[data-ym-part="rhead"]')[0], rows, stats;
+      if (over() && hd) hide(hd);
+      rows = q('[data-ym-row]'); stats = q('[data-ym-stat]');
+      // Ratings are the main thing: rows and stats lines give way by turns, the last stats lines and rows last.
+      while (over() && rows.length > 3) hide(rows.pop());
+      while (over() && stats.length > 3) hide(stats.pop());
+      while (over() && rows.length > 1) hide(rows.pop());
+      while (over() && stats.length > 2) hide(stats.pop());
+    };
+    var settle = function () { fit(); spark(); root.setAttribute('data-ym-drawn', '1'); };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle, settle); else settle();
+  }
   function main() {
+    if (YM.profile) return profileMain();
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
     if (!root || !bd || !YM.puzzle) return;
     var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };

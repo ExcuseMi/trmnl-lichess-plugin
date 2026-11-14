@@ -40,10 +40,11 @@ custom_fields:
   group: Lichess
   field_type: select
   name: Mode
-  description: What the screen shows. Your games shows your correspondence games where it is your turn (connect Lichess with the OAuth button above).
+  description: What the screen shows. Your games shows your correspondence games where it is your turn. Profile shows your ratings, rating chart, stats and recent results (connect Lichess with the OAuth button above).
   options:
   - Puzzles: puzzles
   - Your games: games
+  - Profile: profile
   default: puzzles
 name: Lichess
 description: ''

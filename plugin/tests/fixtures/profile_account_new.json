@@ -1,0 +1,42 @@
+{
+ "id": "newbienell",
+ "username": "NewbieNell",
+ "perfs": {
+  "blitz": {
+   "games": 14,
+   "rating": 1535,
+   "rd": 150,
+   "prog": 0,
+   "prov": true
+  },
+  "puzzle": {
+   "games": 0,
+   "rating": 1500,
+   "rd": 500,
+   "prog": 0,
+   "prov": true
+  }
+ },
+ "createdAt": 1793178120000,
+ "seenAt": 1794614400000,
+ "playTime": {
+  "total": 5460,
+  "tv": 0
+ },
+ "url": "https://lichess.org/@/NewbieNell",
+ "count": {
+  "all": 14,
+  "rated": 14,
+  "ai": 0,
+  "draw": 1,
+  "drawH": 1,
+  "loss": 8,
+  "lossH": 8,
+  "win": 5,
+  "winH": 5,
+  "bookmark": 0,
+  "playing": 0,
+  "import": 0,
+  "me": 0
+ }
+}

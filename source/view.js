@@ -5,6 +5,7 @@ var MODES = {
   puzzles: { instance: 'Puzzles' },
   connect: { instance: 'Connect account' },
   games: { instance: 'Your games' },     // the user's correspondence games (source/games.js)
+  profile: { instance: 'Profile' },       // the user's Lichess overview (source/profile.js)
   top: { instance: 'Top game' },         // reserved
   following: { instance: 'Following %s' } // reserved: a followed player, %s = name
 };

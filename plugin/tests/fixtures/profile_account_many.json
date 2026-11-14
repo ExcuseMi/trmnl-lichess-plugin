@@ -1,0 +1,93 @@
+{
+ "id": "knightowl",
+ "username": "KnightOwl",
+ "title": "CM",
+ "perfs": {
+  "bullet": {
+   "games": 140,
+   "rating": 1578,
+   "rd": 64,
+   "prog": -3,
+   "prov": false
+  },
+  "blitz": {
+   "games": 1130,
+   "rating": 1933,
+   "rd": 107,
+   "prog": -18,
+   "prov": false
+  },
+  "rapid": {
+   "games": 410,
+   "rating": 1785,
+   "rd": 101,
+   "prog": -10,
+   "prov": false
+  },
+  "classical": {
+   "games": 36,
+   "rating": 1649,
+   "rd": 94,
+   "prog": 2,
+   "prov": false
+  },
+  "correspondence": {
+   "games": 22,
+   "rating": 1795,
+   "rd": 101,
+   "prog": -1,
+   "prov": false
+  },
+  "chess960": {
+   "games": 9,
+   "rating": 1626,
+   "rd": 140,
+   "prog": 3,
+   "prov": true
+  },
+  "puzzle": {
+   "games": 1342,
+   "rating": 1952,
+   "rd": 61,
+   "prog": 8,
+   "prov": false
+  },
+  "storm": {
+   "runs": 58,
+   "score": 41
+  },
+  "racer": {
+   "runs": 6,
+   "score": 23
+  },
+  "streak": {
+   "runs": 12,
+   "score": 14
+  }
+ },
+ "createdAt": 1489083660000,
+ "seenAt": 1794614400000,
+ "playTime": {
+  "total": 1294380,
+  "tv": 0
+ },
+ "url": "https://lichess.org/@/KnightOwl",
+ "count": {
+  "all": 1747,
+  "rated": 1698,
+  "ai": 4,
+  "draw": 112,
+  "drawH": 109,
+  "loss": 803,
+  "lossH": 801,
+  "win": 832,
+  "winH": 830,
+  "bookmark": 0,
+  "playing": 1,
+  "import": 0,
+  "me": 0
+ },
+ "followable": true,
+ "following": false,
+ "blocking": false
+}

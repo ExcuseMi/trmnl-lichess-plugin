@@ -59,37 +59,48 @@ def games_mocks(playing: 'games_playing_one.json', status: 200, export: true, la
   m['https://lichess.org/api/games/user/Demo*'] = { body: fx('games_last.ndjson') } if last
   m
 end
+# "Profile" mode: account, rating history and the last rated games (fixtures profile_*; the player is KnightOwl / NewbieNell).
+def profile_mocks(account: 'profile_account_many.json', history: 'profile_history_many.json', games: 'profile_games_many.ndjson', status: 200, history_status: 200, games_status: 200)
+  me = JSON.parse(fx(account))['username']
+  { 'https://lichess.org/api/account' => { status: status, json: status == 200 ? JSON.parse(fx(account)) : {} },
+    "https://lichess.org/api/user/#{me}/rating-history" => { status: history_status, json: history_status == 200 ? JSON.parse(fx(history)) : {} },
+    "https://lichess.org/api/games/user/#{me}*" => { status: games_status, body: games_status == 200 ? fx(games) : '' } }
+end
 PANEL_OVERLAP_JS = <<~JS.freeze
   (function () {
-    var p = document.querySelector('[data-ym-panel]'), out = [];
-    if (!p) return out;
-    var kids = Array.prototype.filter.call(p.children, function (e) { return e.getClientRects().length && e.getBoundingClientRect().height > 0; });
-    for (var i = 1; i < kids.length; i++) {
-      var a = kids[i - 1].getBoundingClientRect(), b = kids[i].getBoundingClientRect();
-      if (b.top < a.bottom - 1) out.push((kids[i - 1].getAttribute('data-ym-card') || kids[i - 1].className) + ' / ' + (kids[i].getAttribute('data-ym-card') || kids[i].className));
-    }
-    // one stack, one gap: every vertical gap between the column's blocks within 2 px of the others
-    var gaps = [];
-    for (var j = 1; j < kids.length; j++) gaps.push(kids[j].getBoundingClientRect().top - kids[j - 1].getBoundingClientRect().bottom);
-    if (gaps.length > 1 && Math.max.apply(null, gaps) - Math.min.apply(null, gaps) > 2) out.push('unequal gaps ' + gaps.map(Math.round).join(','));
-    // panels side by side share top and bottom
-    var row = p.querySelector('[data-ym-bottom]');
-    if (row) {
-      var sib = Array.prototype.filter.call(row.children, function (e) { return e.getClientRects().length; }).map(function (e) { return e.getBoundingClientRect(); });
-      for (var k = 1; k < sib.length; k++) if (Math.abs(sib[k].top - sib[0].top) > 2 || Math.abs(sib[k].bottom - sib[0].bottom) > 2) out.push('row panels not aligned');
-    }
-    // a card squeezed smaller than its content draws that content over its neighbours
-    p.querySelectorAll('[data-ym-card]').forEach(function (e) { if (e.getClientRects().length && e.scrollHeight > e.clientHeight + 1) out.push(e.getAttribute('data-ym-card') + ' content taller than the card'); });
+    var out = [];
+    // Every panel column ([data-ym-panel]: one in the puzzle views, two or three in Profile) is checked on its own.
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ym-panel]'), function (p) {
+      if (!p.getClientRects().length) return;
+      var kids = Array.prototype.filter.call(p.children, function (e) { return e.getClientRects().length && e.getBoundingClientRect().height > 0; });
+      for (var i = 1; i < kids.length; i++) {
+        var a = kids[i - 1].getBoundingClientRect(), b = kids[i].getBoundingClientRect();
+        if (b.top < a.bottom - 1) out.push((kids[i - 1].getAttribute('data-ym-card') || kids[i - 1].className) + ' / ' + (kids[i].getAttribute('data-ym-card') || kids[i].className));
+      }
+      // one stack, one gap: every vertical gap between the column's blocks within 2 px of the others
+      var gaps = [];
+      for (var j = 1; j < kids.length; j++) gaps.push(kids[j].getBoundingClientRect().top - kids[j - 1].getBoundingClientRect().bottom);
+      if (gaps.length > 1 && Math.max.apply(null, gaps) - Math.min.apply(null, gaps) > 2) out.push('unequal gaps ' + gaps.map(Math.round).join(','));
+      // panels side by side share top and bottom
+      var row = p.querySelector('[data-ym-bottom]');
+      if (row) {
+        var sib = Array.prototype.filter.call(row.children, function (e) { return e.getClientRects().length; }).map(function (e) { return e.getBoundingClientRect(); });
+        for (var k = 1; k < sib.length; k++) if (Math.abs(sib[k].top - sib[0].top) > 2 || Math.abs(sib[k].bottom - sib[0].bottom) > 2) out.push('row panels not aligned');
+      }
+      // a card squeezed smaller than its content draws that content over its neighbours
+      p.querySelectorAll('[data-ym-card]').forEach(function (e) { if (e.getClientRects().length && e.scrollHeight > e.clientHeight + 1) out.push(e.getAttribute('data-ym-card') + ' content taller than the card'); });
+    });
     return out;
   })()
 JS
 FONT_SIZES_JS = <<~JS.freeze
   (function () {
-    var side = document.querySelector('[data-ym-panel]'), seen = {};
-    if (!side) return [];
-    side.querySelectorAll('*').forEach(function (e) {
-      var own = Array.prototype.some.call(e.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
-      if (own && e.getClientRects().length) seen[Math.round(parseFloat(getComputedStyle(e).fontSize) * 10) / 10] = 1;
+    var seen = {};
+    document.querySelectorAll('[data-ym-panel]').forEach(function (side) {
+      side.querySelectorAll('*').forEach(function (e) {
+        var own = Array.prototype.some.call(e.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+        if (own && e.getClientRects().length) seen[Math.round(parseFloat(getComputedStyle(e).fontSize) * 10) / 10] = 1;
+      });
     });
     return Object.keys(seen).map(Number).sort(function (a, b) { return a - b; });
   })()
@@ -111,6 +122,10 @@ def ym_render(trmnl, c)
   when 'owner'   # the owner's real case of 2026-11-14: puzzle uBhLF (public), rating 1470
     mocks = lichess_mocks(rating: 1470, puzzle: 'lichess_uBhLF.json').merge(mocks); login = 'tok'
     state = { 'rating' => 1470, 'cur' => nil, 'last' => nil }
+  when 'profile_many' then mocks = profile_mocks; login = 'tok'
+  when 'profile_new' then mocks = profile_mocks(account: 'profile_account_new.json', history: 'profile_history_new.json', games: 'profile_games_new.ndjson'); login = 'tok'
+  when 'profile_fail' then mocks = profile_mocks(status: 503); login = 'tok'
+  when 'profile_partial' then mocks = profile_mocks(history_status: 503, games_status: 503); login = 'tok'
   when 'games_one' then mocks = games_mocks; login = 'tok'
   when 'games_many' then mocks = games_mocks(playing: 'games_playing_many.json'); login = 'tok'
   when 'games_none' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
@@ -125,6 +140,7 @@ def ym_render(trmnl, c)
   end
   fields['orientation'] = c['orientation'] if c['orientation']
   fields['mode'] = 'games' if sc.start_with?('games')
+  fields['mode'] = 'profile' if sc.start_with?('profile')
   dev = c['device'].is_a?(Hash) ? c['device'].transform_keys(&:to_sym) : (c['device'] || 'v2')
   opts = { view: c['view'], device: dev, mocks: mocks, custom_fields: fields, now: NOW.iso8601, wait_for: "document.querySelector('[data-ym-drawn],[data-ym-none]') !== null || document.querySelector('.layout') !== null" }
   opts[:dark_mode] = true if c['dark']
