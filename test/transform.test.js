@@ -297,7 +297,7 @@ test('games: your turn: the game, the user side, opponent, time left, the moves,
   assert.strictEqual(o.puzzle.to, 4, 'last move f8e8 outlined on e8'); assert.strictEqual(o.puzzle.game.opp, 'Magnus_C'); assert.strictEqual(o.puzzle.game.opp_rating, 1812);
   assert.strictEqual(o.puzzle.game.left, '2d 3h'); assert.strictEqual(o.time_value_short, '2d'); assert.strictEqual(o.opp_line, 'Magnus_C (1812)'); assert.strictEqual(o.find, 'Play white');
   assert.strictEqual(o.rows.length, 8); assert.strictEqual(o.rows[7].n, 12); assert.ok(o.rows[7].hb, 'the last move (black) is the marked one');
-  assert.strictEqual(o.more_line, ''); assert.strictEqual(o.problems, undefined); assert.strictEqual(o.t.scan, 'Scan to move');
+  assert.strictEqual(o.more_line, ''); assert.strictEqual(o.problems, undefined); assert.strictEqual(o.t.scan, 'Scan to play');
   assert.ok(!calls.some((u) => /puzzle|rating-history|activity|token\/test/.test(u)), 'no puzzle calls in games mode: ' + calls.join(' '));
   seen.forEach(([u, a, b]) => { assert.ok(!u.includes('SECRET') && !String(b || '').includes('SECRET')); assert.strictEqual(a, 'Bearer SECRET'); });
   assert.ok(!JSON.stringify(o).includes('SECRET'));
@@ -318,12 +318,12 @@ test('games: several: least time left first, only correspondence, "N more games 
 test('games: opponent to move: the first such game like the normal view, "Their turn", N waiting for opponents; no ongoing game: the last finished game with its result; nothing at all: calm', async () => {
   const w = await load(games({}, [], 'games_playing_none.json')).run(gin());
   assert.strictEqual(w.none, false); assert.strictEqual(w.puzzle.game.phase, 'wait'); assert.strictEqual(w.heading, 'Their turn'); assert.strictEqual(w.find, 'Waiting for Bob_W');
-  assert.strictEqual(w.more_line, '1 game waiting for opponents'); assert.strictEqual(w.more_short, '1 waiting'); assert.strictEqual(w.t.scan, 'Scan to view'); assert.strictEqual(w.puzzle.moves.length, 12);
+  assert.strictEqual(w.more_line, '1 game waiting for opponents'); assert.strictEqual(w.more_short, '1 waiting'); assert.strictEqual(w.t.scan, 'Scan to play'); assert.strictEqual(w.puzzle.moves.length, 12);
   assert.strictEqual(w.time_label, 'Waiting for'); assert.strictEqual(w.time_value, 'Bob_W'); assert.strictEqual(w.time_value_short, 'Bob_W'); assert.strictEqual(w.puzzle.url, 'https://lichess.org/mM4nN5oO');
   const turn = await load(games({}, [], 'games_playing_many.json')).run(gin()); assert.strictEqual(turn.puzzle.game.phase, 'turn', 'a game to move on comes before one the opponent is to move in');
   const l = await load(games({}, [], 'games_playing_empty.json')).run(gin());
   assert.strictEqual(l.none, false); assert.strictEqual(l.puzzle.game.phase, 'last'); assert.strictEqual(l.heading, 'Last game'); assert.strictEqual(l.find, 'vs Rival_X (1720)'); assert.strictEqual(l.time_sub, 'in 12 moves'); assert.strictEqual(l.show_info, false, 'no vs/kind card repeating the header'); assert.strictEqual(l.puzzle.game.result_line, 'Won against Rival_X');
-  assert.strictEqual(l.puzzle.url, 'https://lichess.org/'); assert.strictEqual(l.t.scan, 'Start a new game'); assert.strictEqual(l.time_value, 'Won'); assert.strictEqual(l.puzzle.moves.length, 12); assert.strictEqual(l.trmnl_state.gm, undefined, 'a finished game is never saved as the game to show offline');
+  assert.strictEqual(l.puzzle.url, 'https://lichess.org/'); assert.strictEqual(l.t.scan, 'Scan to play'); assert.strictEqual(l.time_value, 'Won'); assert.strictEqual(l.puzzle.moves.length, 12); assert.strictEqual(l.trmnl_state.gm, undefined, 'a finished game is never saved as the game to show offline');
   const none = await load(games({ 'https://lichess.org/api/games/user/Demo': resp(200, '') }, [], 'games_playing_empty.json')).run(gin());
   assert.strictEqual(none.none, true); assert.strictEqual(none.calm, true); assert.strictEqual(none.t.none, 'No games waiting for you'); assert.strictEqual(none.calm_line, 'Start a game on lichess.org.'); assert.strictEqual(none.instance, 'Your games');
   const noRep = await load(games({ 'https://lichess.org/api/games/user/Demo': resp(200, JSON.stringify({ status: 'resign', winner: 'black', moves: 'e4 e4', players: { white: { user: { name: 'Demo' } }, black: { user: { name: 'Bob' } } } })) }, [], 'games_playing_empty.json')).run(gin());

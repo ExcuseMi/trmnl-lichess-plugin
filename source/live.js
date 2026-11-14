@@ -6,7 +6,7 @@
 //   Follow: GET /api/users/status?withGameIds=true, then GET /game/export/{id}; not playing: GET /api/games/user/{name}?max=1.
 // The model is the Your games one (out.puzzle: board, turn, last move, QR target, moves) with out.puzzle.game = { w, b, event, round,
 // kind, status: live|done, res }; w and b: { name, title, rating, clock (centiseconds or null) }.
-var LV_EN = { scan_live: 'Watch live', scan_game: 'Watch the game', live: 'Live', to_move: 'to move', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
+var LV_EN = { scan_live: 'Scan to watch', scan_game: 'Scan to watch', live: 'Live', to_move: 'to move', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
   top_none: 'No live game right now', top_none2: 'No broadcast or TV game to show. Looking again at the next refresh.', fl_empty: 'Follow a player', fl_empty2: 'Enter a Lichess username in the plugin settings.',
   fl_unknown: 'Unknown player', fl_unknown2: 'Check the name in the plugin settings.', fl_none: 'No games yet', fl_none2: ' has not played a game yet.', lv_fail: 'Could not reach Lichess. Showing again at the next refresh.', fl_nogame: 'No game to show',
   playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', casual: 'casual', finished: 'Finished', anon: 'Anonymous', computer: 'Computer' };

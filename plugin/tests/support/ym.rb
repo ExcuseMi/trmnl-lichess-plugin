@@ -167,8 +167,8 @@ def ym_render(trmnl, c)
   when 'games_fail' then mocks = games_mocks(status: 503); login = 'tok'
   when 'games_scope' then mocks = games_mocks(status: 403); login = 'tok'
   when 'offline'
-    mocks = { 'https://lichess.org/api/puzzle/daily' => { status: 503, json: {} } }
-    state = { 'rating' => 0, 'last' => { 'source' => 'lichess', 'id' => 'u3zfD', 'url' => 'https://lichess.org/training/u3zfD', 'board' => '...k....' + '...b.p..' + '.p.P.p.p' + '....Q...' + '....B...' + '....qP.P' + 'P.p...PK' + '........', 'turn' => 'w', 'from' => 4, 'to' => 3, 'rating' => 1874, 'themes' => ['Mate in 3'], 'title' => '' } }
+    mocks = lichess_mocks.merge('https://lichess.org/api/puzzle/next*' => { status: 503, json: {} }); login = 'tok'   # connected, the puzzle call fails: the saved puzzle stands in
+    state = { 'rating' => 1861, 'last' => { 'source' => 'lichess', 'id' => 'u3zfD', 'url' => 'https://lichess.org/training/u3zfD', 'board' => '...k....' + '...b.p..' + '.p.P.p.p' + '....Q...' + '....B...' + '....qP.P' + 'P.p...PK' + '........', 'turn' => 'w', 'from' => 4, 'to' => 3, 'rating' => 1874, 'themes' => ['Mate in 3'], 'title' => '' } }
   end
   fields['orientation'] = c['orientation'] if c['orientation']
   fields['mode'] = 'games' if sc.start_with?('games')
@@ -199,6 +199,14 @@ def ym_checks(s, c)
   # a panel with nothing in it is a bug (an empty card once drew a bare grey bar between two panels)
   empty = s.evaluate("Array.prototype.filter.call(document.querySelectorAll('[data-ym-card]'),function(e){return e.getClientRects().length&&!e.textContent.trim()&&!e.querySelector('img,svg')}).map(function(e){return e.getAttribute('data-ym-card')})")
   expect(empty).to be_empty, "#{c['name']}: empty panel(s): #{empty.inspect}"
+  # One pattern in every mode: a QR label reads "Scan to solve / play / watch"; a failure screen has one title (owner 2026-11-14, R6).
+  bad = s.evaluate("Array.prototype.filter.call(document.querySelectorAll('[data-ym-qrbox]'),function(e){return e.getClientRects().length&&!/^\\s*Scan to (solve|play|watch)\\s*$/.test(e.textContent)}).map(function(e){return e.textContent.trim()})")
+  expect(bad).to be_empty, "#{c['name']}: QR label not 'Scan to solve/play/watch': #{bad.inspect}"
+  fail_title = s.evaluate("(function(){var p=document.querySelector('[data-ym-calm] [data-ym-problem]');return p?document.querySelector('[data-ym-calm] .title').textContent.trim():''})()")
+  expect(fail_title).to satisfy { |t| t.empty? || t == 'Lichess did not answer' }, "#{c['name']}: failure screen title is #{fail_title.inspect}"
+  # One title bar rule for every mode and state: the view's own title bar only in the full view (the platform draws none in the others).
+  tb = s.evaluate("!!document.querySelector('.title_bar')")
+  expect(tb).to eq(c['view'] == 'full'), "#{c['name']}: title bar #{tb ? 'drawn' : 'missing'} in view #{c['view']}"
   sizes = s.evaluate(FONT_SIZES_JS)
   expect(sizes.length).to be <= 4, "#{c['name']}: #{sizes.length} text sizes in the panel: #{sizes.inspect}"
 end

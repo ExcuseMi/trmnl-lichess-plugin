@@ -16,6 +16,7 @@ function signed(n) { return (n > 0 ? '+' : '') + n; }
 function sanParts(san) { var s = String(san || ''), m = /^([KQRBN])(.*)$/.exec(s); return m ? [m[1], m[2]] : ['', s]; }
 function viewModel(out, nowS) {
   var P = out.puzzle, A = out.account;
+  if (out.none && out.t) out.t = Object.assign({}, out.t, { fail_title: 'Lichess did not answer' });   // one title for every failure screen (the problem lines say which call)
   out.mode = out.connect ? 'connect' : out.mode || 'puzzles';   // 'games' is set by runGames
   out.instance = modeInstance(out.mode, out.instance_arg);
   out.instance_long = out.instance;

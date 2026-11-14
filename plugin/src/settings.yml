@@ -21,7 +21,7 @@ custom_fields:
 - keyname: author_info
   name: About This Plugin
   field_type: author_bio
-  description: 'Unofficial. Lichess puzzles at your level on your TRMNL. A crisp e-ink chessboard with the puzzle to solve and the moves that led to it, and a QR code that opens exactly this puzzle on your phone. Connect Lichess with the OAuth button above for unseen puzzles at your rating, your rating, streak and week. Without a login it shows the Lichess daily puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) API. Pieces: Colin M.L. Burnett (Cburnett), BSD licence. Not affiliated with or endorsed by Lichess.org.'
+  description: 'Unofficial. Lichess on your TRMNL: puzzles at your level with a QR code to solve them on your phone, your correspondence games where it is your turn, your profile with ratings and a rating chart, the top live game right now, or a player you follow. Connect Lichess with the OAuth button above; without a login it shows the daily puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) API. Pieces: Colin M.L. Burnett (Cburnett), BSD licence. Not affiliated with or endorsed by Lichess.org.'
   github_url: https://github.com/ExcuseMi/trmnl-your-move-plugin
   category: games
 - keyname: difficulty

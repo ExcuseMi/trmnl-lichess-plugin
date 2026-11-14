@@ -79,7 +79,7 @@ test('top: everything failing: the saved game as "Offline" with the failure line
   const down = { 'https://lichess.org/api/broadcast/top': resp(503, {}), 'https://lichess.org/api/tv/channels': resp(503, {}) };
   const good = await load(router(TOP())).run(input('top'));
   const o = await load(router(down)).run(input('top', good.trmnl_state));
-  assert.strictEqual(o.stale, true); assert.strictEqual(o.puzzle.id, 'g2LiveAB'); assert.strictEqual(o.status_text, 'Offline', 'a saved game is never called live'); assert.strictEqual(o.t.scan, 'Watch the game'); assert.strictEqual(o.instance, 'Top game · Example International');
+  assert.strictEqual(o.stale, true); assert.strictEqual(o.puzzle.id, 'g2LiveAB'); assert.strictEqual(o.status_text, 'Offline', 'a saved game is never called live'); assert.strictEqual(o.t.scan, 'Scan to watch'); assert.strictEqual(o.instance, 'Top game · Example International');
   assert.deepStrictEqual(Array.from(o.problems), ['Lichess broadcast: HTTP 503', 'Lichess TV: HTTP 503']);
   assert.deepStrictEqual(o.trmnl_state.tg, good.trmnl_state.tg, 'the saved game is kept for the next refresh');
   const c = await load(router(down)).run(input('top'));
@@ -106,7 +106,7 @@ test('follow: one call, the current-game of the player: a game in play with cloc
 test('follow: the last game when not playing, said from the followed player\'s side', async () => {
   const o = await load(router(FOLLOW('follow_game_last.json'))).run(input('following', undefined, 'KnightOwl'));
   assert.strictEqual(o.puzzle.id, 'fl4StGmE'); assert.strictEqual(o.puzzle.game.status, 'done'); assert.strictEqual(o.status_text, 'Won'); assert.strictEqual(o.puzzle.game.round, 'Last game');
-  assert.strictEqual(o.puzzle.game.res, '0-1'); assert.strictEqual(o.t.scan, 'Watch the game');
+  assert.strictEqual(o.puzzle.game.res, '0-1'); assert.strictEqual(o.t.scan, 'Scan to watch');
   const row = J('follow_game_last.json'); row.winner = 'white';
   assert.strictEqual((await load(router({ 'https://lichess.org/api/user/KnightOwl/current-game': resp(200, row) })).run(input('following', undefined, 'KnightOwl'))).status_text, 'Lost');
   delete row.winner; row.status = 'draw';

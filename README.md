@@ -1,45 +1,56 @@
-# Lichess
+# Lichess for TRMNL
 
-Unofficial. Lichess puzzles at your level for [TRMNL](https://trmnl.com) e-paper displays. Not affiliated with or endorsed by Lichess.org.
+Unofficial. Lichess on your TRMNL: puzzles at your level, your correspondence games, your profile, top live games or a player you follow.
 
-- The puzzle position on a framed board (cburnett pieces), the last move tinted, framed and drawn as an arrow.
-- Side panel cards: Your turn, the puzzle and the game it comes from, the moves that led to it (Lichess-style list), your rating with the last results, sparkline and week, and a QR code that opens exactly this puzzle.
-- Without a login: the Lichess daily puzzle. Connect Lichess with the OAuth button (scope `puzzle:read`): unseen puzzles at your rating, kept until solved, then "Solved! +N".
-- A failed Lichess call is said on screen ("Lichess activity: timeout"); the last good activity from the saved state stands in.
-- All four views, 1-bit, greyscale and dark mode. Texts are English for now.
+## Modes
 
-## Settings
+| Mode | Shows |
+|---|---|
+| Puzzles | A puzzle at your rating (or your weakest theme), the moves that led to it, your rating and week, a QR code to solve it |
+| Your games | The correspondence game where it is your turn, time left, moves, a QR code to play |
+| Profile | Ratings, 90-day rating chart, stats and recent results |
+| Top game | The best live game now (a broadcast, else Lichess TV): players, clocks, moves, a QR code to watch |
+| Follow a player | The current game of a player you name, or their last game |
+
+![Puzzles](assets/screenshots/puzzles.png)
+![Your games](assets/screenshots/games.png)
+![Profile](assets/screenshots/profile.png)
+![Top game](assets/screenshots/top.png)
+![Follow a player](assets/screenshots/following.png)
+
+## Setup
+
+1. Add the plugin and press Connect Lichess (OAuth).
+2. Pick a mode.
+3. Optional: difficulty and puzzle focus (Puzzles), the username to follow (Follow a player).
 
 | Setting | What it does |
 |---|---|
-| Lichess (OAuth button) | Optional login, scope `puzzle:read` only. The token is never shown or logged |
-| Difficulty | Easiest to hardest, relative to your puzzle rating (needs the login) |
-| Mode | Puzzles (default), Your games (your correspondence games where it is your turn), Profile (ratings, chart, stats, recent results), Top game (the best live game: a broadcast, else Lichess TV) or Follow a player |
-| Player to follow | Lichess username for Follow a player: their current game, or their last game |
-| Board orientation, Coordinates, Hide title bar | As named |
+| Difficulty | Easiest to hardest, relative to your puzzle rating |
+| Mode | Puzzles, Your games, Profile, Top game, Follow a player |
+| Puzzle focus | Any theme, or your weakest theme |
+| Player to follow | Lichess username for Follow a player |
+
+All four views, 1-bit, grayscale and dark mode. Texts are English.
+
+## Privacy
+
+Only reads your Lichess data, with the scopes shown on the Lichess consent screen. Nothing is stored outside TRMNL.
 
 ## Build and test
 
 | What | Command |
 |---|---|
 | Build `plugin/src/transform.js` and `shared.liquid` from `source/` | `node tools/build.js` |
-| Regenerate `source/pieces.js` from `assets/pieces/cburnett` | `node tools/pieces.js` |
-| Logic and view tests | `node --test test/` |
-| Review renders (needs trmnl.com for the Framework; checks at most 4 text sizes in the panel) | `cd plugin && YM_CASES="$(cat <cases.json>)" YM_OUT=<dir> trmnlp test ../tools/render_sheet_spec.rb` |
-| Lint | `cd plugin && trmnlp lint` |
+| Regenerate `source/pieces.js` | `node tools/pieces.js` |
+| Logic tests | `node --test test/` |
+| Rendered tests, lint | `cd plugin && trmnlp test`, `trmnlp lint` |
+| Review sheets of every mode state | `tools/r6_sheets.sh` (after rendering into `renders/design/r6`) |
 
-Edit `source/`, never the files in `plugin/src/` that the build writes. `settings.yml` is not built: it comes from `trmnlp pull`.
+Edit `source/`, never the files in `plugin/src/` that the build writes. `settings.yml` comes from `trmnlp pull`. Handoff notes: [docs/NOTES.md](docs/NOTES.md).
 
-## Choices
+## Credits and licence
 
-| Topic | Choice |
-|---|---|
-| Position and moves | The puzzle's FEN; the moves before it from the game PGN up to `initialPly`, replayed with chess.js (vendored) and dropped if they do not reach the FEN |
-| Lichess calls | Activity, token scopes, account and the next puzzle start side by side (3.5 s each, inside TRMNL's 5 s) |
-| Board | Drawn as SVG in the page script |
-| Pieces | cburnett (Colin M.L. Burnett) from Wikimedia Commons, under the BSD option the files offer; see LICENSES/pieces.md |
-| QR | Platform `qr_code` Liquid filter, whole pixels per module, never one a 1-bit panel cannot read |
+Not affiliated with or endorsed by Lichess.org. Lichess, its knight logo and its data belong to Lichess; the logo appears as the plugin icon only to name the source. Puzzles are the Lichess CC0 database; data comes from its public API.
 
-## Licence
-
-All rights reserved, as the other plugins of this account. chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform ([LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt)); the cburnett pieces are BSD ([LICENSES/cburnett-BSD-3.txt](LICENSES/cburnett-BSD-3.txt)). Puzzles belong to Lichess (CC0 database); data comes from its public API.
+Pieces: Colin M.L. Burnett (Cburnett), BSD ([LICENSES/cburnett-BSD-3.txt](LICENSES/cburnett-BSD-3.txt)). chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform ([LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt)). Everything else: all rights reserved, as the other plugins of this account.
