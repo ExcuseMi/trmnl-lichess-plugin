@@ -24,23 +24,10 @@ custom_fields:
   description: 'Unofficial. Lichess on your TRMNL: puzzles at your level with a QR code to solve them on your phone, your correspondence games where it is your turn, your profile with ratings and a rating chart, the top live game right now, or a player you follow. Connect Lichess with the OAuth button above; without a login it shows the daily puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) API. Pieces: Colin M.L. Burnett (Cburnett), BSD licence. Not affiliated with or endorsed by Lichess.org.'
   github_url: https://github.com/ExcuseMi/trmnl-your-move-plugin
   category: games
-- keyname: difficulty
-  group: Lichess
-  field_type: select
-  name: Difficulty
-  description: Puzzle difficulty relative to your puzzle rating. Connect Lichess with the OAuth button above to get puzzles at your level.
-  options:
-  - Easiest: easiest
-  - Easier: easier
-  - Normal: normal
-  - Harder: harder
-  - Hardest: hardest
-  default: normal
 - keyname: mode
-  group: Lichess
   field_type: select
   name: Mode
-  description: What the screen shows. Your games shows your correspondence games where it is your turn. Profile shows your ratings, rating chart, stats and recent results. Top game shows the most important live game now (a broadcast, else Lichess TV) with players, clocks, event and recent moves. Follow a player shows the current game of the player named below, or their last game. Connect Lichess with the OAuth button above.
+  description: What the screen shows. Connect Lichess with the OAuth button above.
   options:
   - Puzzles: puzzles
   - Your games: games
@@ -48,20 +35,41 @@ custom_fields:
   - Top game: top
   - Follow a player: following
   default: puzzles
+  conditional_validation:
+  - when: puzzles
+    visible:
+    - difficulty
+    - puzzle_focus
+  - when: following
+    visible:
+    - follow_username
+    required:
+    - follow_username
+- keyname: difficulty
+  field_type: select
+  name: Difficulty
+  description: Puzzle difficulty relative to your puzzle rating.
+  options:
+  - Easiest: easiest
+  - Easier: easier
+  - Normal: normal
+  - Harder: harder
+  - Hardest: hardest
+  default: normal
+  optional: true
 - keyname: puzzle_focus
-  group: Lichess
   field_type: select
   name: Puzzle focus
-  description: Any theme gives puzzles of every kind. My weakest theme trains the theme you solve worst (at least 10 attempts in the last 30 days, checked once a day). Used only in the mode Puzzles.
+  description: My weakest theme trains the theme you solve worst (at least 10 attempts in the last 30 days, checked once a day).
   options:
   - Any theme: any
   - My weakest theme: weakest
   default: any
+  optional: true
 - keyname: follow_username
-  group: Lichess
   field_type: string
   name: Player to follow
-  description: Lichess username for the mode Follow a player. Used only in that mode.
+  description: Lichess username. Shows their current game, or their last one.
   placeholder: DrNykterstein
   optional: true
 name: Lichess
