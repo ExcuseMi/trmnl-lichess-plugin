@@ -10,7 +10,10 @@
    "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
    "newest move at the bottom, the last move a dark block": "(function(){var r=document.querySelectorAll('[data-ym-part=moves] tr'), last=r[r.length-1]; var n=Array.prototype.map.call(r,function(x){return parseInt(x.textContent,10)}); return n.every(function(v,i){return !i||v>n[i-1]}) && !!last.querySelector('.label--inverted');})()",
    "title bar says the mode": "/^Puzzles/.test(document.querySelector('[data-ym-instance]').textContent.trim())",
-   "no inline style outside the board": "Array.prototype.every.call(document.querySelectorAll('[style]'),function(e){return !!e.closest('[data-ym-board]') || !e.closest('[data-ym]') })"
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
+   "panel column top and bottom on the board rim (within 2 px)": "(function(){var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect(),p=document.querySelector('[data-ym-panel]').getBoundingClientRect();return Math.abs(b.top-p.top)<=2&&Math.abs(b.bottom-p.bottom)<=2;})()",
+   "rating sparkline drawn as a Framework chart": "!!document.querySelector('[data-ym-part=spark] svg path')",
+   "no inline style outside the board and the chart": "Array.prototype.every.call(document.querySelectorAll('[style]'),function(e){return !!e.closest('[data-ym-board]') || !!e.closest('[data-ym-part=spark]') || !e.closest('[data-ym]') })"
   }
  },
  {

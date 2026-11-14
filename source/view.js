@@ -30,11 +30,13 @@ function viewModel(out, nowS) {
   out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : ''].filter(Boolean).join(' · ');
   if (A) {
     out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';
-    out.chips = (A.recent || []).slice(0, 6).reverse().map(function (d) { return { text: signed(d), up: d >= 0 }; });
+    out.chips = (A.recent || []).slice(0, 3).reverse().map(function (d) { return { text: signed(d), up: d >= 0 }; });
     if (A.days) {
       var s = 0, f = 0, d0 = new Date(nowS * 1000).getUTCDay();
       A.days.forEach(function (x) { s += x.s; f += x.f; });
-      out.week_line = out.t.this_week + ': ' + s + ' ' + out.t.solved_n + ', ' + f + ' ' + out.t.failed_n + (out.caps && out.caps.streak && A.streak ? ' · ' + out.t.streak + ' ' + A.streak : '');
+      out.week_line = s + ' ' + out.t.solved_n + ' · ' + f + ' ' + out.t.failed_n;   // short lines: a label does not wrap
+      out.week_title = out.t.this_week;
+      out.streak_line = out.caps && out.caps.streak && A.streak ? out.t.streak + ' ' + A.streak : '';
       out.days = A.days.map(function (x, i) { return { name: DAY_NAMES[(d0 - (6 - i) + 70) % 7], on: x.s > 0, today: i === 6 }; });
     }
   }

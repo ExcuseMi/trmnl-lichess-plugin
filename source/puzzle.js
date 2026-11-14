@@ -2,7 +2,7 @@
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Find the best move for white.', find_b: 'Find the best move for black.', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'Best move for white', find_b: 'Best move for black', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', connect: 'Connect Lichess to track your progress' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -113,7 +113,8 @@ function weekFromDays(rows, nowS) {
   for (i = 0; i < 7; i++) days.push({ s: 0, f: 0 });
   rows.slice().sort(function (a, b) { return b[0] - a[0]; }).forEach(function (r) {
     var d = d0 - Math.floor(r[0] / 86400000);
-    if (d >= 0 && d < 7) { days[6 - d].s += r[1]; days[6 - d].f += r[2]; }
+    if (d < 0 || d > 6) return;   // chips and counts cover the same 7 days
+    days[6 - d].s += r[1]; days[6 - d].f += r[2];
     if (r[1] + r[2] > 0 && r[3] && r[4] && recent.length < 6) recent.push(r[4] - r[3]);
   });
   var week = 0; days.forEach(function (x) { week += x.s; });

@@ -241,6 +241,10 @@ test('week: from the public per-day activity (fast); a failed call reuses the sa
   assert.strictEqual(good.account.days[6].s, 2); assert.strictEqual(good.account.days[6].f, 1); assert.strictEqual(good.account.days[4].s, 1);
   assert.strictEqual(good.account.week, 3); assert.deepStrictEqual(Array.from(good.account.recent), [12, 11]);   // rating change per day, newest first
   assert.strictEqual(good.problems, undefined); assert.ok(good.trmnl_state.wk.d.length >= 2);
+  // chips and counts cover the same 7 days: a day 9 days back (+87) is in neither (seen on the live screen 2026-11-14)
+  const old = [...WEEK, { interval: { start: D0 - 9 * DAY, end: D0 - 8 * DAY }, puzzles: { score: { win: 5, loss: 0, draw: 0, rp: { before: 1700, after: 1787 } } } }];
+  const o2 = await load(account({ 'https://lichess.org/api/user/Demo/activity': resp(200, old) })).run(input({ lichess_token: 't' }));
+  assert.deepStrictEqual(Array.from(o2.account.recent), [12, 11]); assert.strictEqual(o2.account.week, 3);
   const down = await load(account({ 'https://lichess.org/api/user/Demo/activity': resp(429, '') })).run(input({ lichess_token: 't' }, good.trmnl_state));
   assert.strictEqual(down.account.days[6].s, 2, 'saved week, not 0'); assert.deepStrictEqual(Array.from(down.problems), ['Lichess activity: HTTP 429']);
   assert.deepStrictEqual(down.trmnl_state.wk, good.trmnl_state.wk, 'the saved week is kept, not overwritten by nothing');

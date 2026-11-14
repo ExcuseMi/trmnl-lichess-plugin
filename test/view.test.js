@@ -30,7 +30,9 @@ test('the board takes its colours from the Framework resolver (no hard-coded gre
   const BOARD = 'rnbqkbnr' + 'pppppppp' + '.'.repeat(32) + 'PPPPPPPP' + 'RNBQKBNR';
   const svg = ctx.boardSvg({ size: 400, board: BOARD, flip: false, from: 52, to: 36, coords: true, bits: 4, dark: false, font: 'x' });
   assert.ok(!/#[0-9a-f]{3}([0-9a-f]{3})?\b/i.test(svg.replace(/<style>[\s\S]*?<\/style>/g, '')), 'no hex colour in the board');
-  assert.ok(['white', 'gray-55', 'gray-40', 'black'].every((k) => asked.includes(k)), 'light, dark, last-move squares and ink asked: ' + asked.join(','));
+  assert.ok(['white', 'gray-55', 'gray-30', 'black'].every((k) => asked.includes(k)), 'light and dark squares, rim and ink asked: ' + asked.join(','));
+  // the last move is an outline only (owner 2026-11-14): a black frame in the destination square, no fill
+  assert.ok(/<rect[^>]*fill="none" stroke="rgb\(black\)"/.test(svg), 'last-move outline');
   asked.length = 0;
   ctx.boardSvg({ size: 400, board: BOARD, flip: false, from: 52, to: 36, coords: true, bits: 4, dark: true, font: 'x' });
   assert.ok(asked.includes('black') && asked.includes('gray-30'), 'dark mode asks the inverse tokens so the board stays light: ' + asked.join(','));

@@ -15,6 +15,7 @@
 {%- comment -%} Framework markup only (owner 2026-11-14): layout, cards, rating, move list, QR, connect screen and title bar are
 plain HTML with Framework classes, no inline styles or style blocks. Only the chessboard (data-ym-board) is drawn by the page script.
 Type: heading value--small, rating value / lg:value--large, change value--xsmall, every other text label. {%- endcomment -%}
+{%- assign ym_chart = "ym-spark" | append_random -%}
 {%- if view == 3 %}{% assign ym_dir = "col" %}{% else %}{% assign ym_dir = "row" %}{% endif -%}
 <div class="layout layout--{{ ym_dir }} layout--stretch gap--small lg:gap--medium" data-ym>
 {%- if connect %}
@@ -30,17 +31,20 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
   </div>
 {%- else %}
   <div class="flex shrink-0" data-ym-board></div>
-  <div class="flex flex--col flex--stretch gap--small lg:gap--medium grow" data-ym-panel>
-    <div class="outline rounded p--2 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
+  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel>
+    {%- comment -%} One stack, one gap. The move list takes the height that is left (the page script hides its oldest rows
+    while the stack is too tall); without a move list the rating and QR row takes it. Panels: one style, light grey,
+    white on 1-bit so no dither sits behind small text. {%- endcomment -%}
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
       {%- if turn_w %}{% assign ym_k = ym_wK %}{% else %}{% assign ym_k = ym_bK %}{% endif %}
-      <img class="image w--[32px] h--[32px] lg:w--[56px] lg:h--[56px]" src="{{ ym_k }}" alt="">
+      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]" src="{{ ym_k }}" alt="">
       <div class="flex flex--col flex--left text--left">
         <span class="value value--small font--bold">{{ t.your_turn }}</span>
         {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{{ find }}</span>{% endif %}
       </div>
     </div>
     {%- if view == 1 %}
-    <div class="outline rounded p--2 flex flex--col flex--left text--left gap--xsmall" data-ym-card="puzzle">
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--col flex--left text--left" data-ym-card="puzzle">
       <span class="label font--bold">{{ t.puzzle_n }} #{{ puzzle.id }}</span>
       {%- if meta != "" %}<span class="label" data-ym-meta>{{ meta }}</span>{% endif %}
       {%- if puzzle.game and puzzle.game.kind != "" %}
@@ -51,19 +55,19 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
         {%- endfor %}
       </div>
       {%- endif %}
+      {%- if banner != "" %}<span class="label label--inverted font--bold">{{ banner }}</span>{% endif %}
+      {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
+      {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
     </div>
     {%- endif %}
-    {%- if banner != "" %}<div class="outline rounded p--2 label--inverted"><span class="label font--bold">{{ banner }}</span></div>{% endif %}
-    {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
-    {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
-    {%- if account == nil and view == 1 %}<span class="label" data-ym-part="hint">{{ t.connect }}</span>{% endif %}
     {%- if view == 1 and rows.size > 1 %}
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 grow" data-ym-card="moves">
     <table class="table table--small" data-ym-part="moves">
       <tbody>
       {%- for r in rows %}
         {%- if r.back < 4 %}
-        <tr class="{% if r.back > 1 %}hidden lg:table-row{% endif %}">
-          <td class="bg--gray-75 text--center"><span class="label">{{ r.n }}.</span></td>
+        <tr>
+          <td class="bg--gray-60 1bit:bg--white text--center"><span class="label">{{ r.n }}.</span></td>
           <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% else %}{% assign ym_f = ym_wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}">{% endif %}{{ r.ws }}</span></td>
           <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% else %}{% assign ym_f = ym_bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}">{% endif %}{{ r.bs }}</span>{% endif %}</td>
         </tr>
@@ -71,28 +75,35 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       {%- endfor %}
       </tbody>
     </table>
+    </div>
     {%- endif %}
-    <div class="grow"></div>
-    <div class="flex flex--row flex--bottom gap--small lg:gap--medium">
+    <div class="flex flex--row flex--stretch-y gap--small lg:gap--medium {% if view != 1 or rows.size < 2 %}grow{% else %}shrink-0{% endif %}" data-ym-bottom>
       {%- if account %}
-      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall grow" data-ym-card="rating">
+      <div class="bg--gray-75 1bit:bg--white rounded p--2 flex flex--col flex--center-x flex--center-y gap--xsmall grow" data-ym-card="rating">
         <span class="label">{{ t.rating_you }}</span>
         <div class="flex flex--row flex--center-y gap--small" data-ym-part="rating">
           <span class="value lg:value--large">{{ account.rating }}</span>
           {%- if change != "" %}<span class="value value--xsmall">{{ change }}</span>{% endif %}
         </div>
         {%- if view == 1 and chips.size > 0 %}
-        <div class="hidden lg:flex flex--row gap--xsmall" data-ym-part="recent">
+        <div class="hidden lg:flex flex--row flex--wrap flex--center-x gap--xsmall" data-ym-part="recent">
           {%- for c in chips %}<span class="label {% if c.up %}label--inverted{% else %}label--outline{% endif %}">{{ c.text }}</span>{% endfor %}
         </div>
         {%- endif %}
+        {%- if view == 1 and account.history.size > 1 %}
+        <div class="hidden lg:visible w--full h--[48px]" id="{{ ym_chart }}" data-ym-part="spark"></div>
+        {%- endif %}
         {%- if view == 1 and caps.solved and days %}
         <div class="hidden lg:flex flex--col flex--center-x gap--xsmall" data-ym-part="bars">
-          <span class="label">{{ week_line }}</span>
-          <div class="flex flex--row gap--xsmall">
+          <div class="flex flex--col flex--center-x">
+            <span class="label">{{ week_title }}</span>
+            <span class="label">{{ week_line }}</span>
+            {%- if streak_line != "" %}<span class="label">{{ streak_line }}</span>{% endif %}
+          </div>
+          <div class="flex flex--row flex--wrap gap--xsmall">
             {%- for d in days %}
             <div class="flex flex--col flex--center-x">
-              <div class="w--[26px] h--[26px] rounded--small {% if d.on %}bg--black{% else %}outline{% endif %}"></div>
+              <div class="w--[14px] h--[14px] rounded--small {% if d.on %}bg--black{% else %}bg--white{% endif %}"></div>
               <span class="label{% if d.today %} font--bold{% endif %}">{{ d.name }}</span>
             </div>
             {%- endfor %}
@@ -104,8 +115,9 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       </div>
       {%- endif %}
       {%- if view != 4 %}
-      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
-        {{ puzzle.url | qr_code: 4, "m", "fixed" }}
+      <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--col flex--center-x flex--center-y gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
+        <div class="lg:hidden">{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
+        <div class="hidden lg:visible">{{ puzzle.url | qr_code: 3, "m", "fixed" }}</div>
         <span class="label">{{ t.scan }}</span>
       </div>
       {%- endif %}
@@ -121,8 +133,10 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 </div>
 {%- endif %}
 {%- unless none %}
+<script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
+<script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {{ account.history | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 // Generated by tools/pieces.js from assets/pieces/cburnett (Colin M.L. Burnett, BSD licence). Do not edit.
 var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#fff\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#fff\" d=\"M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7\"/><path d=\"M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0\"/></g>",
@@ -139,7 +153,7 @@ var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" st
   "bP":"<path d=\"m 22.5,9 c -2.21,0 -4,1.79 -4,4 0,0.89 0.29,1.71 0.78,2.38 C 17.33,16.5 16,18.59 16,21 c 0,2.03 0.94,3.84 2.41,5.03 C 15.41,27.09 11,31.58 11,39.5 H 34 C 34,31.58 29.59,27.09 26.59,26.03 28.06,24.84 29,23.03 29,21 29,18.59 27.67,16.5 25.72,15.38 26.21,14.71 26.5,13.89 26.5,13 c 0,-2.21 -1.79,-4 -4,-4 z\" fill=\"#000000\" fill-rule=\"nonzero\" stroke=\"#000000\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"miter\"/>"};
 // Drawing: the board as SVG text, cburnett pieces (source/pieces.js, 45 x 45 each). No DOM here, so it can be tested in Node.
 // Rim board: a grey rim (level 85, 119 in dark mode, black on 1-bit) with white coordinates on it, light squares white,
-// dark squares grey (170), the last move tinted (119) and framed. The board keeps its light look in dark mode.
+// dark squares grey (170), the last move outlined. The board keeps its light look in dark mode.
 // Colours come from the Framework (TRMNLPaint, owner 2026-11-14): every grey is a level 0..255 asked as the bg--{token} that
 // paints it on this screen, so bit depth, palette (the X's gray-16, gray-4, bw) and dark mode shape it as CSS does. A token
 // that dithers comes back as a pattern tile. Without the Framework (Node tests) the level is used as a plain grey.
@@ -166,17 +180,17 @@ function ymSolid(level) { var f = ymFill(level); return f.def ? (level >= 128 ? 
 function ymInks(svg) { var W = ymSolid(255), K = ymSolid(0); return svg.replace(/#f{3}(f{3})?\b/gi, W).replace(/#0{3}(0{3})?\b/g, K); }   // the set's white and black as Framework inks
 function pieceSvg(type, white, x, y, s) {
   var k = (white ? 'w' : 'b') + type.toUpperCase();
-  return '<svg x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '" viewBox="0 0 45 45">' + ymInks(PIECE_SVG[k]) + '</svg>';
+  return '<svg x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '" viewBox="0 0 45 45" class="ymp" shape-rendering="geometricPrecision"><g filter="url(#ymhalo)">' + ymInks(PIECE_SVG[k]) + '</g></svg>';
 }
 // o: { size, board (64 chars), flip, from, to (indices or -1), coords, bits (1, 2 or 4), dark (dark mode), font }
 function boardSvg(o) {
   var S = o.size, m = o.coords ? Math.round(S * 0.058) : Math.max(4, Math.round(S * 0.02)), q = Math.floor((S - 2 * m) / 8), B = q * 8, x0 = Math.round((S - B) / 2), i, out = [];
   YM_DARK = !!o.dark; YM_FILLS = {};
-  var fRim = ymFill(o.dark ? 119 : 85), fSq = ymFill(170), fLm = ymFill(119), fW = ymFill(255), K = ymSolid(0), Wt = ymSolid(255), lw = Math.max(1, Math.round(S * 0.003));
+  var fRim = ymFill(o.dark ? 119 : 85), fSq = ymFill(170), fW = ymFill(255), K = ymSolid(0), Wt = ymSolid(255), lw = Math.max(1, Math.round(S * 0.003));
   var rim = o.bits === 1 ? K : fRim.paint, sq = fSq.paint;
   out.push('<svg xmlns="http://www.w3.org/2000/svg" class="block" width="' + S + '" height="' + S + '" viewBox="0 0 ' + S + ' ' + S + '" shape-rendering="crispEdges">');
-  out.push('<defs>' + fRim.def + fSq.def + fLm.def + fW.def +
-    '<filter id="ymhalo" x="-10%" y="-10%" width="120%" height="120%"><feMorphology in="SourceAlpha" operator="dilate" radius="' + (q * 0.035).toFixed(2) + '" result="d"/><feFlood flood-color="' + Wt + '"/><feComposite in2="d" operator="in" result="h"/><feMerge><feMergeNode in="h"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>');
+  out.push('<defs>' + fRim.def + fSq.def + fW.def +
+    '<filter id="ymhalo" x="-5%" y="-5%" width="110%" height="110%"><feMorphology in="SourceAlpha" operator="dilate" radius="' + (45 * 0.035 / 1.04).toFixed(2) + '" result="d"/><feFlood flood-color="' + Wt + '"/><feComposite in2="d" operator="in" result="h"/><feMerge><feMergeNode in="h"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>');
   out.push('<rect width="' + S + '" height="' + S + '" rx="' + Math.round(m * 0.5) + '" fill="' + rim + '" shape-rendering="geometricPrecision"/>');
   out.push('<rect x="' + x0 + '" y="' + x0 + '" width="' + B + '" height="' + B + '" fill="' + fW.paint + '"/>');
   function pos(idx) { var f = idx % 8, r = Math.floor(idx / 8); if (o.flip) { f = 7 - f; r = 7 - r; } return [x0 + f * q, x0 + r * q]; }
@@ -184,26 +198,23 @@ function boardSvg(o) {
     var p = pos(i);
     if ((i % 8 + Math.floor(i / 8)) % 2 === 1) out.push('<rect x="' + p[0] + '" y="' + p[1] + '" width="' + q + '" height="' + q + '" fill="' + sq + '"/>');
   }
-  // Last move: both squares in a strong tint with an inner frame, distinct from light and dark squares.
-  var tint = fLm.paint, fw = Math.max(2, Math.round(q * 0.04));
-  var lm = [o.from, o.to].filter(function (idx) { return idx != null && idx >= 0; });
-  lm.forEach(function (idx) {
-    var p = pos(idx);
-    out.push('<rect x="' + p[0] + '" y="' + p[1] + '" width="' + q + '" height="' + q + '" fill="' + tint + '"/>');
-    out.push('<rect x="' + (p[0] + fw / 2) + '" y="' + (p[1] + fw / 2) + '" width="' + (q - fw) + '" height="' + (q - fw) + '" fill="none" stroke="' + K + '" stroke-width="' + fw + '"/>');
-  });
+  // Last move: an outline only (owner 2026-11-14, variant A): a thick dark frame inside the destination square, no fill.
+  var fw = Math.max(3, Math.round(q * 0.07));
+  if (o.to != null && o.to >= 0) {
+    var pt = pos(o.to);
+    out.push('<rect x="' + (pt[0] + fw / 2) + '" y="' + (pt[1] + fw / 2) + '" width="' + (q - fw) + '" height="' + (q - fw) + '" fill="none" stroke="' + K + '" stroke-width="' + fw + '"/>');
+  }
   out.push('<rect x="' + (x0 - lw) + '" y="' + (x0 - lw) + '" width="' + (B + 2 * lw) + '" height="' + (B + 2 * lw) + '" fill="none" stroke="' + Wt + '" stroke-width="' + lw + '"/>');
   // 1-bit thresholds thin lines away: keep every piece line at least ~1.5 screen pixels (the set draws 1.5 of 45 units).
   var sw = o.bits === 1 ? 1.15 * 45 / (q * 1.04) : 0;   // 1.15 screen px in piece units
   if (sw > 1.5) out.push('<style>.ymp *{stroke-width:' + sw.toFixed(2) + 'px !important}</style>');
-  out.push('<g class="ymp" filter="url(#ymhalo)" shape-rendering="geometricPrecision">');
+
   for (i = 0; i < 64; i++) {
     var c = o.board[i];
     if (c === '.') continue;
     var pp = pos(i), s = q * 1.04;
     out.push(pieceSvg(c, c === c.toUpperCase(), pp[0] + (q - s) / 2, pp[1] + (q - s) / 2, s));
   }
-  out.push('</g>');
   if (o.coords) {
     var fs = Math.round(m * 0.62), fam = o.font || 'sans-serif';
     for (i = 0; i < 8; i++) {
@@ -222,6 +233,29 @@ function boardSvg(o) {
 (function () {
   if (!window.TRMNLPaint && document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); return; }
   main();
+  // The rating history as a Framework chart (TRMNLCharts over Highcharts), only where its container shows (lg full view).
+  function spark() {
+    var id = YM.chart || 'ym-spark', el = document.getElementById(id), h = YM.history || [];
+    if (!el || h.length < 2 || !window.Highcharts || !window.TRMNLCharts || !el.offsetParent) return;
+    window.TRMNLCharts.watch(id, function () {
+      return window.Highcharts.chart(id, window.TRMNLCharts.merge(window.TRMNLCharts.options({ el: id }), {
+        chart: { type: 'line', height: el.clientHeight - 6, spacing: [10, 10, 10, 10] },   // room for the last point's marker inside the container
+        xAxis: { visible: false }, yAxis: { visible: false }, legend: { enabled: false }, tooltip: { enabled: false }, accessibility: { enabled: false }, credits: { enabled: false },
+        plotOptions: { series: { animation: false, enableMouseTracking: false, lineWidth: window.TRMNLPaint.px(3, { el: id }), marker: { enabled: false } } },
+        series: [{ data: h.map(function (v, i) { return i === h.length - 1 ? { y: v, marker: { enabled: true, radius: window.TRMNLPaint.px(4, { el: id }) } } : v; }), color: window.TRMNLCharts.series(0, 1, { el: id }) }]
+      }));
+    });
+  }
+  // The move list takes the height that is left: while the panel stack is taller than the board, its oldest row gets the
+  // Framework's hidden class; with fewer than 2 rows left the list goes and the rating and QR row takes the height.
+  function fitMoves() {
+    var panel = document.querySelector('[data-ym-panel]'), card = document.querySelector('[data-ym-card="moves"]');
+    if (!panel || !card) return;
+    var rows = card.querySelectorAll('tr'), i = 0, tb = card.querySelector('table'), cs = window.getComputedStyle(card),
+      over = function () { return panel.scrollHeight > panel.clientHeight + 1 || tb.getBoundingClientRect().bottom > card.getBoundingClientRect().bottom - (parseFloat(cs.paddingBottom) || 0) + 1; };
+    while (over() && i < rows.length - 2) rows[i++].classList.add('hidden');
+    if (over()) { card.classList.add('hidden'); var b = document.querySelector('[data-ym-bottom]'); if (b) { b.classList.remove('shrink-0'); b.classList.add('grow'); } }
+  }
   function main() {
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
     if (!root || !bd || !YM.puzzle) return;
@@ -232,11 +266,26 @@ function boardSvg(o) {
     var W = Math.floor(r.width - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
     var H = Math.floor(r.height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0));
     // The board's share; the panel (a Framework flex column, grow) takes the rest.
-    var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : Math.min(H, Math.round(W * (view === 1 ? (lg ? 0.6 : 0.55) : view === 2 ? 0.45 : 0.58)));
+    // The board takes the full content height when the panel keeps its minimum width (as in c828281); the panel takes the rest.
+    var gap = parseFloat(cs.columnGap || cs.gap) || 0, minPanel = Math.round(W * (view === 1 ? (lg ? 0.28 : 0.3) : view === 2 ? 0.45 : 0.4));
+    var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : Math.min(H, W - minPanel - gap);
     var lab = document.querySelector('[data-ym-panel] .label'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
     var P = YM.puzzle;
-    bd.innerHTML = boardSvg({ size: S, board: P.board, flip: !YM.white_bottom, from: P.from, to: P.to, coords: YM.coords && S > 150, bits: bits, dark: dark, font: font.replace(/"/g, "'") });
-    root.setAttribute('data-ym-drawn', '1');
+    var draw = function (s) { bd.innerHTML = boardSvg({ size: s, board: P.board, flip: !YM.white_bottom, from: P.from, to: P.to, coords: YM.coords && s > 150, bits: bits, dark: dark, font: font.replace(/"/g, "'") }); };
+    draw(S);
+    // Once the web fonts are in, if the panel's content needs more room than its share (the row overflows), the board
+    // gives way by that much; then the page counts as drawn.
+    var settle = function () {
+      for (var k = 0, s = S; k < 3; k++) {
+        var over = view === 3 ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
+        if (over <= 0) break;
+        draw(s -= over); (window.Highcharts && window.Highcharts.charts || []).forEach(function (c) { if (c) c.reflow(); });
+      }
+      fitMoves();
+      spark();   // after the board settled: the chart takes the card's final width
+      root.setAttribute('data-ym-drawn', '1');
+    };
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle, settle); else settle();
   }
 })();
 

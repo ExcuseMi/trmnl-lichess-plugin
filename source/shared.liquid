@@ -4,6 +4,7 @@
 {%- comment -%} Framework markup only (owner 2026-11-14): layout, cards, rating, move list, QR, connect screen and title bar are
 plain HTML with Framework classes, no inline styles or style blocks. Only the chessboard (data-ym-board) is drawn by the page script.
 Type: heading value--small, rating value / lg:value--large, change value--xsmall, every other text label. {%- endcomment -%}
+{%- assign ym_chart = "ym-spark" | append_random -%}
 {%- if view == 3 %}{% assign ym_dir = "col" %}{% else %}{% assign ym_dir = "row" %}{% endif -%}
 <div class="layout layout--{{ ym_dir }} layout--stretch gap--small lg:gap--medium" data-ym>
 {%- if connect %}
@@ -19,17 +20,20 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
   </div>
 {%- else %}
   <div class="flex shrink-0" data-ym-board></div>
-  <div class="flex flex--col flex--stretch gap--small lg:gap--medium grow" data-ym-panel>
-    <div class="outline rounded p--2 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
+  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel>
+    {%- comment -%} One stack, one gap. The move list takes the height that is left (the page script hides its oldest rows
+    while the stack is too tall); without a move list the rating and QR row takes it. Panels: one style, light grey,
+    white on 1-bit so no dither sits behind small text. {%- endcomment -%}
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
       {%- if turn_w %}{% assign ym_k = ym_wK %}{% else %}{% assign ym_k = ym_bK %}{% endif %}
-      <img class="image w--[32px] h--[32px] lg:w--[56px] lg:h--[56px]" src="{{ ym_k }}" alt="">
+      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]" src="{{ ym_k }}" alt="">
       <div class="flex flex--col flex--left text--left">
         <span class="value value--small font--bold">{{ t.your_turn }}</span>
         {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{{ find }}</span>{% endif %}
       </div>
     </div>
     {%- if view == 1 %}
-    <div class="outline rounded p--2 flex flex--col flex--left text--left gap--xsmall" data-ym-card="puzzle">
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--col flex--left text--left" data-ym-card="puzzle">
       <span class="label font--bold">{{ t.puzzle_n }} #{{ puzzle.id }}</span>
       {%- if meta != "" %}<span class="label" data-ym-meta>{{ meta }}</span>{% endif %}
       {%- if puzzle.game and puzzle.game.kind != "" %}
@@ -40,19 +44,19 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
         {%- endfor %}
       </div>
       {%- endif %}
+      {%- if banner != "" %}<span class="label label--inverted font--bold">{{ banner }}</span>{% endif %}
+      {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
+      {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
     </div>
     {%- endif %}
-    {%- if banner != "" %}<div class="outline rounded p--2 label--inverted"><span class="label font--bold">{{ banner }}</span></div>{% endif %}
-    {%- if notice != "" or stale %}<span class="label">{{ notice | default: t.offline }}</span>{% endif %}
-    {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
-    {%- if account == nil and view == 1 %}<span class="label" data-ym-part="hint">{{ t.connect }}</span>{% endif %}
     {%- if view == 1 and rows.size > 1 %}
+    <div class="bg--gray-75 1bit:bg--white rounded p--2 grow" data-ym-card="moves">
     <table class="table table--small" data-ym-part="moves">
       <tbody>
       {%- for r in rows %}
         {%- if r.back < 4 %}
-        <tr class="{% if r.back > 1 %}hidden lg:table-row{% endif %}">
-          <td class="bg--gray-75 text--center"><span class="label">{{ r.n }}.</span></td>
+        <tr>
+          <td class="bg--gray-60 1bit:bg--white text--center"><span class="label">{{ r.n }}.</span></td>
           <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% else %}{% assign ym_f = ym_wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}">{% endif %}{{ r.ws }}</span></td>
           <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% else %}{% assign ym_f = ym_bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}">{% endif %}{{ r.bs }}</span>{% endif %}</td>
         </tr>
@@ -60,28 +64,35 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       {%- endfor %}
       </tbody>
     </table>
+    </div>
     {%- endif %}
-    <div class="grow"></div>
-    <div class="flex flex--row flex--bottom gap--small lg:gap--medium">
+    <div class="flex flex--row flex--stretch-y gap--small lg:gap--medium {% if view != 1 or rows.size < 2 %}grow{% else %}shrink-0{% endif %}" data-ym-bottom>
       {%- if account %}
-      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall grow" data-ym-card="rating">
+      <div class="bg--gray-75 1bit:bg--white rounded p--2 flex flex--col flex--center-x flex--center-y gap--xsmall grow" data-ym-card="rating">
         <span class="label">{{ t.rating_you }}</span>
         <div class="flex flex--row flex--center-y gap--small" data-ym-part="rating">
           <span class="value lg:value--large">{{ account.rating }}</span>
           {%- if change != "" %}<span class="value value--xsmall">{{ change }}</span>{% endif %}
         </div>
         {%- if view == 1 and chips.size > 0 %}
-        <div class="hidden lg:flex flex--row gap--xsmall" data-ym-part="recent">
+        <div class="hidden lg:flex flex--row flex--wrap flex--center-x gap--xsmall" data-ym-part="recent">
           {%- for c in chips %}<span class="label {% if c.up %}label--inverted{% else %}label--outline{% endif %}">{{ c.text }}</span>{% endfor %}
         </div>
         {%- endif %}
+        {%- if view == 1 and account.history.size > 1 %}
+        <div class="hidden lg:visible w--full h--[48px]" id="{{ ym_chart }}" data-ym-part="spark"></div>
+        {%- endif %}
         {%- if view == 1 and caps.solved and days %}
         <div class="hidden lg:flex flex--col flex--center-x gap--xsmall" data-ym-part="bars">
-          <span class="label">{{ week_line }}</span>
-          <div class="flex flex--row gap--xsmall">
+          <div class="flex flex--col flex--center-x">
+            <span class="label">{{ week_title }}</span>
+            <span class="label">{{ week_line }}</span>
+            {%- if streak_line != "" %}<span class="label">{{ streak_line }}</span>{% endif %}
+          </div>
+          <div class="flex flex--row flex--wrap gap--xsmall">
             {%- for d in days %}
             <div class="flex flex--col flex--center-x">
-              <div class="w--[26px] h--[26px] rounded--small {% if d.on %}bg--black{% else %}outline{% endif %}"></div>
+              <div class="w--[14px] h--[14px] rounded--small {% if d.on %}bg--black{% else %}bg--white{% endif %}"></div>
               <span class="label{% if d.today %} font--bold{% endif %}">{{ d.name }}</span>
             </div>
             {%- endfor %}
@@ -93,8 +104,9 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       </div>
       {%- endif %}
       {%- if view != 4 %}
-      <div class="outline rounded p--2 flex flex--col flex--center-x gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
-        {{ puzzle.url | qr_code: 4, "m", "fixed" }}
+      <div class="bg--gray-75 1bit:bg--white rounded p--2 shrink-0 flex flex--col flex--center-x flex--center-y gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
+        <div class="lg:hidden">{{ puzzle.url | qr_code: 4, "m", "fixed" }}</div>
+        <div class="hidden lg:visible">{{ puzzle.url | qr_code: 3, "m", "fixed" }}</div>
         <span class="label">{{ t.scan }}</span>
       </div>
       {%- endif %}
@@ -110,8 +122,10 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 </div>
 {%- endif %}
 {%- unless none %}
+<script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
+<script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { view: {{ view }}, puzzle: {{ puzzle | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {{ account.history | json }}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
 // ==== DRAW
 {{DRAW}}
 // ==== PAGE
