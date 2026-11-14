@@ -73,5 +73,5 @@ custom_fields:
   placeholder: DrNykterstein
   optional: true
 name: Lichess
-description: ''
+description: Lichess puzzles, games and profile
 refresh_interval: 60

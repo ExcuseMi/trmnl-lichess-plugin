@@ -8,3 +8,7 @@ test('settings: no group, Mode reveals difficulty/focus for Puzzles and the user
   for (const k of ['difficulty', 'puzzle_focus', 'follow_username'])
     assert.ok(new RegExp('keyname: ' + k + '\\n(  .*\\n)*?  optional: true').test(y), k + ' optional (hidden fields must not block saving)');
 });
+test('marketplace tagline: present and at most 35 characters (TRMNL requires it, owner 2026-11-14)', () => {
+  const y = fs.readFileSync(FILE, 'utf8'), m = /^description: (.*)$/m.exec(y), t = m ? m[1].replace(/^'(.*)'$/, '$1').trim() : '';
+  assert.ok(t.length > 0 && t.length <= 35, 'tagline "' + t + '" (' + t.length + ')');
+});
