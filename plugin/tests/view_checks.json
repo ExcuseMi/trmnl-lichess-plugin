@@ -692,5 +692,68 @@
    "recent moves in the half horizontal view (2-3 rows)": "(function(){var n=document.querySelectorAll('[data-ym-part=moves] tr').length;return n>=2&&n<=3;})()",
    "result from the player's side": "document.querySelector('[data-ym-part=status]').textContent.trim()==='Won'"
   }
+ },
+ {
+  "name": "focus_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "focus",
+  "checks": {
+   "training line names the theme and rate": "document.querySelector('[data-ym-training]') && document.querySelector('[data-ym-training]').textContent.trim()==='Training: Fork · 54 % solved'",
+   "difficulty in the puzzle info line": "/· Harder$/.test(document.querySelector('[data-ym-card=puzzle] [data-ym-meta]').textContent.trim())",
+   "title bar keeps the theme": "/^Puzzles/.test(document.querySelector('[data-ym-instance]').textContent.trim())"
+  }
+ },
+ {
+  "name": "focus_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "focus",
+  "checks": {
+   "training line shown or hidden for room, never wrapped": "(function(){var n=document.querySelector('[data-ym-training]');return !n||!n.getClientRects().length||n.offsetHeight<=parseFloat(getComputedStyle(n).lineHeight)*1.6;})()"
+  }
+ },
+ {
+  "name": "focus_sparse_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "focus_sparse",
+  "checks": {
+   "calm fallback line": "document.querySelector('[data-ym-training]').textContent.trim()==='Not enough data for a focus yet'",
+   "no problem line": "!document.querySelector('[data-ym-problem]')"
+  }
+ },
+ {
+  "name": "focus_fail_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "focus_fail",
+  "checks": {
+   "calm fallback line, board still drawn": "document.querySelector('[data-ym-training]').textContent.trim()==='Not enough data for a focus yet' && !!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "no problem line": "!document.querySelector('[data-ym-problem]')"
+  }
+ },
+ {
+  "name": "focus_half_horizontal_x",
+  "view": "half_horizontal",
+  "device": "v2",
+  "scenario": "focus",
+  "checks": {}
+ },
+ {
+  "name": "focus_half_vertical_x",
+  "view": "half_vertical",
+  "device": "v2",
+  "scenario": "focus",
+  "checks": {}
+ },
+ {
+  "name": "focus_quadrant_x",
+  "view": "quadrant",
+  "device": "v2",
+  "scenario": "focus",
+  "checks": {
+   "quadrant stays short: no training line": "!document.querySelector('[data-ym-training]') || !document.querySelector('[data-ym-training]').getClientRects().length"
+  }
  }
 ]

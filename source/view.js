@@ -49,7 +49,7 @@ function viewModel(out, nowS) {
     out.show_info = ph !== 'last' || !!(out.problems && out.problems.length) || !!out.stale || !!out.notice;
     return out;
   }
-  out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : ''].filter(Boolean).join(' · ');
+  out.meta = [P.rating ? out.t.difficulty + ' ' + P.rating : '', P.themes && P.themes[0] ? P.themes[0] : '', out.diff_label || ''].filter(Boolean).join(' · ');
   if (A) {
     out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';
     out.chips = (A.recent || []).slice(0, 3).reverse().map(function (d) { return { text: signed(d), up: d >= 0 }; });

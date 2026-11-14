@@ -4,14 +4,14 @@ const assert = require('node:assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const { bundle } = require('../tools/build.js');
+const { bundle, minified, checkBudget, BUDGET } = require('../tools/build.js');
 const FX = (n) => JSON.parse(fs.readFileSync(path.join(__dirname, '../plugin/tests/fixtures', n), 'utf8'));
 const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 
-function load(fetchImpl) {
+function load(fetchImpl, code) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext(bundle() + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine };', ctx);
+  vm.runInContext((code || bundle()) + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine, pickWeakest };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -370,4 +370,76 @@ test('games: the mode is the one setting; anything else is puzzles, which are un
   assert.strictEqual(api.timeLeft(null), 'No limit');
   const big = await load(games({}, [], 'games_playing_many.json')).run(input({ lichess_token: 't', mode: 'games' }, { v: 1, rating: 1500, wk: { t: 1, d: LIST(10).map((i) => [i, 1, 1, 1, 1]) }, last: GFX('games_playing_many.json') }));
   assert.ok(JSON.stringify(big.trmnl_state).length < 7500, 'state stays under the TRMNL limit');
+});
+
+// ---- Puzzle training options: difficulty and focus (difficulty, puzzle_focus)
+const DASH = FX('dashboard_themes.json'), DASH_SPARSE = FX('dashboard_sparse.json');
+const DASH_URL = 'https://lichess.org/api/puzzle/dashboard/30';
+const nextUrls = (calls) => calls.filter((u) => u.includes('/api/puzzle/next'));
+
+test('training: the weakest theme is the lowest performance among themes with >= 10 attempts', () => {
+  const api = load(async () => resp(599, {}));
+  assert.deepStrictEqual({ ...api.pickWeakest(DASH) }, { k: 'fork', rate: 54 });   // endgame is lower but has only 6 attempts; 13 / 24 = 54 %
+  assert.strictEqual(api.pickWeakest(DASH_SPARSE), null);
+  for (const bad of [null, {}, { themes: null }, { themes: { x: {} } }, { themes: { 'bad key!': { results: { nb: 50, performance: 1, firstWins: 1 } } } }]) assert.strictEqual(api.pickWeakest(bad), null);
+});
+
+test('training: difficulty goes into the next-puzzle URL; bad values mean normal', async () => {
+  for (const [f, want] of [[{ difficulty: 'hardest' }, 'hardest'], [{ difficulty: 'harder' }, 'harder'], [{}, 'normal'], [{ difficulty: 'bogus' }, 'normal']]) {
+    const calls = []; await load(account({}, calls)).run(input({ lichess_token: 't', ...f }));
+    assert.deepStrictEqual(nextUrls(calls), ['https://lichess.org/api/puzzle/next?difficulty=' + want], JSON.stringify(f));
+  }
+});
+
+test('training: focus weakest asks the dashboard once, requests angle=<theme> and says what is trained', async () => {
+  const calls = [];
+  const o = await load(account({ [DASH_URL]: resp(200, DASH) }, calls)).run(input({ lichess_token: 't', puzzle_focus: 'weakest', difficulty: 'harder' }));
+  assert.deepStrictEqual(nextUrls(calls), ['https://lichess.org/api/puzzle/next?difficulty=harder&angle=fork']);
+  assert.strictEqual(o.training, 'Training: Fork · 54 % solved'); assert.strictEqual(o.diff_label, 'Harder');
+  assert.ok(o.meta.endsWith('· Harder'));
+  assert.deepStrictEqual({ ...o.trmnl_state.fc }, { t: NOW, k: 'fork', rate: 54 });
+  const off = []; const o2 = await load(account({ [DASH_URL]: resp(200, DASH) }, off)).run(input({ lichess_token: 't' }));
+  assert.ok(!off.some((u) => u.includes('dashboard')), 'focus off: no dashboard call'); assert.strictEqual(o2.training, undefined); assert.ok(!nextUrls(off)[0].includes('angle'));
+});
+
+test('training: the chosen theme is cached for 24 h (one dashboard call a day)', async () => {
+  const first = await load(account({ [DASH_URL]: resp(200, DASH) })).run(input({ lichess_token: 't', puzzle_focus: 'weakest' }));
+  const mk = (later) => input({ lichess_token: 't', puzzle_focus: 'weakest' }, first.trmnl_state, later);
+  for (const [dt, calls] of [[3600, 0], [86399, 0], [86401, 1]]) {
+    const c = []; const inp = mk(); inp.trmnl.system.timestamp_utc = NOW + dt;
+    const o = await load(account({ [DASH_URL]: resp(200, DASH) }, c)).run(inp);
+    assert.strictEqual(c.filter((u) => u.includes('dashboard')).length, calls, 'after ' + dt + ' s');
+    assert.ok(nextUrls(c)[0].endsWith('&angle=fork')); assert.strictEqual(o.training, 'Training: Fork · 54 % solved');
+  }
+});
+
+test('training: too little data or a failing dashboard falls back to any theme with one calm line, never a problem', async () => {
+  for (const dash of [resp(200, DASH_SPARSE), resp(503, {}), resp(200, 'not json'), resp(200, [])]) {
+    const c = []; const o = await load(account({ [DASH_URL]: dash }, c)).run(input({ lichess_token: 't', puzzle_focus: 'weakest' }));
+    assert.deepStrictEqual(nextUrls(c), ['https://lichess.org/api/puzzle/next?difficulty=normal']);
+    assert.strictEqual(o.training, 'Not enough data for a focus yet'); assert.strictEqual(o.none, false); assert.strictEqual(o.problems, undefined);
+  }
+  const o = await load(account({ [DASH_URL]: resp(503, {}) })).run(input({ lichess_token: 't', puzzle_focus: 'weakest' }));
+  assert.strictEqual(o.trmnl_state.fc, undefined, 'a failed dashboard is retried at the next refresh');
+  const s = await load(account({ [DASH_URL]: resp(200, DASH_SPARSE) })).run(input({ lichess_token: 't', puzzle_focus: 'weakest' }));
+  assert.strictEqual(s.trmnl_state.fc.k, '', 'too little data is remembered for the day');
+});
+
+// Guard (R5): the markup reads `training`; a view file that does not pass it drops the line silently (it did, until the render check caught it).
+test('training: the markup reads `training` and all four view files pass it', () => {
+  assert.ok(/\btraining\b/.test(fs.readFileSync(path.join(__dirname, '../source/shared.liquid'), 'utf8')));
+  for (const v of ['full', 'half_horizontal', 'half_vertical', 'quadrant']) assert.ok(/ training: training[,\s]/.test(fs.readFileSync(path.join(__dirname, '../plugin/src', v + '.liquid'), 'utf8')), v + '.liquid does not pass training');
+});
+
+// Size budget (R5): TRMNL refuses a transform over 102400 bytes. The shipped file is the minified bundle; it must be current,
+// under 90 % of the limit, and behave exactly like the readable source.
+test('transform.js: shipped file is the current minified build, within the size budget, and behaves like the source', async () => {
+  const code = await minified();
+  assert.strictEqual(fs.readFileSync(path.join(__dirname, '../plugin/src/transform.js'), 'utf8'), code, 'run node tools/build.js');
+  assert.ok(Buffer.byteLength(code) <= BUDGET, 'over the budget: ' + Buffer.byteLength(code));
+  assert.throws(() => checkBudget(Buffer.byteLength(code), 1000), /over the budget/);   // the guard itself: it fails when the size is over
+  const run = (c) => load(account({ [DASH_URL]: resp(200, DASH) }), c).run(input({ lichess_token: 't', puzzle_focus: 'weakest', difficulty: 'harder' }));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(await run(code))), JSON.parse(JSON.stringify(await run())));
+  const g = (c) => load(games({}), c).run(input({ lichess_token: 'T', mode: 'games' }));
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(await g(code))), JSON.parse(JSON.stringify(await g())));
 });

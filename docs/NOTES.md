@@ -13,7 +13,7 @@ Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth
 | `assets/pieces/cburnett/` | Piece SVGs (BSD); `node tools/pieces.js` regenerates `source/pieces.js` |
 | `plugin/src/*` | Build output (`node tools/build.js`); `settings.yml` is not built, it comes from `trmnlp pull` |
 
-Build: `node tools/build.js`. Push: `cd plugin && trmnlp push` (test plugin only).
+Build: `npm install` once (terser, dev only), then `node tools/build.js`: `plugin/src/transform.js` ships minified (top-level names kept), the source stays readable; tests load the readable bundle and `test/transform.test.js` also checks the shipped file is the current minified build and answers like the source. Push: `cd plugin && trmnlp push` (test plugin only).
 
 ## Tests and renders
 
@@ -85,6 +85,18 @@ The moves call (`/game/export`) and the last-game call run after the playing lis
 | Failure | Each call has its own timeout inside TRMNL's 5 s; broadcast and TV start side by side; a failed call is said on screen; the saved game (`tg`, `fw` with the user) stands in, called "Offline", never "Live"; no saved game: calm screen |
 | Guard | `test/live.test.js`; each `render "main"` line in `plugin/src/*.liquid` must pass every variable the markup reads (a missing one once left the cards empty); renders `renders/design-r4.png` |
 
+## Size budget
+
+TRMNL refuses a transform over 102400 bytes (`trmnlp lint`: files_under_upload_limit). The build fails above 90 % of it (92160 bytes, `BUDGET` in `tools/build.js`; test `transform.js: shipped file ...` fails when the file is stale or over, and the check itself was seen failing with a lower threshold). Minified size now about 75 KB (source 102 KB readable). Do not trim comments to fit: split a module or drop code.
+
+## Puzzle training (mode Puzzles, `source/puzzle.js`)
+
+| Setting | Rule |
+|---|---|
+| `difficulty` (existing) | `/api/puzzle/next?difficulty=easiest..hardest`; "Harder" etc. is appended to the puzzle info line when not Normal |
+| `puzzle_focus` | Any theme (default) or My weakest theme: `GET /api/puzzle/dashboard/30` (2 s), lowest `performance` among themes with `nb` >= 10, then `next?...&angle=<theme>`. Kept 24 h in state `fc` (`t`, `k`, `rate`; too little data is kept too, a failed call is retried next refresh). Line "Training: Fork · 54 % solved" (firstWins / nb) in the puzzle card (full) or turn card (half views); fallback line "Not enough data for a focus yet", never a problem line |
+| Guards | `test/transform.test.js` (theme pick, URL, cache, fallbacks, view files pass `training`); fixtures `dashboard_themes.json`, `dashboard_sparse.json`; scenarios `focus`, `focus_sparse`, `focus_fail`; renders `renders/design-r5.png` |
+
 ## Quadrant
 
 The board takes the full content height (check >= 97 %); the panel gets the rest. Short texts (`heading_short`, `time_value_short`, `+N waiting`), p--1 cards and no wide gap; optional lines (`data-ym-opp`, `more`, `meta`) are dropped before the board gives up any height (`quadrantFit` in `page.js`). One ladder in every view and mode: heading `value value--small`, figure `value`, rest `label`.
@@ -94,7 +106,8 @@ The board takes the full content height (check >= 97 %); the panel gets the rest
 | Call | Scope | Timeout | Use |
 |---|---|---|---|
 | `GET /api/account` | puzzle:read token | 3.5 s | name, puzzle rating |
-| `GET /api/puzzle/next?difficulty=` | puzzle:read | 3.5 s | the puzzle (started at once, used unless the current one is kept) |
+| `GET /api/puzzle/dashboard/30` | puzzle:read | 2 s | weakest theme (focus on only, once a day) |
+| `GET /api/puzzle/next?difficulty=&angle=` | puzzle:read | 3.5 s | the puzzle (started at once, used unless the current one is kept) |
 | `GET /api/user/{name}/rating-history` | token sent, public | 3.5 s | rating chart |
 | `GET /api/user/{name}/activity` | public | 3.5 s | week: solved, failed, rating change per day; failure reuses the saved week |
 | `GET /api/account/playing?nb=50` | valid token | 3.5 s | Your games: ongoing games |

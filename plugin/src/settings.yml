@@ -48,6 +48,15 @@ custom_fields:
   - Top game: top
   - Follow a player: following
   default: puzzles
+- keyname: puzzle_focus
+  group: Lichess
+  field_type: select
+  name: Puzzle focus
+  description: Any theme gives puzzles of every kind. My weakest theme trains the theme you solve worst (at least 10 attempts in the last 30 days, checked once a day). Used only in the mode Puzzles.
+  options:
+  - Any theme: any
+  - My weakest theme: weakest
+  default: any
 - keyname: follow_username
   group: Lichess
   field_type: string

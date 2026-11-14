@@ -135,6 +135,11 @@ def ym_render(trmnl, c)
   when 'owner'   # the owner's real case of 2026-11-14: puzzle uBhLF (public), rating 1470
     mocks = lichess_mocks(rating: 1470, puzzle: 'lichess_uBhLF.json').merge(mocks); login = 'tok'
     state = { 'rating' => 1470, 'cur' => nil, 'last' => nil }
+  when 'focus', 'focus_sparse', 'focus_fail'   # Puzzles with focus on my weakest theme and difficulty harder (dashboard: themes, too little data, failure)
+    mocks = lichess_mocks(rating: 1470, puzzle: 'lichess_uBhLF.json'); login = 'tok'
+    mocks['https://lichess.org/api/puzzle/dashboard/30'] = sc == 'focus' ? { json: JSON.parse(fx('dashboard_themes.json')) } : sc == 'focus_sparse' ? { json: JSON.parse(fx('dashboard_sparse.json')) } : { status: 503, json: {} }
+    state = { 'rating' => 1470, 'cur' => nil, 'last' => nil }
+    fields['puzzle_focus'] = 'weakest'; fields['difficulty'] = 'harder'
   when 'profile_many' then mocks = profile_mocks; login = 'tok'
   when 'profile_new' then mocks = profile_mocks(account: 'profile_account_new.json', history: 'profile_history_new.json', games: 'profile_games_new.ndjson'); login = 'tok'
   when 'profile_fail' then mocks = profile_mocks(status: 503); login = 'tok'

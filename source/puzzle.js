@@ -2,7 +2,7 @@
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress', training: 'Training', solved_pct: 'solved', no_focus: 'Not enough data for a focus yet' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -139,12 +139,42 @@ async function lichessAccountInfo(ctx) {
   if (!ctx.cache.account) { ctx.diag = ctx.diag || {}; ctx.cache.account = getJson('https://lichess.org/api/account', authHeader(ctx), LT); ctx.cache.account.catch(function (e) { ctx.diag.account = callError(e); }); }
   return ctx.cache.account;   // a rejected promise is cached too: one 401 is one call
 }
+// Training options: difficulty; puzzle_focus=weakest (lowest performance, >= 10 attempts, 30 days; dashboard once a day, state `fc`).
+var DIFFS = { easiest: 'Easiest', easier: 'Easier', normal: 'Normal', harder: 'Harder', hardest: 'Hardest' };
+function pickDifficulty(input) {
+  var v = String(field(input, 'difficulty', 'normal')).toLowerCase();
+  return DIFFS[v] ? v : 'normal';
+}
+function pickWeakest(dash) {
+  var th = dash && typeof dash === 'object' && dash.themes && typeof dash.themes === 'object' ? dash.themes : {}, best = null;
+  Object.keys(th).forEach(function (k) {
+    var r = th[k] && th[k].results;
+    if (!/^[A-Za-z0-9]{2,40}$/.test(k) || !r || !(+r.nb >= 10) || !isFinite(+r.performance)) return;
+    if (!best || +r.performance < best.perf || (+r.performance === best.perf && k < best.k)) best = { k: k, perf: +r.performance, rate: Math.round(100 * (+r.firstWins || 0) / +r.nb) };
+  });
+  return best ? { k: best.k, rate: Math.min(100, best.rate) } : null;
+}
+// {k, rate}; k '' = any theme (too little data or dashboard failed).
+function resolveFocus(ctx) {
+  if (!ctx.cache.focus) ctx.cache.focus = (async function () {
+    var fc = stObj(ctx.state.fc);
+    if (fc && ctx.nowS - (+fc.t || 0) < 86400 && ctx.nowS >= (+fc.t || 0) && typeof fc.k === 'string') return { k: fc.k, rate: +fc.rate || 0, t: fc.t };
+    try { var w = pickWeakest(await getJson('https://lichess.org/api/puzzle/dashboard/30', authHeader(ctx), 2000)) || { k: '', rate: 0 }; return { k: w.k, rate: w.rate, t: ctx.nowS }; }
+    catch (e) { ctx.diag.dashboard = callError(e); return { k: '', rate: 0, failed: true }; }
+  })();
+  return ctx.cache.focus;
+}
+function nextUrl(ctx, f) { return 'https://lichess.org/api/puzzle/next?difficulty=' + encodeURIComponent(ctx.settings.difficulty || 'normal') + (f && f.k ? '&angle=' + encodeURIComponent(f.k) : ''); }
+function startNext(ctx) {
+  ctx.cache.next = (ctx.settings.focus ? resolveFocus(ctx) : Promise.resolve(null)).then(function (f) { return getJson(nextUrl(ctx, f), authHeader(ctx), LT); });
+  return ctx.cache.next;
+}
 var lichessProvider = {
   id: 'lichess',
   capabilities: { personalPuzzles: true, solvedCheck: true, ratingHistory: true, streak: true },
   active: function (ctx) { return ctx.token ? this.capabilities : NO_CAPS; },
   fetchPuzzle: async function (ctx) {
-    if (!ctx.cache.next) ctx.cache.next = getJson('https://lichess.org/api/puzzle/next?difficulty=' + encodeURIComponent(ctx.settings.difficulty || 'normal'), authHeader(ctx), LT);
+    if (!ctx.cache.next) startNext(ctx);
     return lichessModel(await ctx.cache.next);
   },
   fetchProgress: async function (ctx) {
@@ -183,10 +213,10 @@ async function run(input) {
   if (String(field(input, 'mode', 'puzzles')) === 'following') return runFollow(input, token, nowS, st0);   // "Follow a player" (source/live.js)
   if (String(field(input, 'mode', 'puzzles')) === 'profile') return runProfile(input, token, nowS, st0);   // "Profile" (source/profile.js)
   var prov = PROVIDERS[which];
-  var ctx = { settings: { difficulty: String(field(input, 'difficulty', 'normal')) }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
+  var ctx = { settings: { difficulty: pickDifficulty(input), focus: String(field(input, 'puzzle_focus', 'any')) === 'weakest' }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
   if (ctx.token) {   // every Lichess call starts now, side by side: activity, scopes, account and a next puzzle in case it is needed
     lichessActivity(ctx); lichessScopes(ctx); lichessAccountInfo(ctx).catch(function () {});   // the week follows the account (it needs the name)
-    ctx.cache.next = getJson('https://lichess.org/api/puzzle/next?difficulty=' + encodeURIComponent(ctx.settings.difficulty || 'normal'), authHeader(ctx), LT);
+    startNext(ctx);
     ctx.cache.next.catch(function (e) { ctx.diag.next = callError(e); });
   }
   var model = null, progress = null, banner = '', notice = '', stale = false, cur = null, caps = prov.active(ctx), rating = +st0.rating || 0;
@@ -220,10 +250,14 @@ async function run(input) {
     if (scopes && !/(^|[ ,])puzzle:read([ ,]|$)/.test(scopes) && !notice) notice = 'scope';
   }
   var out = { t: T_EN, none: !model, stale: stale, notice: notice ? T_EN[notice] : '', banner: banner, account: progress, caps: { personal: !!caps.personalPuzzles, solved: !!caps.solvedCheck, history: !!caps.ratingHistory, streak: !!caps.streak }, coords: coords, white_bottom: !flip, show_account: !!progress };
+  var foc = ctx.settings.focus && ctx.cache.focus ? await ctx.cache.focus : null;
+  if (foc) out.training = foc.k ? T_EN.training + ': ' + themeWords(foc.k) + ' · ' + foc.rate + ' % ' + T_EN.solved_pct : T_EN.no_focus;
+  if (ctx.settings.difficulty !== 'normal') out.diff_label = DIFFS[ctx.settings.difficulty];
   if (model) { out.puzzle = model; out.to_move = model.turn === 'w' ? T_EN.white : T_EN.black; }
   var st = { v: 1, rating: rating || 0 };
   if (model && !stale) st.last = slim(model); else if (last0) st.last = last0;
   if (cur) st.cur = cur;
+  if (foc && !foc.failed) st.fc = { t: foc.t, k: foc.k, rate: foc.rate };
   if (ctx.cache.weekRows && ctx.cache.weekRows.length && !ctx.cache.weekSaved) st.wk = { t: nowS, d: ctx.cache.weekRows };   // the last good week, for a failed call
   else if (stObj(st0.wk)) st.wk = st0.wk;
   // A Lichess call that failed is said on screen, always (owner 2026-11-14): "Lichess activity: timeout", "HTTP 429", "0 items".
@@ -234,4 +268,4 @@ async function run(input) {
   out.trmnl_state = fitState(st);
   return viewModel(out, nowS);
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, weekFromDays: weekFromDays, shortThemes: shortThemes };
+if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, weekFromDays: weekFromDays, shortThemes: shortThemes, pickWeakest: pickWeakest, pickDifficulty: pickDifficulty };

@@ -16,9 +16,24 @@ function pieceCaptures() {
 }
 function icon() { return fs.readFileSync(path.join(ROOT, 'assets/icon-mono.svg'), 'utf8').trim(); }
 function page() { return rd('shared.liquid').replace('{{ICON}}', icon).replace('{{PIECES}}', pieceCaptures).replace('{{DRAW}}', () => rd('pieces.js') + rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
-module.exports = { bundle, page };
+// plugin/src/transform.js ships minified (TRMNL refuses a file over 100 KB = 102400 bytes); the source stays readable. Top-level names are kept.
+// Guard: the build fails above 90 % of the limit, so the next feature meets the budget here and not at upload (NOTES.md "Size budget").
+const LIMIT = 102400, BUDGET = Math.floor(LIMIT * 0.9);
+async function minified() {
+  const r = await require('terser').minify(bundle(), { compress: { passes: 2 }, mangle: true, format: { comments: false } });
+  if (r.error || !r.code) throw new Error('terser failed: ' + (r.error && r.error.message));
+  return r.code;
+}
+function checkBudget(bytes, budget) {
+  if (bytes > (budget || BUDGET)) throw new Error('transform.js is ' + bytes + ' bytes, over the budget of ' + (budget || BUDGET) + ' (90 % of ' + LIMIT + '). Split or slim the source.');
+}
+module.exports = { bundle, page, minified, checkBudget, BUDGET };
 if (require.main === module) {
-  const t = path.join(ROOT, 'plugin/src/transform.js'), s = path.join(ROOT, 'plugin/src/shared.liquid');
-  fs.writeFileSync(t, bundle()); fs.writeFileSync(s, page());
-  console.log(t + ': ' + fs.statSync(t).size + ' bytes\n' + s + ': ' + fs.statSync(s).size + ' bytes');
+  (async () => {
+    const t = path.join(ROOT, 'plugin/src/transform.js'), s = path.join(ROOT, 'plugin/src/shared.liquid');
+    const code = await minified();
+    checkBudget(Buffer.byteLength(code));
+    fs.writeFileSync(t, code); fs.writeFileSync(s, page());
+    console.log(t + ': ' + fs.statSync(t).size + ' bytes (budget ' + BUDGET + ')\n' + s + ': ' + fs.statSync(s).size + ' bytes');
+  })().catch((e) => { console.error(e.message); process.exit(1); });
 }

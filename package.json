@@ -1,0 +1,6 @@
+{
+  "name": "trmnl-lichess-puzzle-plugin",
+  "private": true,
+  "description": "Build tooling only (tools/build.js minifies plugin/src/transform.js with terser).",
+  "devDependencies": { "terser": "5.36.0" }
+}

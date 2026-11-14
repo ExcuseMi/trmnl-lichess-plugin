@@ -241,7 +241,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]{% if view == 4 %} hidden{% endif %}" src="{{ ym_k }}" alt="">
       <div class="flex flex--col flex--left text--left">
         <span class="value value--small font--bold">{% if view == 4 %}{{ heading_short | default: t.your_turn }}{% else %}{{ heading | default: t.your_turn }}{% endif %}</span>
-        {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{% if view == 4 %}{% if turn_w %}{{ t.side_w }}{% else %}{{ t.side_b }}{% endif %}{% else %}{{ find }}{% endif %}</span>{% if meta != "" and view != 4 %}<span class="label hidden lg:visible" data-ym-meta>{{ meta }}</span>{% endif %}{% endif %}
+        {%- if view == 1 %}<span class="label">{{ find }}</span>{% else %}<span class="label hidden lg:visible">{% if view == 4 %}{% if turn_w %}{{ t.side_w }}{% else %}{{ t.side_b }}{% endif %}{% else %}{{ find }}{% endif %}</span>{% if meta != "" and view != 4 %}<span class="label hidden lg:visible" data-ym-meta>{{ meta }}</span>{% endif %}{% if training and training != "" and view != 4 and mode != "games" %}<span class="label hidden lg:visible" data-ym-meta data-ym-training>{{ training }}</span>{% endif %}{% endif %}
       </div>
     </div>
     {%- if view == 1 and show_info != false %}
@@ -252,6 +252,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       {%- else %}
       <span class="label font--bold">{{ t.puzzle_n }} #{{ puzzle.id }}</span>
       {%- if meta != "" %}<span class="label" data-ym-meta>{{ meta }}</span>{% endif %}
+      {%- if training and training != "" %}<span class="label" data-ym-meta data-ym-training>{{ training }}</span>{% endif %}
       {%- endif %}
       {%- if mode != "games" and puzzle.game and puzzle.game.kind != "" %}
       <div class="hidden lg:flex flex--col flex--left" data-ym-game>
