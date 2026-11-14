@@ -14,7 +14,7 @@
    "panel column top and bottom on the board rim (within 2 px)": "(function(){var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect(),p=document.querySelector('[data-ym-panel]').getBoundingClientRect();return Math.abs(b.top-p.top)<=2&&Math.abs(b.bottom-p.bottom)<=2;})()",
    "rating sparkline drawn as a Framework chart": "!!document.querySelector('[data-ym-part=spark] svg path')",
    "no inline style outside the board and the chart": "Array.prototype.every.call(document.querySelectorAll('[style]'),function(e){return !!e.closest('[data-ym-board]') || !!e.closest('[data-ym-part=spark]') || !e.closest('[data-ym]') })",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -35,7 +35,7 @@
   "checks": {
    "rating only: no moves, no week, no QR": "!!document.querySelector('[data-ym-part=rating]') && !document.querySelector('[data-ym-part=moves]') && !document.querySelector('[data-ym-part=bars]') && !document.querySelector('[data-ym-qrbox]')",
    "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -64,7 +64,7 @@
   "scenario": "owner",
   "checks": {
    "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -83,7 +83,7 @@
   "scenario": "owner",
   "checks": {
    "rating and QR side by side, same top and bottom": "(function(){var a=document.querySelector('[data-ym-card=rating],[data-ym-card=time]'),q=document.querySelector('[data-ym-qrbox]');if(!a||!q||!q.getClientRects().length)return false;var x=a.getBoundingClientRect(),y=q.getBoundingClientRect();return Math.abs(x.top-y.top)<=2&&Math.abs(x.bottom-y.bottom)<=2&&y.left>=x.right-1;})()",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -96,7 +96,7 @@
    "board from the user side with the last move outlined": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg rect[fill=none]')",
    "opponent, time left, moves and QR": "/Magnus_C \\(1812\\)/.test(document.body.textContent) && /2d 3h/.test(document.querySelector('[data-ym-part=time]').textContent) && !!document.querySelector('[data-ym-part=moves]') && !!document.querySelector('[data-ym-qrbox] svg') && /Scan to move/.test(document.querySelector('[data-ym-qrbox]').textContent)",
    "no more-games panel with one game": "!document.querySelector('[data-ym-part=more]')",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()",
    "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()"
   }
  },
@@ -107,7 +107,7 @@
   "scenario": "games_one",
   "checks": {
    "QR on the OG": "!!document.querySelector('[data-ym-qrbox] svg')",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -118,7 +118,7 @@
   "checks": {
    "most urgent game first (least time left), played as black: board turned": "/Magnus_C/.test(document.body.textContent) && !/SlowPoke/.test(document.body.textContent) && /8h 20m/.test(document.querySelector('[data-ym-part=time]').textContent) && !!document.querySelector('[data-ym-board] svg text')",
    "N more games waiting panel": "/2 more games waiting/.test(document.querySelector('[data-ym-part=more]').textContent)",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -137,7 +137,7 @@
   "scenario": "games_many",
   "checks": {
    "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -147,7 +147,7 @@
   "scenario": "games_many",
   "checks": {
    "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
-   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value, [data-ym-panel] .title').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
   }
  },
  {
@@ -504,6 +504,193 @@
    "drawn": "!!document.querySelector('[data-ym-drawn],[data-ym-calm]')",
    "history and games failures are on screen, ratings still shown, no chart": "document.querySelectorAll('[data-ym-problem]').length===2&&/history/.test(document.querySelectorAll('[data-ym-problem]')[0].textContent)&&/games/.test(document.querySelectorAll('[data-ym-problem]')[1].textContent)&&Array.prototype.filter.call(document.querySelectorAll('[data-ym-row]'),function(e){return e.getClientRects().length}).length>=4&&!document.querySelector('[data-ym-part=spark] svg')",
    "list rows are packed: row pitch <= 1.6x the text line height": "(function(){var ok=true,by=new Map();Array.prototype.forEach.call(document.querySelectorAll('[data-ym-row],[data-ym-stat]'),function(e){if(!e.getClientRects().length)return;var a=by.get(e.parentNode)||[];a.push(e);by.set(e.parentNode,a)});by.forEach(function(a){if(a.length<2)return;var lh=0;a[0].querySelectorAll('*').forEach(function(n){if(Array.prototype.some.call(n.childNodes,function(c){return c.nodeType===3&&c.textContent.trim()})){var cs=getComputedStyle(n);lh=Math.max(lh,parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3)}});for(var i=1;i<a.length;i++){if(a[i].offsetTop-a[i-1].offsetTop>1.6*lh)ok=false}});return ok})()"
+  }
+ },
+ {
+  "name": "top_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "top_live",
+  "checks": {
+   "title bar says Top game and the event": "document.querySelector('[data-ym-instance]').textContent.trim()==='Top game · Example International'",
+   "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "black's card above white's, both with a clock (m:ss or h:mm:ss)": "(function(){var b=document.querySelector('[data-ym-card=player-b]').getBoundingClientRect(),w=document.querySelector('[data-ym-card=player-w]').getBoundingClientRect();return b.top<w.top;})() && document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "the side to move is named": "/to move/.test(document.querySelector('[data-ym-card=player-w]').textContent) && !/to move/.test(document.querySelector('[data-ym-card=player-b]').textContent)",
+   "titles and ratings shown": "/GM/.test(document.querySelector('[data-ym-card=player-w]').textContent) && /2712/.test(document.querySelector('[data-ym-card=player-w]').textContent)",
+   "event card: round line, Live chip, QR Watch live": "/Round 5 · Board 2/.test(document.querySelector('[data-ym-card=event]').textContent) && document.querySelector('[data-ym-part=status]').textContent.trim()==='Live' && !!document.querySelector('[data-ym-qrbox] svg') && /Watch live/.test(document.querySelector('[data-ym-qrbox]').textContent)",
+   "recent moves, newest at the bottom, last move a dark block": "(function(){var r=document.querySelectorAll('[data-ym-part=moves] tr'),last=r[r.length-1];var n=Array.prototype.map.call(r,function(x){return parseInt(x.textContent,10)});return r.length>=2&&n.every(function(v,i){return !i||v>n[i-1]})&&!!last.querySelector('.label--inverted');})()",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()",
+   "no inline style outside the board": "Array.prototype.every.call(document.querySelectorAll('[style]'),function(e){return !!e.closest('[data-ym-board]') || !e.closest('[data-ym]') })",
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
+   "moves take the leftover height (as many rows as fit, 8 to 12)": "(function(){var n=document.querySelectorAll('[data-ym-part=moves] tr').length;return n>=8&&n<=12;})()",
+   "event card is content height and shares top and height with the QR box": "(function(){var e=document.querySelector('[data-ym-card=event]').getBoundingClientRect(),q=document.querySelector('[data-ym-qrbox]').getBoundingClientRect(),m=document.querySelector('[data-ym-card=moves]').getBoundingClientRect();return Math.abs(e.top-q.top)<=2&&Math.abs(e.bottom-q.bottom)<=2&&e.height<0.3*m.height*2;})()"
+  }
+ },
+ {
+  "name": "top_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "top_live",
+  "checks": {
+   "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "both players with clocks, black on top": "(function(){var b=document.querySelector('[data-ym-card=player-b]').getBoundingClientRect(),w=document.querySelector('[data-ym-card=player-w]').getBoundingClientRect();return b.top<w.top;})() && document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "QR and the Live chip": "!!document.querySelector('[data-ym-qrbox] svg') && document.querySelector('[data-ym-part=status]').textContent.trim()==='Live'",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "top_half_horizontal_og",
+  "view": "half_horizontal",
+  "device": "og_png",
+  "scenario": "top_live",
+  "checks": {
+   "both players with clocks, black on top": "(function(){var b=document.querySelector('[data-ym-card=player-b]').getBoundingClientRect(),w=document.querySelector('[data-ym-card=player-w]').getBoundingClientRect();return b.top<w.top;})() && document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "event card shown": "(function(){var e=document.querySelector('[data-ym-card=event]');return !!e&&e.getClientRects().length>0;})()",
+   "no QR on the small screen": "getComputedStyle(document.querySelector('[data-ym-qrbox]')).display==='none'"
+  }
+ },
+ {
+  "name": "top_half_vertical_og",
+  "view": "half_vertical",
+  "device": "og_png",
+  "scenario": "top_live",
+  "checks": {
+   "both players with clocks, black on top": "(function(){var b=document.querySelector('[data-ym-card=player-b]').getBoundingClientRect(),w=document.querySelector('[data-ym-card=player-w]').getBoundingClientRect();return b.top<w.top;})() && document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "board at least 240 px": "document.querySelector('[data-ym-board] svg').getBoundingClientRect().width>=240",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "top_quadrant_og",
+  "view": "quadrant",
+  "device": "og_png",
+  "scenario": "top_live",
+  "checks": {
+   "board and the two players only: no moves, event or QR": "!!document.querySelector('[data-ym-card=player-b]') && !!document.querySelector('[data-ym-card=player-w]') && !document.querySelector('[data-ym-part=moves]') && !document.querySelector('[data-ym-card=event]') && !document.querySelector('[data-ym-qrbox]')",
+   "clocks": "document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);return document.querySelector('[data-ym-board] svg').getBoundingClientRect().height>=0.97*h;})()",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "top_quadrant_x_dark",
+  "view": "quadrant",
+  "device": "v2",
+  "scenario": "top_live",
+  "checks": {
+   "surnames only (no truncation dots)": "!/…/.test(document.querySelector('[data-ym-panel]').textContent)",
+   "clocks": "document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})"
+  },
+  "dark": true
+ },
+ {
+  "name": "top_tv_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "top_tv",
+  "checks": {
+   "title bar Top game · TV": "document.querySelector('[data-ym-instance]').textContent.trim()==='Top game · TV'",
+   "event is Lichess TV, game kind on the second line": "/Lichess TV/.test(document.querySelector('[data-ym-card=event]').textContent) && /Rapid 10\\+5/.test(document.querySelector('[data-ym-card=event]').textContent)",
+   "no failure line (nothing failed)": "!document.querySelector('[data-ym-problem]')",
+   "clocks": "document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "top_offline_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "top_offline",
+  "checks": {
+   "saved game is not called live": "document.querySelector('[data-ym-part=status]').textContent.trim()==='Offline'",
+   "failure lines on screen": "document.querySelectorAll('[data-ym-problem]').length===2 && /Lichess broadcast: HTTP 503/.test(document.body.textContent)",
+   "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "top_fail_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "top_fail",
+  "checks": {
+   "calm screen with the failure lines": "!!document.querySelector('[data-ym-calm]') && document.querySelectorAll('[data-ym-problem]').length===2 && /No live game right now/.test(document.body.textContent)",
+   "title bar says Top game": "document.querySelector('[data-ym-instance]').textContent.trim()==='Top game'"
+  }
+ },
+ {
+  "name": "follow_playing_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "follow_playing",
+  "checks": {
+   "title bar Following <name>": "document.querySelector('[data-ym-instance]').textContent.trim()==='Following KnightOwl'",
+   "playing now, Live chip": "/Playing now/.test(document.querySelector('[data-ym-card=event]').textContent) && document.querySelector('[data-ym-part=status]').textContent.trim()==='Live'",
+   "black's card above white's, clocks": "(function(){var b=document.querySelector('[data-ym-card=player-b]').getBoundingClientRect(),w=document.querySelector('[data-ym-card=player-w]').getBoundingClientRect();return b.top<w.top;})() && document.querySelectorAll('[data-ym-part=clock]').length===2 && Array.prototype.every.call(document.querySelectorAll('[data-ym-part=clock]'),function(c){return /^\\d+:\\d\\d(:\\d\\d)?$/.test(c.textContent.trim())})",
+   "board drawn": "!!document.querySelector('[data-ym-drawn] [data-ym-board] svg')",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()",
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()"
+  }
+ },
+ {
+  "name": "follow_playing_quadrant_og",
+  "view": "quadrant",
+  "device": "og_png",
+  "scenario": "follow_playing",
+  "checks": {
+   "board and the two players only": "!!document.querySelector('[data-ym-card=player-b]') && !document.querySelector('[data-ym-qrbox]') && !document.querySelector('[data-ym-part=moves]')",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()"
+  }
+ },
+ {
+  "name": "follow_last_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "follow_last",
+  "checks": {
+   "QR says Watch the game": "/Watch the game/.test(document.querySelector('[data-ym-qrbox]').textContent)",
+   "no text wraps in the panel": "(function(){var bad=[];document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value').forEach(function(n){if(!n.getClientRects().length||n.hasAttribute('data-ym-wrap')||n.querySelector('br')||n.closest('[data-ym-part=moves]'))return;var cs=getComputedStyle(n),lh=parseFloat(cs.lineHeight)||parseFloat(cs.fontSize)*1.3;if(n.offsetHeight>lh*1.6)bad.push(n.textContent.trim())});return bad.length===0;})()",
+   "last game from the followed player's side": "document.querySelector('[data-ym-part=status]').textContent.trim()==='Won'",
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
+   "Last game line": "/Last game/.test(document.querySelector('[data-ym-card=event]').textContent)"
+  }
+ },
+ {
+  "name": "follow_unknown_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "follow_unknown",
+  "checks": {
+   "calm screen: Unknown player": "!!document.querySelector('[data-ym-calm]') && /Unknown player/.test(document.body.textContent) && !document.querySelector('[data-ym-board]')",
+   "title bar names the typed name": "document.querySelector('[data-ym-instance]').textContent.trim()==='Following Nobody_Here'"
+  }
+ },
+ {
+  "name": "follow_empty_full_x",
+  "view": "full",
+  "device": "v2",
+  "scenario": "follow_empty",
+  "checks": {
+   "calm screen asks for a name": "!!document.querySelector('[data-ym-calm]') && /Enter a Lichess username/.test(document.body.textContent)"
+  }
+ },
+ {
+  "name": "follow_fail_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "follow_fail",
+  "checks": {
+   "calm screen with the failure line": "!!document.querySelector('[data-ym-calm]') && document.querySelectorAll('[data-ym-problem]').length===1"
+  }
+ },
+ {
+  "name": "follow_last_hh_x",
+  "view": "half_horizontal",
+  "device": "v2",
+  "scenario": "follow_last",
+  "checks": {
+   "recent moves in the half horizontal view (2-3 rows)": "(function(){var n=document.querySelectorAll('[data-ym-part=moves] tr').length;return n>=2&&n<=3;})()",
+   "result from the player's side": "document.querySelector('[data-ym-part=status]').textContent.trim()==='Won'"
   }
  }
 ]

@@ -1,0 +1,79 @@
+{
+ "id": "tvBest01",
+ "rated": true,
+ "variant": "standard",
+ "speed": "rapid",
+ "perf": "rapid",
+ "createdAt": 1794628466600,
+ "lastMoveAt": 1794628578104,
+ "status": "started",
+ "source": "pool",
+ "players": {
+  "white": {
+   "user": {
+    "name": "TvBestPlayer",
+    "id": "tvbestplayer",
+    "title": "GM"
+   },
+   "rating": 2870
+  },
+  "black": {
+   "user": {
+    "name": "Rival_X",
+    "id": "rival_x",
+    "title": "FM"
+   },
+   "rating": 2790
+  }
+ },
+ "moves": "e4 e5 Nf3 Nc6 Bb5 a6 Ba4 Nf6 O-O Be7 Re1 b5 Bb3 d6 c3 O-O h3 Nb8 d4 Nbd7 Nbd2 Bb7 Bc2 Re8 a4 Bf8 Bd3 c6 Nf1 h6 Ng3 g6 Qd2 Kg7 axb5 axb5 Bb1 Nh5 Nf5+ gxf5 exf5 Nhf6",
+ "clocks": [
+  19500,
+  18000,
+  19190,
+  17690,
+  18880,
+  17380,
+  18570,
+  17070,
+  18260,
+  16760,
+  17950,
+  16450,
+  17640,
+  16140,
+  17330,
+  15830,
+  17020,
+  15520,
+  16710,
+  15210,
+  16400,
+  14900,
+  16090,
+  14590,
+  15780,
+  14280,
+  15470,
+  13970,
+  15160,
+  13660,
+  14850,
+  13350,
+  14540,
+  13040,
+  14230,
+  12730,
+  13920,
+  12420,
+  13610,
+  12110,
+  13300,
+  11800
+ ],
+ "clock": {
+  "initial": 600,
+  "increment": 5,
+  "totalTime": 800
+ }
+}

@@ -40,12 +40,21 @@ custom_fields:
   group: Lichess
   field_type: select
   name: Mode
-  description: What the screen shows. Your games shows your correspondence games where it is your turn. Profile shows your ratings, rating chart, stats and recent results (connect Lichess with the OAuth button above).
+  description: What the screen shows. Your games shows your correspondence games where it is your turn. Profile shows your ratings, rating chart, stats and recent results. Top game shows the most important live game now (a broadcast, else Lichess TV) with players, clocks, event and recent moves. Follow a player shows the current game of the player named below, or their last game. Connect Lichess with the OAuth button above.
   options:
   - Puzzles: puzzles
   - Your games: games
   - Profile: profile
+  - Top game: top
+  - Follow a player: following
   default: puzzles
+- keyname: follow_username
+  group: Lichess
+  field_type: string
+  name: Player to follow
+  description: Lichess username for the mode Follow a player. Used only in that mode.
+  placeholder: DrNykterstein
+  optional: true
 name: Lichess
 description: ''
 refresh_interval: 60

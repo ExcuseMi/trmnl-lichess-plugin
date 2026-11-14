@@ -14,7 +14,8 @@ Unofficial. Lichess puzzles at your level for [TRMNL](https://trmnl.com) e-paper
 |---|---|
 | Lichess (OAuth button) | Optional login, scope `puzzle:read` only. The token is never shown or logged |
 | Difficulty | Easiest to hardest, relative to your puzzle rating (needs the login) |
-| Mode | Puzzles (default), Your games (your correspondence games where it is your turn) or Profile (ratings, chart, stats, recent results) |
+| Mode | Puzzles (default), Your games (your correspondence games where it is your turn), Profile (ratings, chart, stats, recent results), Top game (the best live game: a broadcast, else Lichess TV) or Follow a player |
+| Player to follow | Lichess username for Follow a player: their current game, or their last game |
 | Board orientation, Coordinates, Hide title bar | As named |
 
 ## Build and test

@@ -1,0 +1,31 @@
+{
+ "best": {
+  "user": {
+   "name": "TvBestPlayer",
+   "id": "tvbestplayer",
+   "title": "GM"
+  },
+  "rating": 2870,
+  "gameId": "tvBest01",
+  "color": "white"
+ },
+ "classical": {
+  "user": {
+   "name": "SlowGame_42",
+   "id": "slowgame_42"
+  },
+  "rating": 1958,
+  "gameId": "tvClas01",
+  "color": "black"
+ },
+ "bullet": {
+  "user": {
+   "name": "TvBestPlayer",
+   "id": "tvbestplayer",
+   "title": "GM"
+  },
+  "rating": 2870,
+  "gameId": "tvBest01",
+  "color": "white"
+ }
+}

@@ -1,0 +1,123 @@
+{
+ "round": {
+  "id": "rN4xYz01",
+  "name": "Round 5",
+  "slug": "round-5",
+  "ongoing": true,
+  "startsAt": 1794611280000,
+  "url": "https://lichess.org/broadcast/example-international-2026/round-5/rN4xYz01",
+  "delay": 0
+ },
+ "tour": {
+  "id": "tOuRn4xY",
+  "name": "Example International 2026 | Open Section",
+  "slug": "example-international-2026",
+  "tier": 4,
+  "url": "https://lichess.org/broadcast/example-international-2026/tOuRn4xY"
+ },
+ "study": {
+  "writeable": false
+ },
+ "games": [
+  {
+   "id": "g1FinAl1",
+   "name": "Okafor, Chidi - Lindqvist, Sven",
+   "fen": "rnbq1rk1/p1p1bpp1/1p2pn1p/3p4/2PP3B/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8",
+   "players": [
+    {
+     "name": "Okafor, Chidi",
+     "title": "GM",
+     "rating": 2755,
+     "fideId": 102755,
+     "fed": "XXX",
+     "clock": 310000
+    },
+    {
+     "name": "Lindqvist, Sven",
+     "title": "GM",
+     "rating": 2740,
+     "fideId": 102740,
+     "fed": "XXX",
+     "clock": 95000
+    }
+   ],
+   "lastMove": "b7b6",
+   "status": "1-0"
+  },
+  {
+   "id": "g2LiveAB",
+   "name": "Alvarez, Pedro - Brandt, Jonas",
+   "fen": "r2qrb2/1b1n1pk1/2pp1n1p/1p2pP2/3P4/2P2N1P/1P1Q1PP1/RBB1R1K1 w - - 1 22",
+   "players": [
+    {
+     "name": "Alvarez, Pedro",
+     "title": "GM",
+     "rating": 2712,
+     "fideId": 102712,
+     "fed": "XXX",
+     "clock": 276000
+    },
+    {
+     "name": "Brandt, Jonas",
+     "title": "IM",
+     "rating": 2688,
+     "fideId": 102688,
+     "fed": "XXX",
+     "clock": 171000
+    }
+   ],
+   "lastMove": "h5f6",
+   "thinkTime": 122,
+   "status": "*"
+  },
+  {
+   "id": "g3LiveCD",
+   "name": "Haddad, Omar - Ng, Wei",
+   "fen": "rnbq1rk1/p1p1bpp1/1p2pn1p/3p4/2PP3B/2N1PN2/PP3PPP/R2QKB1R w KQ - 0 8",
+   "players": [
+    {
+     "name": "Haddad, Omar",
+     "title": "GM",
+     "rating": 2650,
+     "fideId": 102650,
+     "fed": "XXX",
+     "clock": 420000
+    },
+    {
+     "name": "Ng, Wei",
+     "title": "GM",
+     "rating": 2641,
+     "fideId": 102641,
+     "fed": "XXX",
+     "clock": 388000
+    }
+   ],
+   "lastMove": "b7b6",
+   "status": "*"
+  },
+  {
+   "id": "g4NoStrt",
+   "name": "Ivanova, Mila - Tanaka, Ren",
+   "fen": "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+   "players": [
+    {
+     "name": "Ivanova, Mila",
+     "title": "IM",
+     "rating": 2800,
+     "fideId": 102800,
+     "fed": "XXX",
+     "clock": 540000
+    },
+    {
+     "name": "Tanaka, Ren",
+     "title": "IM",
+     "rating": 2790,
+     "fideId": 102790,
+     "fed": "XXX",
+     "clock": 540000
+    }
+   ],
+   "status": "*"
+  }
+ ]
+}

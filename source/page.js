@@ -37,7 +37,7 @@
   function hide(n) { n.setAttribute('class', (n.getAttribute('class') || '').replace(/(^|\s)(sm|md|lg):(flex|visible|block|grid|table-row|inline-block)(?=\s|$)/g, ' ') + ' hidden'); }
   // A text that needs more than one line (not a deliberate <br> list, not the move table).
   function wraps(n) {
-    if (!n.getClientRects().length || n.querySelector('br') || n.closest('[data-ym-part="moves"]')) return false;
+    if (!n.getClientRects().length || n.hasAttribute('data-ym-wrap') || n.querySelector('br') || n.closest('[data-ym-part="moves"]')) return false;
     var cs = window.getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
     return n.offsetHeight > lh * 1.6;
   }

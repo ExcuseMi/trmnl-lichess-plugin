@@ -1,12 +1,12 @@
 # Handoff notes
 
-Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). One setting `mode`: Puzzles (default), Your games or Profile (`field(input, 'mode')`; anything but `games` or `profile` is puzzles).
+Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). Settings `mode`: Puzzles (default), Your games, Profile, Top game or Follow a player (`field(input, 'mode')`: `games`, `profile`, `top`, `following`; anything else is puzzles) and `follow_username` (only used by Follow a player).
 
 ## Source and build
 
 | Path | What |
 |---|---|
-| `source/chess.js`, `source/puzzle.js`, `source/games.js`, `source/profile.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, "Your games" mode, view model for Liquid |
+| `source/chess.js`, `source/puzzle.js`, `source/games.js`, `source/profile.js`, `source/live.js`, `source/view.js` | Transform (Node, serverless): FEN, moves, Lichess calls, "Your games", Profile, Top game and Following modes, view model for Liquid |
 | `source/shared.liquid` | All markup: layout, panels, move list, QR, connect screen, title bar (Framework classes only) |
 | `source/draw.js`, `source/pieces.js` | The board SVG (the only custom drawing); `pieces.js` is generated |
 | `source/page.js` | Page script: draws the board, settles its size, fits the panel, draws the rating chart |
@@ -42,7 +42,7 @@ Rendered checks on every case: no overflow, no page errors, at most 4 text sizes
 
 ## Title bar modes
 
-One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games", `profile` "Profile"; reserved `top` "Top game", `following` "Following %s".
+One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "Puzzles · Endgame"), `connect` "Connect account", `games` "Your games", `profile` "Profile", `top` "Top game · <event short name>" (or "Top game · TV"), `following` "Following <name>".
 
 ## Your games mode (`source/games.js`)
 
@@ -72,6 +72,19 @@ The moves call (`/game/export`) and the last-game call run after the playing lis
 - Quadrant: username, top 3 ratings, form chips only.
 - Fixtures `plugin/tests/fixtures/profile_*`; scenarios `profile_many`, `profile_new`, `profile_fail`, `profile_partial`; unit tests `test/profile.test.js`; renders `renders/design-r3.png`.
 
+## Top game and Following modes (`source/live.js`)
+
+| Part | Rule |
+|---|---|
+| Top game: broadcast | `GET /api/broadcast/top` (`active`, rounds with `round.ongoing`, highest `tour.tier` first, at most 3 rounds). Boards: `GET /api/broadcast/-/-/{roundId}` (`/api/broadcast/round/{id}` is a 404). Shown: the board in play (`status` `*` with a last move) with the highest rating sum. Moves: `GET /api/study/{roundId}/{gameId}.pgn` (clock comments are dropped; a list that does not replay to the board's FEN is not shown). QR: `https://lichess.org/study/{round}/{game}` (Lichess redirects to the broadcast page; keeps the QR small). Clocks are centiseconds |
+| Top game: TV | No board in play in any broadcast: `GET /api/tv/channels`, the classical game when its rating >= 2000, else `best`; `GET /game/export/{id}` JSON (moves, clocks, players) replayed with chess.js. Title bar "Top game · TV" |
+| Nothing in play | The top board of a just ended broadcast round (result shown), else a calm screen "No live game right now" (no failure line when nothing failed) |
+| Follow | `follow_username` (empty or invalid name: calm screen, no call). One call: `GET /api/user/{name}/current-game?moves=true&clocks=true` (public: the ongoing game, else the last game played; 404 = unknown account, calm screen "Unknown player"). Result from the followed player's side (chip "Won"/"Lost"/"Draw", the event line starts with the name). Variants are not drawn ("Lichess game: not shown"). `/api/games/user/{name}` is 404 anonymously: not used |
+| Screen | Board from white's side, last move outlined. Player cards: black top, white bottom of the moves (title chip, name, rating, "to move", clock as last fetched); event card (content height, event name may wrap to 2 lines, round and board, Live chip or the result) beside the QR; the move list takes the leftover height (as many rows as fit (max 12) full, 3 rows in half horizontal, where it sits between event and QR) "Watch live" / "Watch the game". Failures: own card of lines ("Lichess broadcast: HTTP 503") |
+| Views | Full: cards, moves (oldest hide first), event + QR; the board fills the height (check 97 %). Half views: one-row player cards, event + QR (QR on X only). Quadrant: board and two cards (surname, clock) only |
+| Failure | Each call has its own timeout inside TRMNL's 5 s; broadcast and TV start side by side; a failed call is said on screen; the saved game (`tg`, `fw` with the user) stands in, called "Offline", never "Live"; no saved game: calm screen |
+| Guard | `test/live.test.js`; each `render "main"` line in `plugin/src/*.liquid` must pass every variable the markup reads (a missing one once left the cards empty); renders `renders/design-r4.png` |
+
 ## Quadrant
 
 The board takes the full content height (check >= 97 %); the panel gets the rest. Short texts (`heading_short`, `time_value_short`, `+N waiting`), p--1 cards and no wide gap; optional lines (`data-ym-opp`, `more`, `meta`) are dropped before the board gives up any height (`quadrantFit` in `page.js`). One ladder in every view and mode: heading `value value--small`, figure `value`, rest `label`.
@@ -95,3 +108,4 @@ All calls start side by side at the top of `run()` (TRMNL's 5 s cap). A failed c
 ## Open items
 
 - Your games is unproven against live Lichess (mocked): check `/api/account/playing` with the real token after the push.
+- Top game and Following: endpoints and shapes checked by hand against live Lichess on 2026-11-14 (`/api/broadcast/top`, `/api/broadcast/-/-/{id}`, `/api/study/{round}/{game}.pgn`, `/api/tv/channels`, `/game/export/{id}`); the rendered tests use fixtures. `/api/user/{name}/current-game` checked (200 for thibault, 404 for an unknown name); the QR redirect `/study/{round}/{game}` was checked with curl (303), not from a browser.

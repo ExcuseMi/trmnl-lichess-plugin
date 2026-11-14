@@ -363,7 +363,7 @@ test('games: no moves list when the moves call fails or the game is a variant ch
 });
 
 test('games: the mode is the one setting; anything else is puzzles, which are unchanged', async () => {
-  for (const m of [undefined, '', 'puzzles', 'top', 'GAMES']) { const o = await load(account({})).run(input({ lichess_token: 't', ...(m === undefined ? {} : { mode: m }) })); assert.strictEqual(o.mode, 'puzzles', String(m)); assert.strictEqual(o.puzzle.id, 'u3zfD'); }
+  for (const m of [undefined, '', 'puzzles', 'bogus', 'GAMES']) { const o = await load(account({})).run(input({ lichess_token: 't', ...(m === undefined ? {} : { mode: m }) })); assert.strictEqual(o.mode, 'puzzles', String(m)); assert.strictEqual(o.puzzle.id, 'u3zfD'); }
   const calls = []; await load(games({}, calls)).run(input({ mode: 'games' })); assert.strictEqual(calls.length, 0, 'no login: the connect screen, no call');
   const api = load(async () => resp(599, {}));
   assert.deepStrictEqual(['0', '59', '60', '3599', '3600', '5400', '86400', '187000'].map((s) => api.timeLeft(+s)), ['<1m', '<1m', '1m', '59m', '1h', '1h 30m', '1d', '2d 3h']);

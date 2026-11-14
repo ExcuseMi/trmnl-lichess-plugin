@@ -18,4 +18,14 @@ RSpec.describe 'Lichess views' do
       ym_checks(s, c)
     end
   end
+  # The live modes in every view on OG and X: no overflow, no page errors, at most 4 text sizes.
+  %w[top_live follow_playing].product(%w[full half_horizontal half_vertical quadrant], %w[og_png v2]).each do |sc, view, device|
+    it "no overflow and no page errors: #{sc} #{view} on #{device}" do
+      c = { 'name' => "#{sc}-#{view}-#{device}", 'view' => view, 'device' => device, 'scenario' => sc }
+      s = ym_render(trmnl, c)
+      expect(s).to have_no_overflow
+      expect(s).to have_no_problems
+      ym_checks(s, c)
+    end
+  end
 end

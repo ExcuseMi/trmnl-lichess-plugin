@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # Shared by plugin/tests/*_spec.rb (trmnlp test) and tools/render_sheet_spec.rb (review sheets): fixtures, Lichess mocks,
 # the OAuth seed and ym_render(trmnl, case). A case: {name, view, device, dark, palette, scenario, puzzle, checks}.
-# Scenarios: games_one, games_many, games_none, games_fail, games_scope (mode Your games), account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
+# Scenarios: top_live, top_tv, top_fail, top_offline (mode Top game), follow_playing, follow_last, follow_unknown, follow_empty, follow_fail (mode Following), games_one, games_many, games_none, games_fail, games_scope (mode Your games), account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
 require 'json'
 require 'fileutils'
 require 'time'
@@ -66,6 +66,19 @@ def profile_mocks(account: 'profile_account_many.json', history: 'profile_histor
     "https://lichess.org/api/user/#{me}/rating-history" => { status: history_status, json: history_status == 200 ? JSON.parse(fx(history)) : {} },
     "https://lichess.org/api/games/user/#{me}*" => { status: games_status, body: games_status == 200 ? fx(games) : '' } }
 end
+# "Top game" and "Follow a player" modes (fixtures top_*, tv_*, follow_*; the player is KnightOwl). broadcast: the /api/broadcast/top answer.
+def top_mocks(broadcast: 'top_broadcast.json', status: 200, tv: true, pgn: true)
+  m = { 'https://lichess.org/api/broadcast/top' => { status: status, json: status == 200 ? JSON.parse(fx(broadcast)) : {} },
+        'https://lichess.org/api/broadcast/-/-/rN4xYz01' => { json: JSON.parse(fx('top_round.json')) },
+        'https://lichess.org/api/broadcast/-/-/clubR001' => { json: { round: { id: 'clubR001' }, tour: {}, games: [] } },
+        'https://lichess.org/api/tv/channels' => { status: tv ? 200 : 503, json: tv ? JSON.parse(fx('tv_channels.json')) : {} },
+        'https://lichess.org/game/export/tvBest01*' => { json: JSON.parse(fx('tv_game.json')) } }
+  m['https://lichess.org/api/study/rN4xYz01/g2LiveAB.pgn'] = { body: fx('top_pgn.pgn') } if pgn
+  m
+end
+def follow_mocks(game: 'follow_game_playing.json', status: 200, user: 'KnightOwl')
+  { "https://lichess.org/api/user/#{user}/current-game*" => { status: status, json: status == 200 ? JSON.parse(fx(game)) : {} } }
+end
 PANEL_OVERLAP_JS = <<~JS.freeze
   (function () {
     var out = [];
@@ -126,6 +139,20 @@ def ym_render(trmnl, c)
   when 'profile_new' then mocks = profile_mocks(account: 'profile_account_new.json', history: 'profile_history_new.json', games: 'profile_games_new.ndjson'); login = 'tok'
   when 'profile_fail' then mocks = profile_mocks(status: 503); login = 'tok'
   when 'profile_partial' then mocks = profile_mocks(history_status: 503, games_status: 503); login = 'tok'
+  when 'top_live' then mocks = top_mocks; login = 'tok'
+  when 'top_tv' then mocks = top_mocks(broadcast: 'top_broadcast_none.json'); login = 'tok'
+  when 'top_fail' then mocks = top_mocks(status: 503, tv: false); login = 'tok'
+  when 'top_offline'
+    mocks = top_mocks(status: 503, tv: false); login = 'tok'
+    state = { 'tg' => { 'source' => 'live', 'id' => 'g2LiveAB', 'url' => 'https://lichess.org/study/rN4xYz01/g2LiveAB', 'board' => 'r2qrb2/1b1n1pk1/2pp1n1p/1p2pP2/3P4/2P2N1P/1P1Q1PP1/RBB1R1K1'.gsub('/', '').gsub(/\d/) { |d| '.' * d.to_i },
+                'turn' => 'w', 'from' => 12, 'to' => 21, 'rating' => 0, 'themes' => [], 'title' => '', 'plays' => 0, 'moves' => [[20, 'Qd2', 'Qd8'], [21, 'Bb1', 'Nh5']],
+                'game' => { 'w' => { 'name' => 'Alvarez, Pedro', 'title' => 'GM', 'rating' => 2712, 'clock' => 276000 }, 'b' => { 'name' => 'Brandt, Jonas', 'title' => 'IM', 'rating' => 2688, 'clock' => 171000 },
+                            'event' => 'Example International', 'round' => 'Round 5 · Board 2', 'status' => 'live', 'res' => '', 'arg' => 'Example International' } } }
+  when 'follow_playing' then mocks = follow_mocks; login = 'tok'
+  when 'follow_last' then mocks = follow_mocks(game: 'follow_game_last.json'); login = 'tok'
+  when 'follow_unknown' then mocks = follow_mocks(status: 404, user: 'Nobody_Here'); login = 'tok'
+  when 'follow_empty' then mocks = {}; login = 'tok'
+  when 'follow_fail' then mocks = follow_mocks(status: 503); login = 'tok'
   when 'games_one' then mocks = games_mocks; login = 'tok'
   when 'games_many' then mocks = games_mocks(playing: 'games_playing_many.json'); login = 'tok'
   when 'games_none' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
@@ -141,6 +168,11 @@ def ym_render(trmnl, c)
   fields['orientation'] = c['orientation'] if c['orientation']
   fields['mode'] = 'games' if sc.start_with?('games')
   fields['mode'] = 'profile' if sc.start_with?('profile')
+  fields['mode'] = 'top' if sc.start_with?('top')
+  if sc.start_with?('follow')
+    fields['mode'] = 'following'
+    fields['follow_username'] = sc == 'follow_unknown' ? 'Nobody_Here' : sc == 'follow_empty' ? '' : 'KnightOwl'
+  end
   dev = c['device'].is_a?(Hash) ? c['device'].transform_keys(&:to_sym) : (c['device'] || 'v2')
   opts = { view: c['view'], device: dev, mocks: mocks, custom_fields: fields, now: NOW.iso8601, wait_for: "document.querySelector('[data-ym-drawn],[data-ym-none]') !== null || document.querySelector('.layout') !== null" }
   opts[:dark_mode] = true if c['dark']

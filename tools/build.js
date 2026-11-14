@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
-const PARTS = ['vendor/chess.min.js', 'chess.js', 'view.js', 'puzzle.js', 'games.js', 'profile.js'];
+const PARTS = ['vendor/chess.min.js', 'chess.js', 'view.js', 'puzzle.js', 'games.js', 'profile.js', 'live.js'];
 const rd = (p) => fs.readFileSync(path.join(ROOT, 'source', p), 'utf8');
 function bundle() { return PARTS.map((p) => '// ==== ' + p + '\n' + rd(p)).join('\n'); }
 // Liquid captures of the cburnett pieces as data URIs (move list figurines, the king in "Your turn"), from source/pieces.js.

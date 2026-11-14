@@ -27,6 +27,29 @@
 {%- comment -%} Framework markup only (owner 2026-11-14): layout, cards, rating, move list, QR, connect screen and title bar are
 plain HTML with Framework classes, no inline styles or style blocks. Only the chessboard (data-ym-board) is drawn by the page script.
 Type: heading value--small, rating value / lg:value--large, change value--xsmall, every other text label. {%- endcomment -%}
+{%- comment -%} The move list card, shared by the puzzle, Your games, Top game and Following views. {%- endcomment -%}
+{%- assign ym_live = false %}{% if mode == "top" or mode == "following" %}{% assign ym_live = true %}{% endif %}
+{%- assign ym_mmax = 4 %}{% if ym_live and view == 1 %}{% assign ym_mmax = 12 %}{% elsif ym_live %}{% assign ym_mmax = 3 %}{% endif %}
+{%- capture ym_b_moves %}
+    {%- assign ym_mv = false %}{% if view == 1 and rows.size > 1 %}{% assign ym_mv = true %}{% elsif view == 2 and ym_live and rows.size > 1 %}{% assign ym_mv = true %}{% endif %}
+    {%- if ym_mv %}
+    <div class="bg--gray-75 1bit:bg--white rounded p--{% if view == 4 %}1{% else %}2{% endif %} {% if ym_live %}grow{% else %}shrink-0{% endif %}" data-ym-card="moves">
+    <table class="table table--small" data-ym-part="moves">
+      <tbody>
+      {%- for r in rows %}
+        {%- if r.back < ym_mmax %}
+        <tr>
+          <td class="bg--gray-60 1bit:bg--white text--center"><span class="label">{{ r.n }}.</span></td>
+          <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% assign ym_g = ym_1wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% assign ym_g = ym_1wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% assign ym_g = ym_1wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% assign ym_g = ym_1wB %}{% else %}{% assign ym_f = ym_wN %}{% assign ym_g = ym_1wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.ws }}</span></td>
+          <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% assign ym_g = ym_1bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% assign ym_g = ym_1bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% assign ym_g = ym_1bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% assign ym_g = ym_1bB %}{% else %}{% assign ym_f = ym_bN %}{% assign ym_g = ym_1bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.bs }}</span>{% endif %}</td>
+        </tr>
+        {%- endif %}
+      {%- endfor %}
+      </tbody>
+    </table>
+    </div>
+    {%- endif %}
+{%- endcapture %}
 {%- assign ym_chart = "ym-spark" | append_random -%}
 {%- if view == 3 %}{% assign ym_dir = "col" %}{% else %}{% assign ym_dir = "row" %}{% endif -%}
 <div class="layout layout--{{ ym_dir }} layout--left layout--stretch gap--small{% if view != 4 %} lg:gap--medium{% endif %}" data-ym>
@@ -42,6 +65,63 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
     <span class="title title--large text--center">{{ t.none }}</span>
     <span class="description text--center">{{ calm_line | default: t.none2 }}</span>
     {%- for pr in problems %}<span class="label text--center" data-ym-problem>{{ pr }}</span>{% endfor %}
+  </div>
+{%- elsif mode == "top" or mode == "following" %}
+  {%- comment -%} Top game and Following: the board from white's side, the panel mirrors it: black's card on top, white's at the bottom of the
+  moves, then the event and the QR side by side. One panel style, one gap. Quadrant: the board and the two players only. {%- endcomment -%}
+  {%- if view == 4 %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--1" %}{% else %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--2" %}{% endif %}
+  {%- for p in cards %}
+  {%- capture ym_c %}
+    {%- if view == 4 %}
+    <div class="{{ ym_pp }} grow flex flex--col flex--center-x flex--center-y gap--xsmall" data-ym-card="player-{{ p.side }}">
+      <div class="flex flex--row flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg><span class="label font--bold">{{ p.short }}</span></div>
+      {%- if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}
+    </div>
+    {%- elsif view != 1 %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--row flex--center-y flex--between gap--small" data-ym-card="player-{{ p.side }}">
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{{ p.name }}</span>{% if p.sub != "" %}<span class="label" data-ym-meta>{{ p.sub }}</span>{% endif %}</div>
+      {%- if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}
+    </div>
+    {%- else %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--col flex--stretch-x gap--xsmall" data-ym-card="player-{{ p.side }}">
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{{ p.name }}</span></div>
+      <div class="flex flex--row flex--center-y flex--between gap--small"><span class="label">{{ p.sub }}</span>{% if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}</div>
+    </div>
+    {%- endif %}
+  {%- endcapture %}
+  {%- if forloop.first %}{% assign ym_card_b = ym_c %}{% else %}{% assign ym_card_w = ym_c %}{% endif %}
+  {%- endfor %}
+  <div class="flex flex-none" data-ym-board></div>
+  <div class="flex flex--col flex--stretch-x gap--small lg:gap--medium grow" data-ym-panel>
+    {{ ym_card_b }}
+    {%- if view == 1 %}{{ ym_b_moves }}{% endif %}
+    {{ ym_card_w }}
+    {%- if view != 4 %}
+    <div class="flex flex--row flex--stretch-y gap--small lg:gap--medium{% if view != 1 %} grow{% endif %} shrink-0" data-ym-bottom>
+      <div class="{{ ym_pp }} {% if view == 2 %}shrink-0{% else %}grow{% endif %} flex flex--col flex--center-y flex--left text--left gap--xsmall" data-ym-card="event">
+        {%- if view == 1 %}
+        <span class="label" data-ym-wrap>{{ event_name }}</span>
+        {%- if round_line != "" %}<span class="label" data-ym-meta>{{ round_line }}</span>{% endif %}
+        <div class="flex flex--row flex--left"><span class="label label--inverted" data-ym-part="status">{{ status_text }}</span></div>
+        {%- else %}
+        <div class="flex flex--row flex--left flex--center-y gap--small"><span class="label label--inverted" data-ym-part="status">{{ status_text }}</span><span class="label">{{ event_name }}</span></div>
+        {%- if round_line != "" %}<span class="label" data-ym-meta>{{ round_line }}</span>{% endif %}
+        {%- endif %}
+      </div>
+      {%- if view == 2 %}{{ ym_b_moves }}{% endif %}
+      {%- if view == 3 %}{% assign ym_qr_og = 3 %}{% else %}{% assign ym_qr_og = 4 %}{% endif %}
+      <div class="{{ ym_pp }} shrink-0 flex flex--col flex--center-x flex--center-y gap--xsmall {% if view != 1 %}hidden lg:flex{% endif %}" data-ym-qrbox>
+        <div class="lg:hidden">{{ puzzle.url | qr_code: ym_qr_og, "m", "fixed" }}</div>
+        <div class="hidden lg:visible">{% if view == 1 %}{{ puzzle.url | qr_code: 3, "m", "fixed" }}{% else %}{{ puzzle.url | qr_code: 2, "m", "fixed" }}{% endif %}</div>
+        <span class="label">{{ t.scan }}</span>
+      </div>
+    </div>
+    {%- if problems.size > 0 %}
+    <div class="{{ ym_pp }} shrink-0 flex flex--col flex--left text--left" data-ym-card="problems">
+      {%- for pr in problems %}<span class="label" data-ym-problem>{{ pr }}</span>{% endfor %}
+    </div>
+    {%- endif %}
+    {%- endif %}
   </div>
 {%- elsif mode == "profile" %}
   {%- comment -%} Profile: no board. Blocks are captured once and placed per view. One panel style, one gap. Lists are packed (normal row
@@ -214,23 +294,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
       <span class="label font--bold">{% if view == 4 %}{{ more_short }}{% else %}{{ more_line }}{% endif %}</span>
     </div>
     {%- endif %}
-    {%- if view == 1 and rows.size > 1 %}
-    <div class="bg--gray-75 1bit:bg--white rounded p--{% if view == 4 %}1{% else %}2{% endif %} shrink-0" data-ym-card="moves">
-    <table class="table table--small" data-ym-part="moves">
-      <tbody>
-      {%- for r in rows %}
-        {%- if r.back < 4 %}
-        <tr>
-          <td class="bg--gray-60 1bit:bg--white text--center"><span class="label">{{ r.n }}.</span></td>
-          <td><span class="label{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% assign ym_g = ym_1wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% assign ym_g = ym_1wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% assign ym_g = ym_1wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% assign ym_g = ym_1wB %}{% else %}{% assign ym_f = ym_wN %}{% assign ym_g = ym_1wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.ws }}</span></td>
-          <td>{% if r.bs != "" %}<span class="label{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% assign ym_g = ym_1bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% assign ym_g = ym_1bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% assign ym_g = ym_1bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% assign ym_g = ym_1bB %}{% else %}{% assign ym_f = ym_bN %}{% assign ym_g = ym_1bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.bs }}</span>{% endif %}</td>
-        </tr>
-        {%- endif %}
-      {%- endfor %}
-      </tbody>
-    </table>
-    </div>
-    {%- endif %}
+    {{ ym_b_moves }}
     <div class="flex flex--row flex--stretch-y gap--small lg:gap--medium grow shrink-0" data-ym-bottom>
       {%- if mode == "games" %}
       <div class="bg--gray-75 1bit:bg--white rounded p--{% if view == 4 %}1{% else %}2{% endif %} flex flex--col flex--center-x flex--center-y gap--small grow" data-ym-card="time">
@@ -296,7 +360,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
 <script src="https://trmnl.com/js/highcharts/12.3.0/highcharts.js"></script>
 <script src="https://trmnl.com/js/highcharts/12.3.0/pattern-fill.js"></script>
 <script type="text/javascript">
-var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {% if mode == "profile" and pf.chart %}{{ pf.chart.pts | json }}{% else %}{{ account.history | json }}{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }} };
+var YM = { chart: "{{ ym_chart }}", view: {{ view }}, puzzle: {{ puzzle | json }}, history: {% if mode == "profile" and pf.chart %}{{ pf.chart.pts | json }}{% else %}{{ account.history | json }}{% endif %}, profile: {% if mode == "profile" %}true{% else %}false{% endif %}, coords: {{ coords | json }}, white_bottom: {{ white_bottom | json }}, live: {% if mode == "top" or mode == "following" %}true{% else %}false{% endif %} };
 // ==== DRAW
 // Generated by tools/pieces.js from assets/pieces/cburnett (Colin M.L. Burnett, BSD licence). Do not edit.
 var PIECE_SVG = {"wK":"<g fill=\"none\" fill-rule=\"evenodd\" stroke=\"#000\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.5\"><path stroke-linejoin=\"miter\" d=\"M22.5 11.63V6M20 8h5\"/><path fill=\"#fff\" stroke-linecap=\"butt\" stroke-linejoin=\"miter\" d=\"M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5\"/><path fill=\"#fff\" d=\"M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7\"/><path d=\"M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0\"/></g>",
@@ -427,7 +491,7 @@ function boardSvg(o) {
   function hide(n) { n.setAttribute('class', (n.getAttribute('class') || '').replace(/(^|\s)(sm|md|lg):(flex|visible|block|grid|table-row|inline-block)(?=\s|$)/g, ' ') + ' hidden'); }
   // A text that needs more than one line (not a deliberate <br> list, not the move table).
   function wraps(n) {
-    if (!n.getClientRects().length || n.querySelector('br') || n.closest('[data-ym-part="moves"]')) return false;
+    if (!n.getClientRects().length || n.hasAttribute('data-ym-wrap') || n.querySelector('br') || n.closest('[data-ym-part="moves"]')) return false;
     var cs = window.getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
     return n.offsetHeight > lh * 1.6;
   }

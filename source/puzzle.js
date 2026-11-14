@@ -179,6 +179,8 @@ async function run(input) {
   var which = 'lichess';
   if (!token) return viewModel({ t: T_EN, connect: true, none: true, trmnl_state: fitState(stObj(st0.wk) ? { v: 1, rating: +st0.rating || 0, wk: st0.wk } : { v: 1, rating: +st0.rating || 0 }) }, nowS);   // OAuth is required (owner 2026-11-14)
   if (String(field(input, 'mode', 'puzzles')) === 'games') return runGames(input, token, nowS, st0);   // "Your games" (source/games.js)
+  if (String(field(input, 'mode', 'puzzles')) === 'top') return runTop(input, token, nowS, st0);   // "Top game" (source/live.js)
+  if (String(field(input, 'mode', 'puzzles')) === 'following') return runFollow(input, token, nowS, st0);   // "Follow a player" (source/live.js)
   if (String(field(input, 'mode', 'puzzles')) === 'profile') return runProfile(input, token, nowS, st0);   // "Profile" (source/profile.js)
   var prov = PROVIDERS[which];
   var ctx = { settings: { difficulty: String(field(input, 'difficulty', 'normal')) }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };

@@ -1,0 +1,71 @@
+{
+ "id": "fl4StGmE",
+ "rated": true,
+ "variant": "standard",
+ "speed": "blitz",
+ "perf": "blitz",
+ "createdAt": 1794628466600,
+ "lastMoveAt": 1794628578104,
+ "status": "resign",
+ "source": "pool",
+ "players": {
+  "white": {
+   "user": {
+    "name": "Rival_X",
+    "id": "rival_x"
+   },
+   "rating": 1688
+  },
+  "black": {
+   "user": {
+    "name": "KnightOwl",
+    "id": "knightowl",
+    "title": "CM"
+   },
+   "rating": 1642
+  }
+ },
+ "moves": "e4 e5 Nf3 Nc6 Bc4 Nf6 Ng5 d5 exd5 Na5 Bb5+ c6 dxc6 bxc6 Be2 h6 Nf3 e4 Ne5 Bd6 d4 exd3 Nxd3 Qc7 O-O O-O Nc3 Bg4 Bxg4 Nxg4 Qxg4 Bxh2+ Kh1 Rae8",
+ "clocks": [
+  19500,
+  18000,
+  19190,
+  17690,
+  18880,
+  17380,
+  18570,
+  17070,
+  18260,
+  16760,
+  17950,
+  16450,
+  17640,
+  16140,
+  17330,
+  15830,
+  17020,
+  15520,
+  16710,
+  15210,
+  16400,
+  14900,
+  16090,
+  14590,
+  15780,
+  14280,
+  15470,
+  13970,
+  15160,
+  13660,
+  14850,
+  13350,
+  14540,
+  13040
+ ],
+ "clock": {
+  "initial": 300,
+  "increment": 3,
+  "totalTime": 420
+ },
+ "winner": "black"
+}

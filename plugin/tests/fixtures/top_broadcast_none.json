@@ -1,0 +1,24 @@
+{
+ "active": [
+  {
+   "tour": {
+    "id": "tOpTier5",
+    "name": "Big League 2026/27",
+    "slug": "big-league",
+    "tier": 5
+   },
+   "round": {
+    "id": "bigR0001",
+    "name": "Round 6",
+    "slug": "round-6",
+    "startsAt": 1794662100000,
+    "url": "https://lichess.org/broadcast/big-league/round-6/bigR0001"
+   }
+  }
+ ],
+ "upcoming": [],
+ "past": {
+  "currentPage": 1,
+  "currentPageResults": []
+ }
+}

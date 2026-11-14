@@ -6,10 +6,10 @@ var MODES = {
   connect: { instance: 'Connect account' },
   games: { instance: 'Your games' },     // the user's correspondence games (source/games.js)
   profile: { instance: 'Profile' },       // the user's Lichess overview (source/profile.js)
-  top: { instance: 'Top game' },         // reserved
-  following: { instance: 'Following %s' } // reserved: a followed player, %s = name
+  top: { instance: 'Top game · %s' },     // the best game now (source/live.js), %s = the event's short name or TV
+  following: { instance: 'Following %s' } // a followed player (source/live.js), %s = name
 };
-function modeInstance(mode, arg) { var m = MODES[mode] || MODES.puzzles; return m.instance.replace('%s', arg || ''); }
+function modeInstance(mode, arg) { var m = MODES[mode] || MODES.puzzles; return m.instance.replace('%s', arg || '').replace(/ · $/, '').trim(); }
 var DAY_NAMES = 'S M T W T F S'.split(' ');
 function signed(n) { return (n > 0 ? '+' : '') + n; }
 // SAN split for figurines: the piece letter (K Q R B N or '' for a pawn) and the rest, e.g. "Qxe5+" -> ['Q', 'xe5+'].
@@ -17,18 +17,19 @@ function sanParts(san) { var s = String(san || ''), m = /^([KQRBN])(.*)$/.exec(s
 function viewModel(out, nowS) {
   var P = out.puzzle, A = out.account;
   out.mode = out.connect ? 'connect' : out.mode || 'puzzles';   // 'games' is set by runGames
-  out.instance = modeInstance(out.mode);
+  out.instance = modeInstance(out.mode, out.instance_arg);
   out.instance_long = out.instance;
   if (P && P.themes && P.themes.length) out.instance_long = out.instance + ' · ' + P.themes[0];
   if (!P) return out;
   out.turn_w = P.turn === 'w';
   var games = out.mode === 'games';
   out.find = games ? (out.turn_w ? out.t.play_w : out.t.play_b) : out.turn_w ? out.t.find_w : out.t.find_b;
-  var list = (P.moves || []).slice(-8), lastB = list.length ? !!list[list.length - 1][2] : false;
+  var list = (P.moves || []).slice(out.mode === 'top' || out.mode === 'following' ? -12 : -8), lastB = list.length ? !!list[list.length - 1][2] : false;
   out.rows = list.map(function (m, i) {
     var w = sanParts(m[1] || '...'), b = sanParts(m[2]), last = i === list.length - 1, back = list.length - 1 - i;
     return { n: +m[0] || 0, wp: w[0], ws: w[1], bp: b[0], bs: b[1], hw: last && !lastB, hb: last && lastB, back: back };
   });
+  if (out.mode === 'top' || out.mode === 'following') return liveView(out, P);   // source/live.js
   if (games) {
     var G = P.game || {}, ph = G.phase || 'turn', t = out.t, tl = G.left;
     out.opp_line = G.opp ? (G.opp.length > 16 ? G.opp.slice(0, 15) + '…' : G.opp) + (G.opp_rating ? ' (' + G.opp_rating + ')' : '') : '';

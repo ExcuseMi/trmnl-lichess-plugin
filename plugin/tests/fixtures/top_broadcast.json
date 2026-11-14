@@ -1,0 +1,61 @@
+{
+ "active": [
+  {
+   "tour": {
+    "id": "tOpTier5",
+    "name": "Big League 2026/27",
+    "slug": "big-league",
+    "tier": 5
+   },
+   "round": {
+    "id": "bigR0001",
+    "name": "Round 6",
+    "slug": "round-6",
+    "startsAt": 1794662100000,
+    "url": "https://lichess.org/broadcast/big-league/round-6/bigR0001"
+   }
+  },
+  {
+   "tour": {
+    "id": "tOuRn4xY",
+    "name": "Example International 2026 | Open Section",
+    "slug": "example-international-2026",
+    "tier": 4,
+    "url": "https://lichess.org/broadcast/example-international-2026/tOuRn4xY"
+   },
+   "round": {
+    "id": "rN4xYz01",
+    "name": "Round 5",
+    "slug": "round-5",
+    "ongoing": true,
+    "startsAt": 1794611280000,
+    "url": "https://lichess.org/broadcast/example-international-2026/round-5/rN4xYz01",
+    "delay": 0
+   }
+  },
+  {
+   "tour": {
+    "id": "tOur3000",
+    "name": "Club Open 2026",
+    "slug": "club-open",
+    "tier": 3
+   },
+   "round": {
+    "id": "clubR001",
+    "name": "Round 2",
+    "slug": "round-2",
+    "ongoing": true,
+    "startsAt": 1794611280000,
+    "url": "https://lichess.org/broadcast/club-open/round-2/clubR001"
+   }
+  }
+ ],
+ "upcoming": [],
+ "past": {
+  "currentPage": 1,
+  "maxPerPage": 20,
+  "currentPageResults": [],
+  "nbResults": 0,
+  "nbPages": 0
+ }
+}
