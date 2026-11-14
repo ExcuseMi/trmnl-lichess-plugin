@@ -6,7 +6,7 @@
 //   Follow: GET /api/users/status?withGameIds=true, then GET /game/export/{id}; not playing: GET /api/games/user/{name}?max=1.
 // The model is the Your games one (out.puzzle: board, turn, last move, QR target, moves) with out.puzzle.game = { w, b, event, round,
 // kind, status: live|done, res }; w and b: { name, title, rating, clock (centiseconds or null) }.
-var LV_EN = { scan_live: 'Scan to watch', scan_game: 'Scan to watch', live: 'Live', to_move: 'to move', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
+var LV_EN = { scan_live: 'Scan to watch', scan_game: 'Scan to watch', live: 'Live', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
   top_none: 'No live game right now', top_none2: 'No broadcast or TV game to show. Looking again at the next refresh.', fl_empty: 'Follow a player', fl_empty2: 'Enter a Lichess username in the plugin settings.',
   fl_unknown: 'Unknown player', fl_unknown2: 'Check the name in the plugin settings.', fl_none: 'No games yet', fl_none2: ' has not played a game yet.', lv_fail: 'Could not reach Lichess. Showing again at the next refresh.', fl_nogame: 'No game to show',
   playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', casual: 'casual', finished: 'Finished', anon: 'Anonymous', computer: 'Computer' };
@@ -78,7 +78,7 @@ function boardsOf(games) {   // the boards in play, highest rated pair first (a 
 function liveView(out, P) {
   var G = P.game || {}, T = out.t, live = G.status === 'live', rows = out.rows || [];
   out.cards = ['b', 'w'].map(function (side) {
-    var p = G[side] || {}, mover = live && P.turn === side, sub = (p.rating ? String(p.rating) : '') + (mover ? (p.rating ? ' · ' : '') + T.to_move : '');
+    var p = G[side] || {}, mover = live && P.turn === side, sub = p.rating ? String(p.rating) : '';   // the side to move is marked by a chevron before the name (shared.liquid), not by text
     return { side: side, black: side === 'b', name: cut(p.name, 20), short: shortName(p.name), title: p.title || '', sub: sub, mover: mover, clock: clockText(p.clock) };
   });
   out.event_name = cut(G.event || '', 40); out.event_short = cut(G.event || '', 16);
@@ -145,7 +145,7 @@ async function runTop(input, token, nowS, st0) {
   if (!model && (diag.broadcast || diag.round || diag.tv) && saved && saved.board) { model = saved; stale = true; arg = saved.game && saved.game.arg || ''; }
   var problems = [];
   if (diag.broadcast) problems.push('Lichess broadcast: ' + diag.broadcast);
-  if (diag.round) problems.push('Lichess round: ' + diag.round);
+  if (diag.round && (!model || stale)) problems.push('Lichess round: ' + diag.round);   // an optional step: said only when no game of this refresh is on screen (TV or another round worked)
   if (diag.moves) problems.push('Lichess moves: ' + diag.moves);
   if (diag.tv) problems.push('Lichess TV: ' + diag.tv);
   var out = liveOut(T, 'top', model, { stale: stale, arg: arg, problems: problems, calm: { none: T.top_none, line: diag.broadcast || diag.round || diag.tv ? T.lv_fail : T.top_none2 } });

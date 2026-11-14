@@ -40,7 +40,7 @@ test('top: the broadcast of the highest tier in play; its highest rated board st
 test('top: cards run black first, the side to move is marked, clocks read like a board, the move list matches the board', async () => {
   const o = await load(router(TOP())).run(input('top'));
   assert.deepStrictEqual(Array.from(o.cards).map((c) => c.side), ['b', 'w']);
-  assert.strictEqual(o.cards[1].mover, true); assert.strictEqual(o.cards[0].mover, false); assert.strictEqual(o.cards[1].sub, '2712 · to move');
+  assert.strictEqual(o.cards[1].mover, true); assert.strictEqual(o.cards[0].mover, false); assert.strictEqual(o.cards[1].sub, '2712');
   assert.strictEqual(o.cards[1].clock, '46:00'); assert.strictEqual(o.cards[0].clock, '28:30');
   assert.ok(o.rows.length >= 4 && o.rows.length <= 12); assert.ok(o.puzzle.moves.length > 8, 'the whole list is kept for the page');
   assert.strictEqual(o.status_text, 'Live');
@@ -160,4 +160,12 @@ test('every variable the markup reads from the answer is passed by all four view
     const missing = read.filter((k) => !passed.has(k));
     assert.deepStrictEqual(missing, [], v + '.liquid does not pass: ' + missing.join(', '));
   }
+});
+
+test('top: a broadcast round call refused (403) while TV worked is no failure line; with no game on screen it is said', async () => {
+  const r403 = { ...TOP(), 'https://lichess.org/api/broadcast/-/-/rN4xYz01': resp(403, {}), 'https://lichess.org/api/broadcast/-/-/clubR001': resp(403, {}) };
+  const o = await load(router(r403)).run(input('top'));
+  assert.strictEqual(o.none, false); assert.strictEqual(o.puzzle.id, 'tvBest01', 'TV stands in'); assert.strictEqual(o.problems, undefined, 'an optional step with a working fallback is not a failure line');
+  const o2 = await load(router({ ...r403, 'https://lichess.org/api/tv/channels': resp(503, {}) })).run(input('top'));
+  assert.ok(Array.from(o2.problems).includes('Lichess round: HTTP 403'), 'no game on screen: the failure is said');
 });

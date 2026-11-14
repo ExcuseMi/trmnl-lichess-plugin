@@ -48,20 +48,21 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
   moves, then the event and the QR side by side. One panel style, one gap. Quadrant: the board and the two players only. {%- endcomment -%}
   {%- if view == 4 %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--1" %}{% else %}{% assign ym_pp = "bg--gray-75 1bit:bg--white rounded p--2" %}{% endif %}
   {%- for p in cards %}
+  {%- assign ym_chev = "" %}{% if p.mover or view == 1 or view == 4 %}{% capture ym_chev %}<svg class="inline-block shrink-0" width="14" height="26" viewBox="0 0 14 26" data-ym-turn="{% if p.mover %}1{% else %}0{% endif %}"><polyline points="3,3 11,13 3,23" fill="none" stroke="{% if p.mover %}currentColor{% else %}none{% endif %}" stroke-width="4"/></svg>{% endcapture %}{% endif %}
   {%- capture ym_c %}
     {%- if view == 4 %}
     <div class="{{ ym_pp }} grow flex flex--col flex--center-x flex--center-y gap--xsmall" data-ym-card="player-{{ p.side }}">
-      <div class="flex flex--row flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg><span class="label font--bold">{{ p.short }}</span></div>
+      <div class="flex flex--row flex--center-y gap--xsmall">{{ ym_chev }}<svg class="inline-block shrink-0" width="10" height="10" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg><span class="label font--bold">{{ p.short }}</span></div>
       {%- if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}
     </div>
     {%- elsif view != 1 %}
     <div class="{{ ym_pp }} shrink-0 flex flex--row flex--center-y flex--between gap--small" data-ym-card="player-{{ p.side }}">
-      <div class="flex flex--row flex--left flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{{ p.name }}</span>{% if p.sub != "" %}<span class="label" data-ym-meta>{{ p.sub }}</span>{% endif %}</div>
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall">{{ ym_chev }}<svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{% if view == 3 %}{{ p.short }}{% else %}{{ p.name }}{% endif %}</span>{% if p.sub != "" %}<span class="label" data-ym-meta>{{ p.sub }}</span>{% endif %}</div>
       {%- if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}
     </div>
     {%- else %}
     <div class="{{ ym_pp }} shrink-0 flex flex--col flex--stretch-x gap--xsmall" data-ym-card="player-{{ p.side }}">
-      <div class="flex flex--row flex--left flex--center-y gap--xsmall"><svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{{ p.name }}</span></div>
+      <div class="flex flex--row flex--left flex--center-y gap--xsmall">{{ ym_chev }}<svg class="inline-block shrink-0" width="12" height="12" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="{% if p.black %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5"/></svg>{% if p.title != "" %}<span class="label label--inverted">{{ p.title }}</span>{% endif %}<span class="value value--small font--bold">{{ p.name }}</span></div>
       <div class="flex flex--row flex--center-y flex--between gap--small"><span class="label">{{ p.sub }}</span>{% if p.clock != "" %}<span class="value value--small" data-ym-part="clock">{{ p.clock }}</span>{% endif %}</div>
     </div>
     {%- endif %}
