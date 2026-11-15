@@ -2,7 +2,7 @@
 // login the next puzzle at the user's level, kept until solved, plus progress. Hands the page the board, texts and the QR target.
 var UA = 'TRMNL Chess Puzzle plugin (contact: https://github.com/ExcuseMi)';
 var ST_MAX = 7500;
-var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played', times: 'times',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress', training: 'Training', solved_pct: 'solved', no_focus: 'Not enough data for a focus yet' };
+var T_EN = { white: 'White to move', black: 'Black to move', side_w: 'White', side_b: 'Black', to_move: 'to move', days: 'S M T W T F S', this_week: 'This week', solved_n: 'solved', failed_n: 'failed', your_turn: 'Your turn', find_w: 'White to move', find_b: 'Black to move', puzzle_n: 'Puzzle', difficulty: 'Rating', from_game: 'From game', played: 'Played',  scan: 'Scan to solve', rating: 'Puzzle', none: 'No puzzle today', none2: 'Could not reach the puzzle service. Showing again at the next refresh.', offline: 'Offline, last puzzle', connect_title: 'Connect Lichess', connect_line: 'Connect your Lichess account on the plugin settings page.', tokbad: 'Lichess login expired: reconnect on the plugin settings page.', scope: 'Reconnect Lichess: missing puzzle permission', solved: 'Solved!', today: 'today', week: 'this week', streak: 'streak', rating_you: 'Your rating', vs: 'vs', connect: 'Connect Lichess to track your progress', training: 'Training', solved_pct: 'solved', no_focus: 'Not enough data for a focus yet' };
 
 function field(input, k, d) { var f = (((input || {}).trmnl || {}).plugin_settings || {}).custom_fields_values || (input || {}); var v = f[k]; return v == null || v === '' ? d : v; }
 function nowSec(input) { return +((((input || {}).trmnl || {}).system || {}).timestamp_utc) || Math.floor(Date.now() / 1000); }
@@ -66,16 +66,6 @@ function lichessGame(g) {
   return { kind: clean((clock ? clock + ' ' : '') + perf), players: players };
 }
 
-function accountFromActivity(lines, nowS) {
-  var days = [], i, streak = 0, streakOn = true, today = 0, week = 0, d0 = Math.floor(nowS / 86400);
-  for (i = 0; i < 7; i++) days.push({ s: 0, f: 0 });
-  lines.forEach(function (a) {
-    var d = d0 - Math.floor((+a.date || 0) / 86400000);
-    if (streakOn) { if (a.win) streak++; else streakOn = false; }
-    if (d >= 0 && d < 7) { if (a.win) days[6 - d].s++; else days[6 - d].f++; if (a.win) { week++; if (d === 0) today++; } }
-  });
-  return { days: days, today: today, week: week, streak: streak };
-}
 function ndjson(text) { return String(text).split('\n').filter(Boolean).map(function (l) { try { return JSON.parse(l); } catch (e) { return null; } }).filter(Boolean); }
 
 // ==== Providers. One interface, the view reads only the normalised model and the capability flags.
@@ -218,16 +208,15 @@ function fitState(st) { if (JSON.stringify(st).length > ST_MAX) { delete st.last
 async function run(input) {
   runStart();
   var nowS = nowSec(input), st0 = stObj((((input || {}).trmnl || {}).state)) || {};
-  var orient = 'side', coords = true;   // fixed (owner 2026-11-14): side to move at the bottom, coordinates shown
+  var coords = true;   // fixed (owner 2026-11-14): side to move at the bottom, coordinates shown
   var oauth = stObj(((input || {}).trmnl || {}).oauth) || {}, token = String(oauth.access_token || '').trim();   // Lichess login: OAuth only
-  var which = 'lichess';
   if (!token) return viewModel({ t: T_EN, connect: true, none: true, trmnl_state: fitState(stObj(st0.wk) ? { v: 1, rating: +st0.rating || 0, wk: st0.wk } : { v: 1, rating: +st0.rating || 0 }) }, nowS);   // OAuth is required (owner 2026-11-14)
   if (String(field(input, 'mode', 'puzzles')) === 'games') return runGames(input, token, nowS, st0);   // "Your games" (source/games.js)
   if (String(field(input, 'mode', 'puzzles')) === 'top') return runTop(input, token, nowS, st0);   // "Top game" (source/live.js)
   if (String(field(input, 'mode', 'puzzles')) === 'following') return runFollow(input, token, nowS, st0);   // "Follow a player" (source/live.js)
   if (String(field(input, 'mode', 'puzzles')) === 'profile') return runProfile(input, token, nowS, st0);   // "Profile" (source/profile.js)
-  var prov = PROVIDERS[which];
-  var ctx = { settings: { difficulty: pickDifficulty(input), focus: String(field(input, 'puzzle_focus', 'any')) === 'weakest' }, token: which === 'lichess' ? token : '', state: st0, nowS: nowS, cache: {}, diag: {} };
+  var prov = PROVIDERS.lichess;
+  var ctx = { settings: { difficulty: pickDifficulty(input), focus: String(field(input, 'puzzle_focus', 'any')) === 'weakest' }, token: token, state: st0, nowS: nowS, cache: {}, diag: {} };
   if (ctx.token) {   // every Lichess call starts now, side by side: activity, scopes, account and a next puzzle in case it is needed
     lichessActivity(ctx); lichessScopes(ctx); lichessAccountInfo(ctx).catch(function () {});   // the week follows the account (it needs the name)
     startNext(ctx);
@@ -236,7 +225,7 @@ async function run(input) {
   var model = null, progress = null, banner = '', notice = '', stale = false, cur = null, caps = prov.active(ctx), rating = +st0.rating || 0;
   var prevCur = stObj(st0.cur), last0 = stObj(st0.last);
   try { progress = await prov.fetchProgress(ctx); } catch (e) { progress = null; if (e && e.status === 401) { notice = 'tokbad'; ctx.token = ''; caps = NO_CAPS; } }
-  if (progress && progress.rating && which === 'lichess') {
+  if (progress && progress.rating) {
     var base = prevCur && prevCur.r0 ? +prevCur.r0 : rating;   // the rating when the shown puzzle was picked: the change since then
     if (base) { progress.delta = progress.rating - base; progress.trend = progress.rating > base ? 'up' : progress.rating < base ? 'down' : 'flat'; }
     rating = progress.rating;
@@ -258,7 +247,7 @@ async function run(input) {
   }
   if (notice === 'tokbad') return viewModel({ t: T_EN, connect: true, none: true, notice: T_EN.tokbad, trmnl_state: fitState({ v: 1, rating: rating || 0 }) }, nowS);   // a rejected login: reconnect
   if (!model && last0 && last0.board) { model = last0; stale = true; }
-  var flip = orient === 'black' ? true : orient === 'white' ? false : !!(model && model.turn === 'b');
+  var flip = !!(model && model.turn === 'b');   // side to move at the bottom
   if (ctx.token || ctx.cache.scopes) {
     var scopes = ctx.cache.scopes ? await ctx.cache.scopes : '';
     if (scopes && !/(^|[ ,])puzzle:read([ ,]|$)/.test(scopes) && !notice) notice = 'scope';
@@ -282,4 +271,4 @@ async function run(input) {
   out.trmnl_state = fitState(st);
   return viewModel(out, nowS);
 }
-if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, accountFromActivity: accountFromActivity, weekFromDays: weekFromDays, shortThemes: shortThemes, pickWeakest: pickWeakest, pickDifficulty: pickDifficulty };
+if (typeof module !== 'undefined' && module.exports) module.exports = { PROVIDERS: PROVIDERS, run: run, viewModel: viewModel, MODES: MODES, parseFen: parseFen, lichessPosition: lichessPosition, lichessModel: lichessModel, lichessMoves: lichessMoves, weekFromDays: weekFromDays, shortThemes: shortThemes, pickWeakest: pickWeakest, pickDifficulty: pickDifficulty };

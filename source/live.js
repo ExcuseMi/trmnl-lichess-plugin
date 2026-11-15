@@ -3,13 +3,13 @@
 // they were, the last moves. Public endpoints only (the token is sent, no scope beyond a valid login), all inside TRMNL's 5 s.
 //   Top game: broadcast first (GET /api/broadcast/top, the rounds in play of the highest tiers, GET /api/broadcast/-/-/{round} for the
 //   boards, GET /api/study/{round}/{game}.pgn for the moves), else Lichess TV (GET /api/tv/channels, GET /game/export/{id}).
-//   Follow: GET /api/users/status?withGameIds=true, then GET /game/export/{id}; not playing: GET /api/games/user/{name}?max=1.
+//   Follow: GET /api/user/{name}/current-game (the ongoing game, else the last one played).
 // The model is the Your games one (out.puzzle: board, turn, last move, QR target, moves) with out.puzzle.game = { w, b, event, round,
 // kind, status: live|done, res }; w and b: { name, title, rating, clock (centiseconds or null) }.
 var LV_EN = { scan_live: 'Scan to watch', scan_game: 'Scan to watch', live: 'Live', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
   top_none: 'No live game right now', top_none2: 'No broadcast or TV game to show. Looking again at the next refresh.', fl_empty: 'Follow a player', fl_empty2: 'Enter a Lichess username in the plugin settings.',
-  fl_unknown: 'Unknown player', fl_unknown2: 'Check the name in the plugin settings.', fl_none: 'No games yet', fl_none2: ' has not played a game yet.', lv_fail: 'Could not reach Lichess. Showing again at the next refresh.', fl_nogame: 'No game to show',
-  playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', casual: 'casual', finished: 'Finished', anon: 'Anonymous', computer: 'Computer' };
+  fl_unknown: 'Unknown player', fl_unknown2: 'Check the name in the plugin settings.', lv_fail: 'Could not reach Lichess. Showing again at the next refresh.', fl_nogame: 'No game to show',
+  playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', finished: 'Finished', anon: 'Anonymous', computer: 'Computer' };
 var BC_TOP_MAX = 3;   // rounds in play looked at (highest tiers first), fetched side by side
 // Clock (centiseconds) as it is read on a board: "1:29:33", "19:20", "0:45"; '' without one.
 function clockText(cs) {
@@ -99,7 +99,7 @@ function liveOut(T, mode, model, o) {
 }
 
 async function runTop(input, token, nowS, st0) {
-  H = authHeader({ token: token }), T = Object.assign({}, T_EN, LV_EN), diag = {}, saved = stObj(st0.tg), noop = function () {};
+  var H = authHeader({ token: token }), T = Object.assign({}, T_EN, LV_EN), diag = {}, saved = stObj(st0.tg), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
   var topP = getJson('https://lichess.org/api/broadcast/top', H, LT), tvP = getJson('https://lichess.org/api/tv/channels', H, LT);   // the TV answer is the fallback, asked at once
   topP.catch(noop); tvP.catch(noop);

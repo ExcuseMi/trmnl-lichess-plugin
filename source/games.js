@@ -1,9 +1,9 @@
 // "Your games" mode: the user's correspondence games where it is their turn (GET /api/account/playing, no scope needed beyond a
 // valid token). The most urgent game (least time left) is shown; the others are only counted. Same view model as a puzzle:
 // out.puzzle is the position to draw (board, last move, QR target), out.game the opponent and the time left.
-var G_EN = { play_w: 'Play white', play_b: 'Play black', scan: 'Scan to play', time_left: 'Time to move', time_short: 'Time left', more_one: 'more game waiting', more_n: 'more games waiting',
+var G_EN = { play_w: 'Play white', play_b: 'Play black', scan: 'Scan to play', time_left: 'Time to move', more_one: 'more game waiting', more_n: 'more games waiting',
   none: 'No games waiting for you', in_moves: 'in', moves_w: 'moves', none_new: 'Start a game on lichess.org.', their_turn: 'Their turn', waiting_short: 'Waiting', finished_short: 'Finished', last_game: 'Last game', waiting_for: 'Waiting for', result: 'Result', scan_view: 'Scan to play', scan_new: 'Scan to play', won_w: 'Won', lost_w: 'Lost', drew_w: 'Draw', won_l: 'Won against', lost_l: 'Lost to', drew_l: 'Drew with', wait_one: 'game waiting for opponents', wait_n: 'games waiting for opponents', none2: 'Could not reach Lichess. Showing again at the next refresh.', offline: 'Offline, last game', scope_games: 'Reconnect Lichess: missing game permission',
-  won: 'Last game: won against', lost: 'Last game: lost to', drew: 'Last game: drew with', opp_wait_one: '1 game waits for the opponent', opp_wait_n: ' games wait for the opponent', no_limit: 'No limit' };
+  won: 'Last game: won against', lost: 'Last game: lost to', drew: 'Last game: drew with', no_limit: 'No limit' };
 var GAME_ID = /^[A-Za-z0-9]{8}$/;
 function timeLeft(sec) {   // "2d 4h", "5h 20m", "12m", "<1m"; null: a game without a clock
   if (sec == null || !isFinite(sec)) return G_EN.no_limit;
@@ -53,7 +53,7 @@ function lastGameInfo(g, me) {
 function lastGameLine(g, me) { var i = lastGameInfo(g, me); return i ? G_EN[i.res + '_l'] + ' ' + i.opp : ''; }
 
 async function runGames(input, token, nowS, st0) {
-  ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
+  var ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
   var playing = getJson('https://lichess.org/api/account/playing?nb=50', H, LT);
   var acct = getJson('https://lichess.org/api/account', H, LT); acct.catch(function () {});
   var data = null, mine = [], theirs = [], model = null, stale = false, line = '', phase = '', moreLine = '', moreShort = '';

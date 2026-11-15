@@ -93,7 +93,7 @@ function weekFor(recent, nowS, hero) {
     streak: run >= 2 && word ? run + ' ' + word[1] + ' ' + PF_EN.in_row : '' };
 }
 async function runProfile(input, token, nowS, st0) {
-  H = authHeader({ token: token }), T = Object.assign({}, T_EN, PF_EN), diag = {}, saved = stObj(st0.pf), noop = function () {};
+  var H = authHeader({ token: token }), T = Object.assign({}, T_EN, PF_EN), diag = {}, saved = stObj(st0.pf), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
   var acctP = getJson('https://lichess.org/api/account', H, LT); acctP.catch(noop);
   var start = function (u, ms) {   // rating history and the last games, side by side

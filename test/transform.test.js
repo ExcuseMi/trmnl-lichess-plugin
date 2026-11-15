@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl, code) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext((code || bundle()) + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, accountFromActivity, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine, pickWeakest };', ctx);
+  vm.runInContext((code || bundle()) + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine, pickWeakest };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -177,14 +177,6 @@ test('token path with the account service down still shows a puzzle', async () =
   const f = account({ 'https://lichess.org/api/account': resp(500, {}), 'https://lichess.org/api/puzzle/activity': resp(500, {}), 'https://lichess.org/api/user/Demo/rating-history': resp(500, {}) });
   const o = await load(f).run(input({ lichess_token: 't' }));
   assert.ok(o.puzzle && !o.none);
-});
-
-test('activity: today, week, streak, seven day bars', () => {
-  const api = load(async () => resp(599, {}));
-  const t = NOW * 1000, d = 86400000;
-  const a = api.accountFromActivity([{ date: t, win: true }, { date: t - 1000, win: true }, { date: t - 2000, win: false }, { date: t - d, win: true }, { date: t - 9 * d, win: true }], NOW);
-  assert.strictEqual(a.today, 2); assert.strictEqual(a.week, 3); assert.strictEqual(a.streak, 2);
-  assert.deepStrictEqual(JSON.parse(JSON.stringify(a.days[6])), { s: 2, f: 1 }); assert.deepStrictEqual(JSON.parse(JSON.stringify(a.days[5])), { s: 1, f: 0 });
 });
 
 test('state stays under TRMNL limit', async () => {
