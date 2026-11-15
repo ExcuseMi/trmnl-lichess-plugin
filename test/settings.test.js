@@ -21,3 +21,9 @@ test('repo URL, learn_more_url, About text (review 2026-11-15 items 1, 2, 4)', (
   assert.strictEqual((y.match(/Connect Lichess with the OAuth button above/g) || []).length, 1, 'OAuth sentence once');
   assert.ok(/^description: .*(puzzles).*(games).*(live)/mi.test(y), 'tagline names the modes');
 });
+test('only the Cburnett piece set ships (unused sets and their licence files are gone, review item 9)', () => {
+  const root = path.join(__dirname, '..');
+  assert.deepStrictEqual(fs.readdirSync(path.join(root, 'assets/pieces')), ['cburnett']);
+  const lic = fs.readdirSync(path.join(root, 'LICENSES')).filter((f) => /chessnut|celtic|kosal/i.test(f));
+  assert.deepStrictEqual(lic, []);
+});
