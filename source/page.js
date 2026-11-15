@@ -1,6 +1,16 @@
 // Page script: draws the chessboard into [data-ym-board] (the one part allowed its own SVG). Everything else on the screen is
 // Framework markup in shared.liquid. Runs once the Framework runtime is there: TRMNLPaint gives the board's colours.
 (function () {
+  // OG-sized text (owner 2026-11-15: unreadable across a room): on a screen that is not the large one (the X), every Framework label is a
+  // 20 px value and the connect subtitle a 26 px one. The X keeps its labels as they are.
+  function ogText() {
+    if (document.querySelector('.screen--lg')) return;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-ym] .label, [data-ym] .description'), function (n) {
+      var c = n.classList;
+      if (c.contains('h--[10px]')) return;   // the week bar is not text
+      if (c.contains('description')) { c.remove('description'); c.add('value', 'value--small'); } else { c.remove('label'); c.add('value', 'value--xsmall'); }
+    });
+  }
   if (!window.TRMNLPaint && document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', main); return; }
   main();
   // Profile charts: a calm y range of at least 100 rating points around the data. The hero gets three light gridlines (no numbers),
@@ -31,10 +41,20 @@
   function fitMoves() {
     var panel = document.querySelector('[data-ym-panel]'), card = document.querySelector('[data-ym-card="moves"]');
     if (!panel || !card) return;
-    var root = document.querySelector('[data-ym]'), rows = card.querySelectorAll('tr'), i = 0, tb = card.querySelector('table'), cs = window.getComputedStyle(card),
+    var root = document.querySelector('[data-ym]'), rows = card.querySelectorAll('tr'), tb = card.querySelector('table'), cs = window.getComputedStyle(card),
       over = function () { return panel.scrollHeight > panel.clientHeight + 1 || root.scrollHeight > root.clientHeight + 1 || tb.getBoundingClientRect().bottom > card.getBoundingClientRect().bottom - (parseFloat(cs.paddingBottom) || 0) + 1; };
-    while (over() && i < rows.length - 2) hide(rows[i++]);
-    if (over()) hide(card);
+    // The oldest rows go first (down to 2); if that is not enough the puzzle info card goes (the title bar and the turn card say the rest),
+    // the rows come back, and so on. Portrait has no room for the info card at all: it goes first.
+    var trim = function () { var i = 0; while (over() && i < rows.length - 2) hide(rows[i++]); return !over(); };
+    var opt = panel.querySelector('[data-ym-card="puzzle"]'), portrait = YM.view === 1 && !!document.querySelector('.screen--portrait');
+    if (portrait && opt) hide(opt);
+    if (trim()) return;
+    if (opt && !portrait) {
+      Array.prototype.forEach.call(rows, function (r) { r.setAttribute('class', (r.getAttribute('class') || '').replace(/(^|\s)hidden(?=\s|$)/g, ' ')); });
+      hide(opt);
+      if (trim()) return;
+    }
+    hide(card);
   }
   // Still too tall (a half or quadrant view): the optional parts give way in this order, with the Framework's hidden class.
   // The Framework's hidden class, minus any size-prefixed display class (lg:flex, lg:visible) that would show it again.
@@ -79,6 +99,7 @@
   // the recent games, the hero's peak line, the least played cards. The hero chart and the card trends take the spare height; a chart
   // box too small to read (hero under 40 px, trend under 16 px) is hidden.
   function profileMain() {
+    ogText();
     var root = document.querySelector('[data-ym]');
     if (!root) return;
     var q = function (sel) { return Array.prototype.filter.call(document.querySelectorAll(sel), function (n) { return n.getClientRects().length; }); };
@@ -110,20 +131,21 @@
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle, settle); else settle();
   }
   function main() {
+    if (!YM.profile) ogText();
     if (YM.profile) return profileMain();
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
     if (!root || !bd || !YM.puzzle) return;
     var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
     var dark = has('screen--dark-mode') || !!document.querySelector('.screen--dark-mode, .dark-mode');
-    var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg'), view = YM.view;
+    var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg'), view = YM.view, portrait = has('screen--portrait') && view === 1;
     var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root);
     var W = Math.floor(r.width - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
     var H = Math.floor(r.height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0));
     // The board's share; the panel (a Framework flex column, grow) takes the rest.
     // The board takes the full content height when the panel keeps its minimum width (as in c828281); the panel takes the rest.
     var gap = parseFloat(cs.columnGap || cs.gap) || 0, minPanel = Math.round(W * (view === 1 ? (lg ? 0.28 : 0.3) : view === 2 ? 0.45 : view === 4 ? 0.1 : 0.4));
-    var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : Math.min(H, W - minPanel - gap);
-    var lab = document.querySelector('[data-ym-panel] .label'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
+    var S = view === 3 ? Math.min(W, Math.round(H * 0.62)) : portrait ? Math.min(W, Math.round(H * 0.66)) : Math.min(H, W - minPanel - gap);   // portrait: the board across the top
+    var lab = document.querySelector('[data-ym-panel] .label, [data-ym-panel] .value'), font = (lab && window.getComputedStyle(lab).fontFamily) || 'sans-serif';
     var P = YM.puzzle;
     var draw = function (s) { bd.innerHTML = boardSvg({ size: s, board: P.board, flip: !YM.white_bottom, from: P.from, to: P.to, coords: YM.coords && s > 150, bits: bits, dark: dark, font: font.replace(/"/g, "'") }); };
     draw(S);
@@ -133,8 +155,9 @@
       // Quadrant: the board takes the full height first; a text that would wrap in the narrow panel is dropped if it is optional
       // (sub line, "+N waiting", name), and only a required one gives the board a step back.
       if (view === 4) quadrantFit();
-      for (var k = 0, s = S; k < 3; k++) {
-        var over = view === 3 ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
+      if (portrait) { fitMoves(); fitParts(); }   // portrait: the optional parts go first, the board gives way by what is still too tall
+      for (var k = 0, s = S; k < (portrait ? 8 : 3); k++) {
+        var over = view === 3 || portrait ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
         if (over <= 0) break;
         draw(s -= over); (window.Highcharts && window.Highcharts.charts || []).forEach(function (c) { if (c) c.reflow(); });
       }

@@ -28,4 +28,23 @@ RSpec.describe 'Lichess views' do
       ym_checks(s, c)
     end
   end
+  # The OG in 2 bits (og_plus), landscape and portrait: text at least 20 px, the portrait board across the top, the Profile header without
+# overlap, failure lines inside their panel (all in ym_checks), and the half views and states (L2, owner 2026-11-15).
+  %w[owner games_one games_wait games_last profile_many profile_new profile_partial profile_fail top_live top_offline top_fail follow_playing games_fail games_nothing daily].product([false, true]).each do |sc, portrait|
+    it "OG 2-bit #{portrait ? 'portrait' : 'landscape'}: #{sc}" do
+      c = { 'name' => "#{sc}-og_plus#{'-portrait' if portrait}", 'view' => 'full', 'device' => 'og_plus', 'palette' => 'gray-4', 'portrait' => portrait, 'scenario' => sc }
+      s = ym_render(trmnl, c)
+      expect(s).to have_no_overflow(except: '.highcharts-container')
+      expect(s).to have_no_problems
+      ym_checks(s, c)
+    end
+  end
+  %w[owner games_one top_live profile_many].product(%w[half_horizontal half_vertical quadrant]).each do |sc, view|
+    it "OG 2-bit #{view}: #{sc}" do
+      c = { 'name' => "#{sc}-og_plus-#{view}", 'view' => view, 'device' => 'og_plus', 'palette' => 'gray-4', 'scenario' => sc }
+      s = ym_render(trmnl, c)
+      expect(s).to have_no_overflow(except: '.highcharts-container')
+      ym_checks(s, c)
+    end
+  end
 end

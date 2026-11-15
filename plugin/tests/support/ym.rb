@@ -118,6 +118,60 @@ FONT_SIZES_JS = <<~JS.freeze
     return Object.keys(seen).map(Number).sort(function (a, b) { return a - b; });
   })()
 JS
+# OG text size, portrait board share, Profile header overlap, failure lines inside their panel (L2, owner 2026-11-15).
+OG_MIN_TEXT_PX = 20
+OG_TEXT_JS = <<~JS.freeze
+  (function () {
+    if (document.querySelector('.screen--lg')) return [];
+    var out = [];
+    document.querySelectorAll('[data-ym] *').forEach(function (e) {
+      var own = Array.prototype.some.call(e.childNodes, function (n) { return n.nodeType === 3 && n.textContent.trim(); });
+      if (!own || !e.getClientRects().length || e.closest('[data-ym-board], .highcharts-container')) return;
+      var px = parseFloat(getComputedStyle(e).fontSize);
+      if (px < #{OG_MIN_TEXT_PX}) out.push(Math.round(px) + 'px: ' + e.textContent.trim().slice(0, 30));
+    });
+    return out;
+  })()
+JS
+PORTRAIT_BOARD_JS = <<~JS.freeze
+  (function () {
+    if (!document.querySelector('.screen--portrait')) return 1;
+    var b = document.querySelector('[data-ym-board] svg'), r = document.querySelector('[data-ym]');
+    if (!b || !r) return 1;
+    var cs = getComputedStyle(r), w = r.getBoundingClientRect().width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    return b.getBoundingClientRect().width / w;
+  })()
+JS
+HEADER_OVERLAP_JS = <<~JS.freeze
+  (function () {
+    var h = document.querySelector('[data-ym-card="header"]'), out = [];
+    if (!h || !h.getClientRects().length) return out;
+    var items = [];   // the drawn text of each leaf (a text range, not the element box: an element can clip text that is drawn over its neighbour)
+    h.querySelectorAll('span').forEach(function (e) {
+      if (!e.getClientRects().length || !e.textContent.trim() || e.querySelector('span')) return;
+      var g = document.createRange(); g.selectNodeContents(e);
+      Array.prototype.forEach.call(g.getClientRects(), function (r) { if (r.width > 0) items.push(r); });
+    });
+    for (var i = 0; i < items.length; i++) for (var j = i + 1; j < items.length; j++) {
+      var a = items[i], b = items[j];
+      if (a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1) out.push('header texts overlap');
+    }
+    var hb = h.getBoundingClientRect();
+    items.forEach(function (a) { if (a.right > hb.right + 1 || a.bottom > hb.bottom + 1) out.push('header text outside its card'); });
+    return out;
+  })()
+JS
+PROBLEMS_INSIDE_JS = <<~JS.freeze
+  (function () {
+    var out = [], root = document.querySelector('[data-ym]').getBoundingClientRect();
+    document.querySelectorAll('[data-ym-problem]').forEach(function (e) {
+      if (!e.getClientRects().length) return;
+      var r = e.getBoundingClientRect(), box = (e.closest('[data-ym-card]') || e.parentElement).getBoundingClientRect();
+      if (r.left < box.left - 1 || r.right > box.right + 1 || r.top < box.top - 1 || r.bottom > box.bottom + 1 || r.bottom > root.bottom + 1) out.push(e.textContent.trim());
+    });
+    return out;
+  })()
+JS
 def ym_render(trmnl, c)
   sc = c['scenario'] || 'daily'
   mocks = { 'https://lichess.org/api/puzzle/daily' => { json: JSON.parse(fx(c['puzzle'] || 'lichess_daily.json')) }}   # puzzle: another fixture (board cases)
@@ -209,4 +263,13 @@ def ym_checks(s, c)
   expect(tb).to eq(c['view'] == 'full'), "#{c['name']}: title bar #{tb ? 'drawn' : 'missing'} in view #{c['view']}"
   sizes = s.evaluate(FONT_SIZES_JS)
   expect(sizes.length).to be <= 4, "#{c['name']}: #{sizes.length} text sizes in the panel: #{sizes.inspect}"
+  small = s.evaluate(OG_TEXT_JS)
+  expect(small).to be_empty, "#{c['name']}: text under #{OG_MIN_TEXT_PX}px on the OG: #{small.inspect}"
+  share = s.evaluate(PORTRAIT_BOARD_JS)
+  # rendered 2026-11-15: live modes 70 to 84 % (two player cards, the event and the QR under the board), the rest 92 to 100 %; thresholds sit 5 points below the lowest
+  expect(share).to be >= (c['scenario'].to_s =~ /^(top|follow)/ ? 0.65 : 0.87), "#{c['name']}: the board is #{(share * 100).round} % of the portrait width"
+  hdr = s.evaluate(HEADER_OVERLAP_JS)
+  expect(hdr).to be_empty, "#{c['name']}: Profile header: #{hdr.inspect}"
+  outside = s.evaluate(PROBLEMS_INSIDE_JS)
+  expect(outside).to be_empty, "#{c['name']}: failure lines outside their panel: #{outside.inspect}"
 end
