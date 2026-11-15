@@ -20,9 +20,12 @@ Unofficial. Lichess on your TRMNL: puzzles at your level, your correspondence ga
 
 ## Setup
 
-1. Add the plugin and press Connect Lichess (OAuth).
-2. Pick a mode.
-3. Optional: difficulty and puzzle focus (Puzzles), the username to follow (Follow a player).
+1. Add the plugin to a playlist. Its settings page shows a Connect Lichess (OAuth) button: press it, then Authorize on the Lichess page that opens (it asks for the `puzzle:read` permission only). You return to TRMNL.
+2. Until you have connected, the screen says "Connect Lichess" and shows no puzzle.
+3. Pick a mode, then Save.
+4. Optional: difficulty and puzzle focus (Puzzles), the username to follow (Follow a player).
+
+Lichess needs no app registration: it accepts any client id with PKCE and no secret. If a Lichess login expires or is revoked, every mode shows "Lichess login expired: reconnect on the plugin settings page"; press Connect again.
 
 | Setting | What it does |
 |---|---|
