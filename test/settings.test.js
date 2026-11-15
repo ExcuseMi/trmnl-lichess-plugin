@@ -16,7 +16,7 @@ test('repo URL, learn_more_url, About text (review 2026-11-15 items 1, 2, 4)', (
   const y = fs.readFileSync(FILE, 'utf8');
   assert.ok(/^  github_url: https:\/\/github\.com\/ExcuseMi\/trmnl-lichess-plugin$/m.test(y), 'github_url is the repo');
   assert.ok(!/your-move/i.test(y), 'no your-move link');
-  assert.ok(/^learn_more_url: https:\/\/github\.com\/ExcuseMi\/trmnl-lichess-plugin#readme$/m.test(y), 'learn_more_url');
+  assert.ok(/^  learn_more_url: https:\/\/github\.com\/ExcuseMi\/trmnl-lichess-plugin#readme$/m.test(y), 'learn_more_url in the author_bio field (trmnlp drops a top-level one)');
   assert.ok(!/without a login|daily puzzle/i.test(y), 'About must not claim a puzzle without a login');
   assert.strictEqual((y.match(/Connect Lichess with the OAuth button above/g) || []).length, 1, 'OAuth sentence once');
   assert.ok(/^description: .*(puzzles).*(games).*(live)/mi.test(y), 'tagline names the modes');

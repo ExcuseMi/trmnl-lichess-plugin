@@ -23,6 +23,7 @@ custom_fields:
   field_type: author_bio
   description: 'Unofficial. Lichess on your TRMNL: puzzles at your level with a QR code to solve them on your phone, your correspondence games where it is your turn, your profile with ratings and a rating chart, the top live game right now, or a player you follow. Connect Lichess with the OAuth button above; until you connect, the screen asks you to connect your Lichess account and shows no puzzle.<br /><br />Data: <strong>Lichess</strong> (lichess.org) API. Pieces: Colin M.L. Burnett (Cburnett), BSD licence. Not affiliated with or endorsed by Lichess.org.'
   github_url: https://github.com/ExcuseMi/trmnl-lichess-plugin
+  learn_more_url: https://github.com/ExcuseMi/trmnl-lichess-plugin#readme
   category: games
 - keyname: mode
   field_type: select
@@ -74,5 +75,4 @@ custom_fields:
   optional: true
 name: Lichess
 description: Lichess puzzles, games, live play
-learn_more_url: https://github.com/ExcuseMi/trmnl-lichess-plugin#readme
 refresh_interval: 60
