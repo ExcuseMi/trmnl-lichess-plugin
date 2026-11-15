@@ -19,6 +19,6 @@ Colin M.L. Burnett (Cburnett). Each file on Wikimedia Commons carries `{{self|GF
 | Chess_plt45.svg | <https://commons.wikimedia.org/wiki/File:Chess_plt45.svg> | <https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg> |
 | Chess_pdt45.svg | <https://commons.wikimedia.org/wiki/File:Chess_pdt45.svg> | <https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg> |
 
-## Lichess logo (title bar and plugin icon)
+## Icon and in-screen knight
 
-The knight is the Lichess logo: lila COPYING.md "public/logo, public/favicon.ico, public/apple-touch-icon.png | sadsnake1 | Only use to refer to lichess.org". This plugin refers to lichess.org (an unofficial Lichess client, not affiliated with or endorsed by Lichess.org). Original: assets/owner/lichess-logo-original.svg; assets/icon.svg recolours it in coral, assets/icon-mono.svg fills it black.
+Our own: the Cburnett knight above (black one for `assets/icon-mono.svg`, the white one on coral for `assets/icon.svg` and `assets/icon.png`). The Lichess logo is not used: lila COPYING.md lists `public/logo` as "Only use to refer to lichess.org" (sadsnake1), and a plugin icon is not clearly a reference to the site.

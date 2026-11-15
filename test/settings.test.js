@@ -27,3 +27,8 @@ test('only the Cburnett piece set ships (unused sets and their licence files are
   const lic = fs.readdirSync(path.join(root, 'LICENSES')).filter((f) => /chessnut|celtic|kosal/i.test(f));
   assert.deepStrictEqual(lic, []);
 });
+test('the Lichess logo is not shipped: icons are the Cburnett knight (review item 10)', () => {
+  const root = path.join(__dirname, '..');
+  assert.ok(!fs.existsSync(path.join(root, 'assets/owner')), 'no assets/owner');
+  for (const f of ['assets/icon.svg', 'assets/icon-mono.svg']) assert.ok(!fs.readFileSync(path.join(root, f), 'utf8').includes('M38.956.5'), f + ' holds the Lichess logo path');
+});

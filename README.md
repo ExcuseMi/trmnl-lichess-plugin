@@ -51,6 +51,6 @@ Edit `source/`, never the files in `plugin/src/` that the build writes. `setting
 
 ## Credits and licence
 
-Not affiliated with or endorsed by Lichess.org. Lichess, its knight logo and its data belong to Lichess; the logo appears as the plugin icon only to name the source. Puzzles are the Lichess CC0 database; data comes from its public API.
+Not affiliated with or endorsed by Lichess.org. Lichess and its data belong to Lichess; the plugin icon is our own knight from the Cburnett set, not the Lichess logo. Puzzles are the Lichess CC0 database; data comes from its public API.
 
 Pieces: Colin M.L. Burnett (Cburnett), BSD ([LICENSES/cburnett-BSD-3.txt](LICENSES/cburnett-BSD-3.txt)). chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform ([LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt)). Everything else: MIT, see [LICENSE](LICENSE).
