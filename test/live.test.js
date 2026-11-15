@@ -169,3 +169,10 @@ test('top: a broadcast round call refused (403) while TV worked is no failure li
   const o2 = await load(router({ ...r403, 'https://lichess.org/api/tv/channels': resp(503, {}) })).run(input('top'));
   assert.ok(Array.from(o2.problems).includes('Lichess round: HTTP 403'), 'no game on screen: the failure is said');
 });
+
+test('top and follow: a 401 (expired or revoked token) shows the reconnect screen like the other modes (review item 3)', async () => {
+  const t = await load(router({ 'https://lichess.org/api/broadcast/top': resp(401, {}), 'https://lichess.org/api/tv/channels': resp(401, {}) })).run(input('top'));
+  assert.strictEqual(t.connect, true); assert.strictEqual(t.notice, t.t.tokbad); assert.strictEqual(t.instance, 'Connect account'); assert.ok(!t.puzzle);
+  const f = await load(router({ 'https://lichess.org/api/user/KnightOwl/current-game': resp(401, {}) })).run(input('following', undefined, 'KnightOwl'));
+  assert.strictEqual(f.connect, true); assert.strictEqual(f.notice, f.t.tokbad); assert.strictEqual(f.instance, 'Connect account'); assert.ok(!f.puzzle);
+});

@@ -104,7 +104,10 @@ async function runTop(input, token, nowS, st0) {
   var topP = getJson('https://lichess.org/api/broadcast/top', H, LT), tvP = getJson('https://lichess.org/api/tv/channels', H, LT);   // the TV answer is the fallback, asked at once
   topP.catch(noop); tvP.catch(noop);
   var model = null, arg = '', finished = null, stale = false, top = null;
-  try { top = await topP; } catch (e) { diag.broadcast = callError(e); }
+  try { top = await topP; } catch (e) {
+    if (e && e.status === 401) return viewModel({ t: T, connect: true, none: true, notice: T.tokbad, trmnl_state: fitState(keep({ v: 1 })) }, nowS);   // expired or revoked login: reconnect
+    diag.broadcast = callError(e);
+  }
   if (top && !Array.isArray(top.active)) { diag.broadcast = 'bad answer'; top = null; }
   if (top) {
     var cands = top.active.filter(function (a) { return a && a.round && a.round.ongoing && GAME_ID.test(a.round.id || '') && a.tour; })
@@ -170,6 +173,7 @@ async function runFollow(input, token, nowS, st0) {
     row = await getJson('https://lichess.org/api/user/' + encodeURIComponent(name) + '/current-game?moves=true&clocks=true&tags=false&evals=false&opening=false', H, 3500);
     if (!row || !row.players) { row = null; diag.game = 'bad answer'; }
   } catch (e) {
+    if (e && e.status === 401) return viewModel({ t: T, connect: true, none: true, notice: T.tokbad, trmnl_state: fitState(keep({ v: 1 })) }, nowS);   // expired or revoked login: reconnect
     if (e && e.status === 404) return calm(T.fl_unknown, T.fl_unknown2, cut(name, 16));   // Lichess knows no such account
     diag.game = callError(e);
   }
