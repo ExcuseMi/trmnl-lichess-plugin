@@ -572,6 +572,10 @@ function boardSvg(o) {
     var sc = document.querySelector('.screen'), has = function (c) { return !!(sc && sc.classList.contains(c)); };
     var dark = has('screen--dark-mode') || !!document.querySelector('.screen--dark-mode, .dark-mode');
     var bits = has('screen--1bit') ? 1 : has('screen--2bit') ? 2 : 4, lg = has('screen--lg'), view = YM.view, portrait = has('screen--portrait') && view === 1;
+    if (portrait && lg) {   // the X in portrait (3:4): the board keeps 66 % of the height, the move list sits beside the rating and QR (owner 2026-11-27)
+      var mv = document.querySelector('[data-ym-card="moves"]'), bot = document.querySelector('[data-ym-bottom]');
+      if (mv && bot) { mv.setAttribute('class', mv.getAttribute('class').replace(/(^|\s)shrink-0(?=\s|$)/, ' ') + ' grow'); bot.insertBefore(mv, bot.firstChild); }
+    }
     var r = root.getBoundingClientRect(), cs = window.getComputedStyle(root);
     var W = Math.floor(r.width - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
     var H = Math.floor(r.height - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0));
@@ -589,7 +593,7 @@ function boardSvg(o) {
       // Quadrant: the board takes the full height first; a text that would wrap in the narrow panel is dropped if it is optional
       // (sub line, "+N waiting", name), and only a required one gives the board a step back.
       if (view === 4) quadrantFit(function () { if (S <= H * 0.9) return false; draw(S -= 1); return true; });
-      if (portrait) { fitMoves(); fitParts(); }   // portrait: the optional parts go first, the board gives way by what is still too tall   // portrait: the optional parts go first, the board gives way by what is still too tall
+      if (portrait) { if (lg) fitParts(); fitMoves(); fitParts(); }   // the X: the rating card's chart and week give way before the move list beside them   // portrait: the optional parts go first, the board gives way by what is still too tall   // portrait: the optional parts go first, the board gives way by what is still too tall
       for (var k = 0, s = S; k < (portrait ? 8 : 3); k++) {
         var over = view === 3 || portrait ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
         if (over <= 0) break;

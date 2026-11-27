@@ -127,6 +127,10 @@ The board takes the full content height (check >= 97 %); the panel gets the rest
 
 All calls are asked at the top of `run()` and run one at a time (the Lichess API asks for one request at a time; every TRMNL user shares the same servers): `getRaw` waits for a slot in `NET` (max 1), the next puzzle is queued first, a call still queued at the deadline is a timeout. A failed call is said on screen ("Lichess activity: timeout").
 
+## X portrait
+
+The board takes 66 % of the height (84 % of the width; the rendered check allows 80 % on the X). The page script moves the move list into the bottom row, beside the rating (or time) and QR cards (owner 2026-11-27): under the board it did not fit.
+
 ## Week and time zone
 
 The puzzle week (`weekFromDays`) and its day letters use the user's date from `trmnl.user.utc_offset`; Lichess activity days are UTC dates, matched by date.
@@ -141,7 +145,6 @@ Move list figurines and the turn king are images; the page script (`darkFigures`
 
 ## Open items
 
-- X portrait (owner choice pending, 2026-11-27): the board takes 66 % of the height (84 % of the width), so the move list does not fit under it (needs ~145 px more); a smaller board or moves beside the QR would show it. The rendered check allows 80 % on the X.
 
 - OAuth is unproven live (checked against docs only). Lichess: public clients, any client id, PKCE, no secret ("unregistered and public clients", Lichess API spec); `settings.yml` has authorize `https://lichess.org/oauth`, token `https://lichess.org/api/token`, scope `puzzle:read`, PKCE on. The client id/secret fields are in the TRMNL plugin editor, not in `settings.yml`: set any client id (e.g. `trmnl-lichess-plugin`), secret empty or any value, and tick the option that shares the OAuth app if the plugin is published. `oauth_auth_params` repeats `code_challenge_method` that PKCE may already add: if Lichess answers "invalid request", clear it.
 - Owner check (needs your Lichess account): 1. Open the test plugin 540460 settings. 2. Press Connect Lichess, Authorize, confirm you land back on TRMNL with the connection shown. 3. Force a refresh: each of the five modes should show data, not the Connect screen. 4. In Lichess (Preferences, API access tokens, or Account, Applications) revoke the app, refresh: the screen must say "Lichess login expired: reconnect ..." in every mode. 5. Connect again, refresh: back to data.

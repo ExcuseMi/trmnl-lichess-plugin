@@ -846,7 +846,9 @@
   "device": "v2",
   "portrait": true,
   "scenario": "owner",
-  "checks": {}
+  "checks": {
+   "the move list shows, beside the rating and QR": "(function(){var m=document.querySelector('[data-ym-card=moves]');return !!m&&m.getClientRects().length>0&&!!m.closest('[data-ym-bottom]')&&Array.prototype.filter.call(m.querySelectorAll('tr'),function(r){return r.getClientRects().length}).length>=3;})()"
+  }
  },
  {
   "name": "top_nologin_full_og",
@@ -855,6 +857,16 @@
   "scenario": "top_nologin",
   "checks": {
    "the game, not the connect screen": "!document.querySelector('[data-ym-connect]') && !!document.querySelector('[data-ym-board] svg')"
+  }
+ },
+ {
+  "name": "games_one_full_x_portrait",
+  "view": "full",
+  "device": "v2",
+  "portrait": true,
+  "scenario": "games_one",
+  "checks": {
+   "the move list shows, beside the rating and QR": "(function(){var m=document.querySelector('[data-ym-card=moves]');return !!m&&m.getClientRects().length>0&&!!m.closest('[data-ym-bottom]')&&Array.prototype.filter.call(m.querySelectorAll('tr'),function(r){return r.getClientRects().length}).length>=3;})()"
   }
  }
 ]
