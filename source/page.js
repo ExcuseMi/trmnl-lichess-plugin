@@ -65,7 +65,7 @@
     var cs = window.getComputedStyle(n), lh = parseFloat(cs.lineHeight) || parseFloat(cs.fontSize) * 1.3;
     return n.offsetHeight > lh * 1.6;
   }
-  function quadrantFit() {
+  function quadrantFit(shrink) {   // shrink(): the board one pixel smaller, false when it may not give more (main() owns the board size)
     var opt = '[data-ym-opp], [data-ym-part="more"], [data-ym-meta]', n;
     for (var w = 0; w < 60; w++) {
       n = Array.prototype.filter.call(document.querySelectorAll('[data-ym-panel] .label, [data-ym-panel] .value'), wraps);
@@ -75,8 +75,7 @@
       else {
         var v = Array.prototype.filter.call(document.querySelectorAll(opt), function (x) { return x.getClientRects().length; })[0];
         if (v) hide(v);   // optional lines go before the board gives up any height
-        else if (S > H * 0.9) draw(S -= 1);
-        else return;
+        else if (!shrink()) return;
       }
     }
   }
@@ -96,7 +95,7 @@
     });
   }
   // Profile (no board): what does not fit goes, in this order: the oldest recent games (down to 3), the least played cards (down to 3),
-  // the recent games, the hero's peak line, the least played cards. The hero chart and the card trends take the spare height; a chart
+  // the oldest recent games (down to 2), the recent games, the hero's peak line, the least played cards. The hero chart and the card trends take the spare height; a chart
   // box too small to read (hero under 40 px, trend under 16 px) is hidden.
   function profileMain() {
     ogText();
@@ -112,6 +111,7 @@
       var sp = q('[data-ym-part="spark"]')[0], low = function () { return over() || !!sp && sp.clientHeight < 40; };   // the hero chart is worth more than old games
       while (low() && games.length > 3) hide(games.pop());
       while (low() && cards.length > 3) hide(cards.pop());
+      while (over() && games.length > 2) hide(games.pop());   // a short list before none (half horizontal without cards)
       if (over() && rc) hide(rc);
       if (over() && pk) hide(pk);
       while (over() && cards.length > 0) hide(cards.pop());
@@ -130,7 +130,20 @@
     var settle = function () { fit(); (YM.sparks || []).forEach(function (s) { spark(s.id, s.pts, s.hero ? 'hero' : 'trend'); }); root.setAttribute('data-ym-drawn', '1'); };
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(settle, settle); else settle();
   }
+  // Dark mode: the move list figurines and the turn king are images, which the Framework does not invert, so their black lines
+  // vanished on the dark panel. They are redrawn with black and white swapped (light lines and a dark fill, as the text inverts).
+  function darkFigures() {
+    if (!document.querySelector('.screen--dark-mode') || typeof atob !== 'function') return;
+    Array.prototype.forEach.call(document.querySelectorAll('img[data-ym-fig]'), function (n) {
+      var s = n.getAttribute('src') || '', i = s.indexOf('base64,');
+      if (i < 0) return;
+      var svg = atob(s.slice(i + 7)).replace(/(<svg[^>]*>)/, '$1<g fill="#000">').replace(/<\/svg>\s*$/, '</g></svg>')
+        .replace(/#f{3}(f{3})?\b/gi, '#ym1').replace(/#0{3}(0{3})?\b/g, '#fff').replace(/#ym1/g, '#000');
+      n.setAttribute('src', s.slice(0, i + 7) + btoa(svg));
+    });
+  }
   function main() {
+    darkFigures();
     if (!YM.profile) ogText();
     if (YM.profile) return profileMain();
     var root = document.querySelector('[data-ym]'), bd = document.querySelector('[data-ym-board]');
@@ -154,8 +167,8 @@
     var settle = function () {
       // Quadrant: the board takes the full height first; a text that would wrap in the narrow panel is dropped if it is optional
       // (sub line, "+N waiting", name), and only a required one gives the board a step back.
-      if (view === 4) quadrantFit();
-      if (portrait) { fitMoves(); fitParts(); }   // portrait: the optional parts go first, the board gives way by what is still too tall
+      if (view === 4) quadrantFit(function () { if (S <= H * 0.9) return false; draw(S -= 1); return true; });
+      if (portrait) { fitMoves(); fitParts(); }   // portrait: the optional parts go first, the board gives way by what is still too tall   // portrait: the optional parts go first, the board gives way by what is still too tall
       for (var k = 0, s = S; k < (portrait ? 8 : 3); k++) {
         var over = view === 3 || portrait ? root.scrollHeight - root.clientHeight : root.scrollWidth - root.clientWidth;
         if (over <= 0) break;

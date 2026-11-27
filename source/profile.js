@@ -1,4 +1,4 @@
-// "Profile" mode (mode = profile): the user's Lichess overview at a glance, no board. Calls (all inside TRMNL's 5 s, side by side
+// "Profile" mode (mode = profile): the user's Lichess overview at a glance, no board. Calls (all inside TRMNL's 5 s, one at a time
 // once the name is known): GET /api/account (token), GET /api/user/{name}/rating-history (public), GET /api/games/user/{name}?max=10&rated=true
 // (ndjson). The last good profile is saved in the state ("pf") and stands in for a call that fails (said on screen).
 var PF_EN = { none: 'No profile to show', none2: 'Could not reach Lichess. Showing again at the next refresh.', member: 'Member since', change_h: '30 days', games_w: 'games',
@@ -16,14 +16,6 @@ function perfKey(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9]/g,
 function perfPoints(hist, key) {
   var want = key === 'puzzle' ? 'puzzles' : perfKey(key), e = (Array.isArray(hist) ? hist : []).filter(function (x) { return x && perfKey(x.name) === want && Array.isArray(x.points); })[0];
   return e ? e.points.filter(function (p) { return Array.isArray(p) && +p[3] > 0; }).map(function (p) { return [Date.UTC(+p[0], +p[1], +p[2]) / 1000, +p[3]]; }) : [];
-}
-// The rating change over the last 30 days: the rating now minus the last one on or before day -30 (else the first one inside the window); null without history.
-function change30(points, now, nowS) {
-  if (!points.length || !now) return null;
-  var cut = nowS - 30 * 86400, base = null, i;
-  for (i = 0; i < points.length; i++) if (points[i][0] <= cut) base = points[i][1];
-  if (base == null) { for (i = 0; i < points.length; i++) if (points[i][0] > cut) { base = points[i][1]; break; } }
-  return base == null ? null : now - base;
 }
 // The change over the last `days` days: the rating now minus the last one on or before that day (else the first one inside the window); null without history.
 function changeN(points, now, nowS, days) {
@@ -45,7 +37,7 @@ function perfRows(acct, hist, nowS, oldRows) {
   var P = acct && acct.perfs && typeof acct.perfs === 'object' ? acct.perfs : {}, old = {};
   (oldRows || []).forEach(function (r) { if (r && r.k) old[r.k] = r; });
   return Object.keys(PF_PERFS).filter(function (k) { return P[k] && +P[k].games > 0 && +P[k].rating > 0; }).map(function (k) {
-    var p = P[k], o = old[k] || {}, rating = Math.round(+p.rating), pts = hist ? perfPoints(hist, k) : null, c = pts ? change30(pts, rating, nowS) : o.c30 == null ? null : o.c30;
+    var p = P[k], o = old[k] || {}, rating = Math.round(+p.rating), pts = hist ? perfPoints(hist, k) : null, c = pts ? changeN(pts, rating, nowS, 30) : o.c30 == null ? null : o.c30;
     var peak = null;
     if (pts) pts.forEach(function (q) { if (!peak || q[1] >= peak[1]) peak = q; });
     var r = { k: k, name: PF_PERFS[k][0], short: PF_PERFS[k][1], rating: rating, prov: !!p.prov, games: +p.games, games_text: num(p.games), c30: p.prov ? null : c,
@@ -96,7 +88,7 @@ async function runProfile(input, token, nowS, st0) {
   var H = authHeader({ token: token }), T = Object.assign({}, T_EN, PF_EN), diag = {}, saved = stObj(st0.pf), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
   var acctP = getJson('https://lichess.org/api/account', H, LT); acctP.catch(noop);
-  var start = function (u, ms) {   // rating history and the last games, side by side
+  var start = function (u, ms) {   // rating history and the last games (queued after the account)
     var h = getJson('https://lichess.org/api/user/' + u + '/rating-history', H, ms), g = getRaw('https://lichess.org/api/games/user/' + u + '?max=' + PF_RECENT_MAX + '&rated=true&ongoing=false&moves=false&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), Math.min(ms, 2200))
       .then(function (r) { if (r.status !== 200) throw Object.assign(new Error('http'), { status: r.status }); return ndjson(r.text); });
     h.catch(noop); g.catch(noop);

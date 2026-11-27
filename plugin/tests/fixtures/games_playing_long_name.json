@@ -1,0 +1,28 @@
+{
+ "nbMyTurn": 0,
+ "nowPlaying": [
+  {
+   "gameId": "mM4nN5oO",
+   "fullId": "mM4nN5oOabcd",
+   "color": "white",
+   "fen": "r2qr1k1/1bpnbppp/p2p1n2/1p2p3/3PP3/2P2N1P/PPBN1PP1/R1BQR1K1",
+   "hasMoved": true,
+   "isMyTurn": false,
+   "lastMove": "e2e4",
+   "opponent": {
+    "id": "magnus_carlsen_fan",
+    "username": "Magnus_Carlsen_Fan",
+    "rating": 1700
+   },
+   "perf": "correspondence",
+   "rated": true,
+   "secondsLeft": 90000,
+   "source": "lobby",
+   "speed": "correspondence",
+   "variant": {
+    "key": "standard",
+    "name": "Standard"
+   }
+  }
+ ]
+}

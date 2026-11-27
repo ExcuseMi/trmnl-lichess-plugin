@@ -1,6 +1,6 @@
 # Handoff notes
 
-Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`). Settings `mode`: Puzzles (default), Your games, Profile, Top game or Follow a player (`field(input, 'mode')`: `games`, `profile`, `top`, `following`; anything else is puzzles) and `follow_username` (only used by Follow a player).
+Unofficial Lichess plugin for TRMNL (test plugin 540460). Lichess login by OAuth only (scope `puzzle:read`), needed for Puzzles, Your games and Profile; Top game and Follow a player also run without one (public calls, no Authorization header). Settings `mode`: Puzzles (default), Your games, Profile, Top game or Follow a player (`field(input, 'mode')`: `games`, `profile`, `top`, `following`; anything else is puzzles) and `follow_username` (only used by Follow a player).
 
 ## Source and build
 
@@ -19,7 +19,7 @@ Build: `npm install` once (terser, dev only), then `node tools/build.js`: `plugi
 
 | What | Command | Where |
 |---|---|---|
-| Logic and static guards | `node --test test/` | `test/transform.test.js`, `test/view.test.js` |
+| Logic and static guards | `node --test` (after `npm install`) | `test/transform.test.js`, `test/view.test.js` |
 | Rendered views (required before a push) | `cd plugin && trmnlp test` | `plugin/tests/*_spec.rb`, checks in `plugin/tests/view_checks.json`, helpers in `plugin/tests/support/ym.rb` |
 | Lint | `cd plugin && trmnlp lint` | |
 | Review sheet PNGs | `cd plugin && YM_CASES="$(cat cases.json)" YM_OUT=<dir> trmnlp test ../tools/render_sheet_spec.rb` then `montage`/`convert` | case: `{name, view, device (og_png, v2), dark, palette, scenario (owner, account, daily, case), puzzle}` |
@@ -46,6 +46,8 @@ One table in `source/view.js` (`MODES`): `puzzles` "Puzzles" (with the theme: "P
 
 ## Run budget (`source/puzzle.js`)
 
+One request at a time: `netSlot`/`netFree` queue every `getRaw` call (see Lichess endpoints).
+
 TRMNL stops a transform at 5 s. `run()` calls `runStart()` (RUN_MS 3500); `getRaw` clamps every call to `runLeft(cap)`, skips a call with under 300 ms left as a timeout, and races each call against the deadline (a fetch deaf to its abort cannot hold the run). A timeout shows the saved fallback and the line "Lichess ...: timeout". Guard: `test/budget.test.js` (never answers, deaf, 2.5 s per call, 1.2 s chain; every mode).
 
 ## Your games mode (`source/games.js`)
@@ -68,13 +70,13 @@ Layout R8 (owner 2026-11-14: the table version "looks pretty weak").
 |---|---|---|
 | Header (full view) | `/api/account` | title chip, name, "Member since Mon YYYY"; right: "Storm best N · 14d 23h played" |
 | Hero | account perfs + `/api/user/{u}/rating-history` | most played rating perf (puzzles only when alone): big rating, `?` when provisional, 30-day change, "Peak 1976 · Sep 2026" (highest history point, "now" when the current rating is higher), 90-day chart (max 45 points, y range >= 100, gridlines, no numbers) |
-| Cards | same | the other perfs with games > 0, most played first (max 9, grid of 3): short name, rating, `?`, 30-day change, trend (90 days, max 16 points) |
+| Cards | same | the other perfs with games > 0, most played first (max 7: 8 rows minus the hero, grid of 3): short name, rating, `?`, 30-day change, trend (90 days, max 16 points) |
 | This week | `/api/games/user/{u}?max=30&rated=true` (ndjson) | games of the last 7 days ("30+" when all fetched games are inside), one framed bar with a segment per game (won black, drawn grey, lost white), "8 won · 2 drawn · 5 lost", hero rating change over 7 days, streak of the newest same results ("3 wins in a row", >= 2) |
 | Recent games | same | newest first, max 12: chip, "opponent (rating)", time control; packed from the top of their panel |
 
-- Calls: account, history and games start side by side (all at once when the name is saved in `pf`; else history and games right after the account). Failures are said on screen in the week card ("Lichess history: HTTP 503"); the saved `pf` (rows with change, trend, peak; recent games) stands in per part; account 401/403 = connect screen; no account and no saved profile = calm screen.
+- Calls: account, then history and games, one at a time (`NET` in `source/puzzle.js`). Failures are said on screen in the week card ("Lichess history: HTTP 503"); the saved `pf` (rows with change, trend, peak; recent games) stands in per part; account 401/403 = connect screen; no account and no saved profile = calm screen.
 - Views: full: header over two columns (hero, week | cards, recent games). Half horizontal: hero | week, cards. Half vertical: one column (hero, week, cards, recent games). Quadrant: hero and week only.
-- The hero chart and the card trends take the spare height. The page script hides, in order: the oldest recent games (down to 3), the least played cards (down to 3), the recent games, the peak line, the other cards; a hero chart under 40 px and a trend under 16 px go. A column whose blocks no longer fill it gives the height to its last card (a list stays packed from the top).
+- The hero chart and the card trends take the spare height. The page script hides, in order: the oldest recent games (down to 3), the least played cards (down to 3), the oldest recent games (down to 2), the recent games, the peak line, the other cards; a hero chart under 40 px and a trend under 16 px go. A column whose blocks no longer fill it gives the height to its last card (a list stays packed from the top).
 - Charts: `YM.sparks` (`{id, pts, hero}`), drawn by `spark()` in `page.js` with TRMNLCharts.
 - Guards: `test/profile.test.js`; rendered checks in `view_checks.json` (hero, peak, cards sorted, week bar segments = games, lost framed and unlike drawn, recent games packed from the top, quadrant hero and week only, old layout gone; the bar, packing and quadrant checks were seen red on mutations). Fixtures `plugin/tests/fixtures/profile_*` (24 games over 14 days; new player: 5 games); scenarios `profile_many`, `profile_new`, `profile_fail`, `profile_partial`; renders `renders/design-r8.png`, `renders/design-r8-bar-1bit.png`, `renders/design-r8-new-x.png`.
 
@@ -88,7 +90,7 @@ Layout R8 (owner 2026-11-14: the table version "looks pretty weak").
 | Follow | `follow_username` (empty or invalid name: calm screen, no call). One call: `GET /api/user/{name}/current-game?moves=true&clocks=true` (public: the ongoing game, else the last game played; 404 = unknown account, calm screen "Unknown player"). Result from the followed player's side (chip "Won"/"Lost"/"Draw", the event line starts with the name). Variants are not drawn ("Lichess game: not shown"). `/api/games/user/{name}` is 404 anonymously: not used |
 | Screen | Board from white's side, last move outlined. Player cards: black top, white bottom of the moves (title chip, name, rating, "to move", clock as last fetched); event card (content height, event name may wrap to 2 lines, round and board, Live chip or the result) beside the QR; the move list takes the leftover height (as many rows as fit (max 12) full, 3 rows in half horizontal, where it sits between event and QR) "Watch live" / "Watch the game". Failures: own card of lines ("Lichess broadcast: HTTP 503") |
 | Views | Full: cards, moves (oldest hide first), event + QR; the board fills the height (check 97 %). Half views: one-row player cards, event + QR (QR on X only). Quadrant: board and two cards (surname, clock) only |
-| Failure | Each call has its own timeout inside TRMNL's 5 s; broadcast and TV start side by side; a failed call is said on screen; the saved game (`tg`, `fw` with the user) stands in, called "Offline", never "Live"; no saved game: calm screen |
+| Failure | Each call has its own timeout inside TRMNL's 5 s; rounds are asked one at a time (highest tier first, stop at the first with a board in play), TV only when no broadcast board is in play; a failed call is said on screen; the saved game (`tg`, `fw` with the user) stands in, called "Offline", never "Live"; no saved game: calm screen |
 | Guard | `test/live.test.js`; each `render "main"` line in `plugin/src/*.liquid` must pass every variable the markup reads (a missing one once left the cards empty); renders `renders/design-r4.png` |
 
 ## Size budget
@@ -120,12 +122,26 @@ The board takes the full content height (check >= 97 %); the panel gets the rest
 | `GET /api/account/playing?nb=50` | valid token | 3.5 s | Your games: ongoing games |
 | `GET /game/export/{id}?moves=true` | token sent | <= 2.2 s | Your games: move list |
 | `GET /api/games/user/{name}?max=1&perfType=correspondence&moves=true` | token sent | <= 2.2 s | Your games: last finished game |
-| `GET /api/puzzle/activity?max=20` | puzzle:read | 2.5 s | solved check and streak only; never shown as a failure |
+| `GET /api/puzzle/activity?max=20` | puzzle:read | 2.5 s | tried check (won or failed: either way the next puzzle follows; "Solved!" only for a win) and streak; never shown as a failure |
 | `POST /api/token/test` (body: token) | none | 3.5 s | scopes; without `puzzle:read` the screen says "Reconnect Lichess" |
 
-All calls start side by side at the top of `run()` (TRMNL's 5 s cap). A failed call is said on screen ("Lichess activity: timeout").
+All calls are asked at the top of `run()` and run one at a time (the Lichess API asks for one request at a time; every TRMNL user shares the same servers): `getRaw` waits for a slot in `NET` (max 1), the next puzzle is queued first, a call still queued at the deadline is a timeout. A failed call is said on screen ("Lichess activity: timeout").
+
+## Week and time zone
+
+The puzzle week (`weekFromDays`) and its day letters use the user's date from `trmnl.user.utc_offset`; Lichess activity days are UTC dates, matched by date.
+
+## Names
+
+`clean()` keeps Latin, Greek and Cyrillic (the Framework font draws them). A player name with no letter left becomes White or Black, an event name "Broadcast".
+
+## Dark mode
+
+Move list figurines and the turn king are images; the page script (`darkFigures`) swaps their black and white in dark mode.
 
 ## Open items
+
+- X portrait (owner choice pending, 2026-11-27): the board takes 66 % of the height (84 % of the width), so the move list does not fit under it (needs ~145 px more); a smaller board or moves beside the QR would show it. The rendered check allows 80 % on the X.
 
 - OAuth is unproven live (checked against docs only). Lichess: public clients, any client id, PKCE, no secret ("unregistered and public clients", Lichess API spec); `settings.yml` has authorize `https://lichess.org/oauth`, token `https://lichess.org/api/token`, scope `puzzle:read`, PKCE on. The client id/secret fields are in the TRMNL plugin editor, not in `settings.yml`: set any client id (e.g. `trmnl-lichess-plugin`), secret empty or any value, and tick the option that shares the OAuth app if the plugin is published. `oauth_auth_params` repeats `code_challenge_method` that PKCE may already add: if Lichess answers "invalid request", clear it.
 - Owner check (needs your Lichess account): 1. Open the test plugin 540460 settings. 2. Press Connect Lichess, Authorize, confirm you land back on TRMNL with the connection shown. 3. Force a refresh: each of the five modes should show data, not the Connect screen. 4. In Lichess (Preferences, API access tokens, or Account, Applications) revoke the app, refresh: the screen must say "Lichess login expired: reconnect ..." in every mode. 5. Connect again, refresh: back to data.

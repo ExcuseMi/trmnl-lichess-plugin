@@ -11,7 +11,7 @@ const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl, code) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
   vm.createContext(ctx);
-  vm.runInContext((code || bundle()) + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine, pickWeakest };', ctx);
+  vm.runInContext((code || bundle()) + '\n;this.api = { PROVIDERS, run, parseFen, lichessPosition, lichessModel, lichessMoves, modeInstance, MODES, shortThemes, timeLeft, gamesToMove, lastGameLine, pickWeakest, weekFromDays };', ctx);
   return ctx.api;
 }
 function resp(status, body) { return { status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) }; }
@@ -147,7 +147,7 @@ test('token from the OAuth connection: progress and personal puzzle', async () =
   assert.ok(o.account); assert.ok(seen.includes('Bearer OAUTHTOK'));
 });
 
-test('the shown puzzle stays until solved, then Solved + change and the next puzzle', async () => {
+test('the shown puzzle stays until tried: solved shows Solved + change, failed moves on quietly, both give the next puzzle', async () => {
   const st = { rating: 1861, cur: { id: 'u3zfD', t: NOW - 3600, r0: 1861 } };
   const first = await load(account({})).run(input({ lichess_token: 't' }, { rating: 1861 }));
   const withLast = { ...st, last: first.trmnl_state.last };
@@ -159,8 +159,8 @@ test('the shown puzzle stays until solved, then Solved + change and the next puz
   const solved = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act([{ date: NOW * 1000, win: true, puzzle: { id: 'u3zfD' } }])), 'https://lichess.org/api/puzzle/next': resp(200, NEXT2) }))
     .run(input({ lichess_token: 't' }, withLast));
   assert.strictEqual(solved.banner, 'Solved! +12'); assert.strictEqual(solved.puzzle.id, 'zzz99'); assert.strictEqual(solved.trmnl_state.cur.id, 'zzz99');
-  const failedOnly = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act([{ date: NOW * 1000, win: false, puzzle: { id: 'u3zfD' } }])) })).run(input({ lichess_token: 't' }, withLast));
-  assert.strictEqual(failedOnly.puzzle.id, 'u3zfD'); assert.strictEqual(failedOnly.banner, '');   // a failed try is not solved
+  const failedOnly = await load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act([{ date: NOW * 1000, win: false, puzzle: { id: 'u3zfD' } }])), 'https://lichess.org/api/puzzle/next': resp(200, NEXT2) })).run(input({ lichess_token: 't' }, withLast));
+  assert.strictEqual(failedOnly.puzzle.id, 'zzz99'); assert.strictEqual(failedOnly.banner, '');   // a failed try is done too (owner 2026-11-27): the next one, no Solved
   const old = await load(account({ 'https://lichess.org/api/puzzle/next': resp(200, NEXT2) })).run(input({ lichess_token: 't' }, { ...withLast, cur: { ...st.cur, t: NOW - 90000 } }));
   assert.strictEqual(old.puzzle.id, 'zzz99');   // 24 hours: the next one
 });
@@ -197,14 +197,14 @@ test('provider lichess: capabilities follow the login; daily without, personal w
   assert.strictEqual(await p.fetchProgress(ctxOf(api)), null);
 });
 
-test('provider lichess: progress, solved check, one activity call per run', async () => {
+test('provider lichess: progress, attempt check (won, failed, not tried), one activity call per run', async () => {
   const calls = [];
   const rows = [{ date: NOW * 1000, win: true, puzzle: { id: 'a1' } }, { date: NOW * 1000 - 1, win: false, puzzle: { id: 'b2' } }];
   const api = load(account({ 'https://lichess.org/api/puzzle/activity': resp(200, act(rows)) }, calls));
   const p = api.PROVIDERS.lichess, ctx = ctxOf(api, { token: 't' });
   const pr = await p.fetchProgress(ctx);
   assert.strictEqual(pr.rating, 1873); assert.strictEqual(pr.today, 2);   // today from the week (WEEK), not from the puzzle list assert.strictEqual(pr.history.length, 5); assert.strictEqual(pr.days.length, 7);
-  assert.strictEqual(await p.isSolved('a1', ctx), true); assert.strictEqual(await p.isSolved('b2', ctx), false); assert.strictEqual(await p.isSolved('zz', ctx), false);
+  assert.strictEqual(await p.attempt('a1', ctx), 'win'); assert.strictEqual(await p.attempt('b2', ctx), 'loss'); assert.strictEqual(await p.attempt('zz', ctx), '');
   assert.strictEqual(calls.filter((u) => u.includes('puzzle/activity')).length, 1);
   await assert.rejects(load(account({ 'https://lichess.org/api/account': resp(401, {}) })).PROVIDERS.lichess.fetchProgress(ctxOf(api, { token: 'bad' })), (e) => e.status === 401);
 });
@@ -216,15 +216,18 @@ test('run hands the view the capability flags with a login; without one only the
   assert.strictEqual(without.connect, true); assert.strictEqual(without.caps, undefined);
 });
 
-test('Lichess calls start side by side: activity, scopes, account and the next puzzle are all asked before any answers', async () => {
+test('Lichess calls run one at a time (the Lichess API asks for it), the next puzzle first', async () => {
   const started = [], waiters = [];
+  let open = 0, most = 0;
   const base = account({});
-  const f = (url, opt) => { started.push(url.split('?')[0]); return new Promise((res) => waiters.push(() => res(base(url, opt)))); };
+  const f = (url, opt) => { started.push(url.split('?')[0]); open++; most = Math.max(most, open); return new Promise((res) => waiters.push(() => { open--; res(base(url, opt)); })); };
   const p = load(f).run(input({ lichess_token: 't' }));
   await new Promise((r) => setTimeout(r, 20));
-  for (const u of ['https://lichess.org/api/puzzle/activity', 'https://lichess.org/api/token/test', 'https://lichess.org/api/account', 'https://lichess.org/api/puzzle/next']) assert.ok(started.includes(u), u + ' started at once');
+  assert.deepStrictEqual(started, ['https://lichess.org/api/puzzle/next'], 'one call asked, the puzzle first');
   const flush = setInterval(() => { while (waiters.length) waiters.shift()(); }, 5);
   const o = await p; clearInterval(flush);
+  assert.strictEqual(most, 1, 'never two calls open at once');
+  for (const u of ['https://lichess.org/api/puzzle/activity', 'https://lichess.org/api/token/test', 'https://lichess.org/api/account']) assert.ok(started.includes(u), u + ' asked');
   assert.strictEqual(o.puzzle.id, 'u3zfD');
 });
 
@@ -434,4 +437,13 @@ test('transform.js: shipped file is the current minified build, within the size 
   assert.deepStrictEqual(JSON.parse(JSON.stringify(await run(code))), JSON.parse(JSON.stringify(await run())));
   const g = (c) => load(games({}), c).run(input({ lichess_token: 'T', mode: 'games' }));
   assert.deepStrictEqual(JSON.parse(JSON.stringify(await g(code))), JSON.parse(JSON.stringify(await g())));
+});
+
+test('week: "today" is the user\'s date (trmnl.user.utc_offset), not UTC\'s: late evening in New York counts the UTC day before', () => {
+  const api = load(account({}));
+  const day = (s) => Math.floor(s / 86400) * 86400000;
+  const now = Date.UTC(2026, 10, 14, 2) / 1000;   // 02:00 UTC = 21:00 on the 13th in New York
+  const rows = [[day(now), 3, 0, 0, 0], [day(now) - 86400000, 5, 0, 0, 0]];
+  assert.strictEqual(api.weekFromDays(rows, now, 0).today, 3);
+  assert.strictEqual(api.weekFromDays(rows, now, -5 * 3600).today, 5);
 });

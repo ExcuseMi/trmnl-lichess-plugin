@@ -810,5 +810,51 @@
   "checks": {
    "quadrant stays short: no training line": "!document.querySelector('[data-ym-training]') || !document.querySelector('[data-ym-training]').getClientRects().length"
   }
+ },
+ {
+  "name": "games_wait_long_name_quadrant_og",
+  "view": "quadrant",
+  "device": "og_png",
+  "scenario": "games_wait_long",
+  "checks": {
+   "board fills the content height (>= 97 %)": "(function(){var r=document.querySelector('[data-ym]'),cs=getComputedStyle(r),h=r.getBoundingClientRect().height-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);var b=document.querySelector('[data-ym-board] svg').getBoundingClientRect().height;return b>=0.97*h;})()",
+   "the quadrant shows the short name (7 characters)": "(function(){return document.querySelector('[data-ym-panel]').textContent.indexOf('Magnus…')>=0;})()"
+  }
+ },
+ {
+  "name": "profile_new_half_horizontal_og",
+  "view": "half_horizontal",
+  "device": "og_png",
+  "scenario": "profile_new",
+  "checks": {
+   "recent games heading does not overlap its first row": "(function(){var c=document.querySelector('[data-ym-card=recent]');if(!c||!c.getClientRects().length)return true;var h=c.querySelector('span').getBoundingClientRect(),r=Array.prototype.filter.call(c.querySelectorAll('[data-ym-game-row]'),function(x){return x.getClientRects().length})[0];return !r||r.getBoundingClientRect().top>=h.bottom-1;})()"
+  }
+ },
+ {
+  "name": "owner_full_og_dark",
+  "view": "full",
+  "device": "og_png",
+  "dark": true,
+  "scenario": "owner",
+  "checks": {
+   "dark mode figurines are drawn inverted (light lines)": "(function(){var i=Array.prototype.filter.call(document.querySelectorAll('img[data-ym-fig]'),function(x){return x.getClientRects().length});if(!i.length)return false;return i.every(function(x){var s=atob(x.getAttribute('src').split('base64,')[1]);return s.indexOf('<g fill=\"#fff\">')>=0;});})()"
+  }
+ },
+ {
+  "name": "owner_full_x_portrait",
+  "view": "full",
+  "device": "v2",
+  "portrait": true,
+  "scenario": "owner",
+  "checks": {}
+ },
+ {
+  "name": "top_nologin_full_og",
+  "view": "full",
+  "device": "og_png",
+  "scenario": "top_nologin",
+  "checks": {
+   "the game, not the connect screen": "!document.querySelector('[data-ym-connect]') && !!document.querySelector('[data-ym-board] svg')"
+  }
  }
 ]

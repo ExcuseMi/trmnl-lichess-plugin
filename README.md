@@ -21,11 +21,11 @@ Unofficial. Lichess on your TRMNL: puzzles at your level, your correspondence ga
 ## Setup
 
 1. Add the plugin to a playlist. Its settings page shows a Connect Lichess (OAuth) button: press it, then Authorize on the Lichess page that opens (it asks for the `puzzle:read` permission only). You return to TRMNL.
-2. Until you have connected, the screen says "Connect Lichess" and shows no puzzle.
+2. Until you have connected, Puzzles, Your games and Profile say "Connect Lichess". Top game and Follow a player work without a login.
 3. Pick a mode, then Save.
 4. Optional: difficulty and puzzle focus (Puzzles), the username to follow (Follow a player).
 
-Lichess needs no app registration: it accepts any client id with PKCE and no secret. If a Lichess login expires or is revoked, every mode shows "Lichess login expired: reconnect on the plugin settings page"; press Connect again.
+Lichess needs no app registration: it accepts any client id with PKCE and no secret. If a Lichess login expires or is revoked, the screen says "Lichess login expired: reconnect on the plugin settings page"; press Connect again.
 
 | Setting | What it does |
 |---|---|
@@ -38,22 +38,23 @@ All four views, 1-bit, grayscale and dark mode. Texts are English.
 
 ## Privacy
 
-Only reads your Lichess data, with the scopes shown on the Lichess consent screen. Nothing is stored outside TRMNL.
+Only reads your Lichess data, with the scopes shown on the Lichess consent screen. Nothing is stored outside TRMNL. Calls go to Lichess one at a time, as its API asks.
 
 ## Build and test
 
 | What | Command |
 |---|---|
+| Install the build tool (terser), once | `npm install` |
 | Build `plugin/src/transform.js` and `shared.liquid` from `source/` | `node tools/build.js` |
 | Regenerate `source/pieces.js` | `node tools/pieces.js` |
-| Logic tests | `node --test test/` |
-| Rendered tests, lint | `cd plugin && trmnlp test`, `trmnlp lint` |
+| Logic tests | `node --test` |
+| Rendered tests, lint | `cd plugin && trmnlp test`, `trmnlp lint` (or the `trmnl/trmnlp` Docker image) |
 | Review sheets of every mode state | `tools/r6_sheets.sh` (after rendering into `renders/design/r6`) |
 
 Edit `source/`, never the files in `plugin/src/` that the build writes. `settings.yml` comes from `trmnlp pull`. Handoff notes: [docs/NOTES.md](docs/NOTES.md).
 
 ## Credits and licence
 
-Not affiliated with or endorsed by Lichess.org. Lichess and its data belong to Lichess; the plugin icon is our own knight from the Cburnett set, not the Lichess logo. Puzzles are the Lichess CC0 database; data comes from its public API.
+Not affiliated with or endorsed by Lichess.org. Lichess and its data belong to Lichess. The plugin icon is the Cburnett knight (BSD, below), not the Lichess logo. Puzzles are the Lichess CC0 database; data comes from the Lichess API with your login.
 
 Pieces: Colin M.L. Burnett (Cburnett), BSD ([LICENSES/cburnett-BSD-3.txt](LICENSES/cburnett-BSD-3.txt)). chess.js 1.4.0 (BSD-2-Clause, Jeff Hlywa) is bundled in the transform ([LICENSES/chess.js-BSD-2.txt](LICENSES/chess.js-BSD-2.txt)). Everything else: MIT, see [LICENSE](LICENSE).

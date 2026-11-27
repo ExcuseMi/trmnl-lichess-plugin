@@ -1,6 +1,6 @@
 // "Top game" (mode = top) and "Follow a player" (mode = following) modes: one game on a board with both players, their clocks, the
 // event, the recent moves and a QR to watch it. A refresh is 15-60 min, so the position stays meaningful: who plays, the clocks as
-// they were, the last moves. Public endpoints only (the token is sent, no scope beyond a valid login), all inside TRMNL's 5 s.
+// they were, the last moves. Public endpoints only (the token is sent when there is one; both modes work without a login), all inside TRMNL's 5 s.
 //   Top game: broadcast first (GET /api/broadcast/top, the rounds in play of the highest tiers, GET /api/broadcast/-/-/{round} for the
 //   boards, GET /api/study/{round}/{game}.pgn for the moves), else Lichess TV (GET /api/tv/channels, GET /game/export/{id}).
 //   Follow: GET /api/user/{name}/current-game (the ongoing game, else the last one played).
@@ -9,8 +9,8 @@
 var LV_EN = { scan_live: 'Scan to watch', scan_game: 'Scan to watch', live: 'Live', offline_g: 'Offline', board_w: 'Board', tv: 'TV', tv_long: 'Lichess TV',
   top_none: 'No live game right now', top_none2: 'No broadcast or TV game to show. Looking again at the next refresh.', fl_empty: 'Follow a player', fl_empty2: 'Enter a Lichess username in the plugin settings.',
   fl_unknown: 'Unknown player', fl_unknown2: 'Check the name in the plugin settings.', lv_fail: 'Could not reach Lichess. Showing again at the next refresh.', fl_nogame: 'No game to show',
-  playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', finished: 'Finished', anon: 'Anonymous', computer: 'Computer' };
-var BC_TOP_MAX = 3;   // rounds in play looked at (highest tiers first), fetched side by side
+  playing_now: 'Playing now', last_game: 'Last game', won: 'Won', lost: 'Lost', draw: 'Draw', rated: 'rated', finished: 'Finished', anon: 'Anonymous', computer: 'Computer', broadcast: 'Broadcast' };
+var BC_TOP_MAX = 3;   // rounds in play looked at (highest tiers first), one at a time until one has a board in play
 // Clock (centiseconds) as it is read on a board: "1:29:33", "19:20", "0:45"; '' without one.
 function clockText(cs) {
   if (cs == null || !isFinite(cs) || cs < 0) return '';
@@ -23,7 +23,8 @@ function cut(s, n) { s = String(s || ''); return s.length > n ? s.slice(0, n - 1
 // The event name for the title bar and the event card: before the first " | " (sections), no year, cut to n characters.
 function shortEvent(name, n) {
   var s = clean(String(name || '').split(' | ')[0]).replace(/\s*\b20\d\d(\/\d\d)?\b\s*/g, ' ').replace(/\s+/g, ' ').trim();
-  return cut(s || clean(name), n || 24);
+  if (!/[A-Za-z\u00c0-\u024f\u0370-\u03ff\u0400-\u04ff]/.test(s)) s = LV_EN.broadcast;   // a name in a script the font lacks
+  return cut(s, n || 24);
 }
 function resFromWinner(w) { return w === 'white' ? '1-0' : w === 'black' ? '0-1' : '½-½'; }
 // SAN moves out of a PGN movetext: tags, {comments}, (variations), move numbers, NAGs and the result are dropped.
@@ -31,10 +32,11 @@ function pgnSans(text) {
   var body = String(text || '').replace(/^\s*\[[^\]]*\]\s*$/gm, '').replace(/\{[^}]*\}/g, ' ').replace(/\([^)]*\)/g, ' ').replace(/\$\d+/g, ' ');
   return body.split(/\s+/).filter(function (t) { return t && !/^\d+\.+$/.test(t) && !/^(1-0|0-1|1\/2-1\/2|½-½|\*)$/.test(t); }).map(function (t) { return t.replace(/^\d+\.+/, ''); }).filter(Boolean);
 }
-function playerOf(p) {   // a player of a broadcast game or a Lichess game
+function playerOf(p, side) {   // a player of a broadcast game or a Lichess game; a name in a script the font lacks becomes White or Black
   p = p || {};
-  var u = p.user || {}, name = p.name || u.name || u.id || (p.aiLevel ? LV_EN.computer + ' ' + p.aiLevel : LV_EN.anon);
-  return { name: clean(name).slice(0, 30), title: clean(p.title || u.title || '').replace(/^BOT$/, '').slice(0, 4), rating: +p.rating || 0, clock: p.clock != null && isFinite(p.clock) ? +p.clock : null };
+  var u = p.user || {}, name = clean(p.name || u.name || u.id || (p.aiLevel ? LV_EN.computer + ' ' + p.aiLevel : LV_EN.anon));
+  if (!/[0-9A-Za-z\u00c0-\u024f\u0370-\u03ff\u0400-\u04ff]/.test(name)) name = side === 'b' ? T_EN.side_b : T_EN.side_w;
+  return { name: name.slice(0, 30), title: clean(p.title || u.title || '').replace(/^BOT$/, '').slice(0, 4), rating: +p.rating || 0, clock: p.clock != null && isFinite(p.clock) ? +p.clock : null };
 }
 // One position from a SAN list (chess.js), as the models of Your games: board, turn, last move, the move pairs; null when it does not replay.
 function liveBase(sans) {
@@ -50,20 +52,20 @@ function lichessLiveModel(j, extra) {
   if (!j || !GAME_ID.test(j.id || '') || (j.variant && j.variant !== 'standard') || !j.players) return null;
   var sans = typeof j.moves === 'string' ? j.moves.split(/\s+/).filter(Boolean) : [], base = liveBase(sans);
   if (!base) return null;
-  var w = playerOf(j.players.white), b = playerOf(j.players.black), cl = Array.isArray(j.clocks) ? j.clocks : [], n = sans.length;
+  var w = playerOf(j.players.white, 'w'), b = playerOf(j.players.black, 'b'), cl = Array.isArray(j.clocks) ? j.clocks : [], n = sans.length;
   var at = function (par) { var i = n - 1; if (i >= 0 && i % 2 !== par) i--; return i >= 0 && isFinite(cl[i]) ? +cl[i] : null; };
   w.clock = at(0); b.clock = at(1);
   var live = j.status === 'started' || j.status === 'created', c = j.clock && +j.clock.initial >= 0 ? j.clock : null;
   var speed = String(j.speed || j.perf || '');
   var kind = (speed ? speed.charAt(0).toUpperCase() + speed.slice(1) : '') + (c ? ' ' + (+c.initial >= 60 ? Math.round(+c.initial / 60) : +c.initial + 's') + '+' + (+c.increment || 0) : '');
-  var game = Object.assign({ w: w, b: b, event: kind.trim(), round: '', kind: kind.trim(), rated: !!j.rated, status: live ? 'live' : 'done', res: live ? '' : j.winner ? resFromWinner(j.winner) : j.status === 'draw' || j.status === 'stalemate' ? '½-½' : '', winner: j.winner || '', n_moves: Math.ceil(n / 2) }, extra || {});
+  var game = Object.assign({ w: w, b: b, event: kind.trim(), round: '', kind: kind.trim(), rated: !!j.rated, status: live ? 'live' : 'done', res: live ? '' : j.winner ? resFromWinner(j.winner) : isDraw(j) ? '½-½' : '', winner: j.winner || '', n_moves: Math.ceil(n / 2) }, extra || {});
   return liveModel(base, j.id, 'https://lichess.org/' + j.id, game);
 }
 // A broadcast board (a row of games in GET /api/broadcast/-/-/{round}) from its fen, last move and players.
 function broadcastModel(g, round, tour, index, sans) {
   if (!g || !GAME_ID.test(g.id || '') || typeof g.fen !== 'string' || !Array.isArray(g.players) || g.players.length < 2) return null;
   var q = parseFen(g.fen), last = String(g.lastMove || ''), pairs = sans && sans.length ? sanPairs(sans, q.board) : [];   // a list that does not replay to this board is dropped
-  var w = playerOf(g.players[0]), b = playerOf(g.players[1]), live = g.status === '*', st = String(g.status || '*');
+  var w = playerOf(g.players[0], 'w'), b = playerOf(g.players[1], 'b'), live = g.status === '*', st = String(g.status || '*');
   var url = 'https://lichess.org/study/' + round.id + '/' + g.id;   // Lichess sends a broadcast study to its broadcast page; the short link keeps the QR small
   var game = { w: w, b: b, event: shortEvent(tour.name, 40), round: clean(round.name || '') + (index >= 0 ? ' · ' + LV_EN.board_w + ' ' + (index + 1) : ''), kind: '', status: live ? 'live' : 'done', res: live ? '' : st === '1-0' || st === '0-1' ? st : '½-½', n_moves: sans && sans.length ? Math.ceil(sans.length / 2) : 0 };
   return liveModel({ board: q.board, turn: q.turn, from: sqIndex(last.slice(0, 2)), to: sqIndex(last.slice(2, 4)), moves: pairs }, g.id, url, game);
@@ -101,8 +103,8 @@ function liveOut(T, mode, model, o) {
 async function runTop(input, token, nowS, st0) {
   var H = authHeader({ token: token }), T = Object.assign({}, T_EN, LV_EN), diag = {}, saved = stObj(st0.tg), noop = function () {};
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
-  var topP = getJson('https://lichess.org/api/broadcast/top', H, LT), tvP = getJson('https://lichess.org/api/tv/channels', H, LT);   // the TV answer is the fallback, asked at once
-  topP.catch(noop); tvP.catch(noop);
+  var topP = getJson('https://lichess.org/api/broadcast/top', H, LT);   // TV is the fallback, asked only when no broadcast board is in play
+  topP.catch(noop);
   var model = null, arg = '', finished = null, stale = false, top = null;
   try { top = await topP; } catch (e) {
     if (e && e.status === 401) return viewModel({ t: T, connect: true, none: true, notice: T.tokbad, trmnl_state: fitState(keep({ v: 1 })) }, nowS);   // expired or revoked login: reconnect
@@ -112,14 +114,14 @@ async function runTop(input, token, nowS, st0) {
   if (top) {
     var cands = top.active.filter(function (a) { return a && a.round && a.round.ongoing && GAME_ID.test(a.round.id || '') && a.tour; })
       .map(function (a, i) { return { a: a, i: i }; }).sort(function (x, y) { return (+y.a.tour.tier || 0) - (+x.a.tour.tier || 0) || x.i - y.i; }).slice(0, BC_TOP_MAX).map(function (x) { return x.a; });
-    var ms = runLeft(2200), got = await Promise.allSettled(cands.map(function (a) { return getJson('https://lichess.org/api/broadcast/-/-/' + a.round.id, H, ms); }));
     var pick = null;
-    got.forEach(function (r, i) {
-      if (r.status === 'rejected') { diag.round = callError(r.reason); return; }
-      var games = r.value && r.value.games, boards = boardsOf(games);
-      if (!pick && boards.length) pick = { a: cands[i], j: r.value, b: boards[0] };
-      if (!finished && Array.isArray(games) && games.length) finished = { a: cands[i], j: r.value };
-    });
+    for (var i = 0; i < cands.length && !pick; i++) {   // one round at a time, highest tier first, until one has a board in play
+      var rj = null;
+      try { rj = await getJson('https://lichess.org/api/broadcast/-/-/' + cands[i].round.id, H, runLeft(1500)); } catch (e) { diag.round = callError(e); if (runLeft() < RUN_MIN) break; continue; }
+      var games = rj && rj.games, boards = boardsOf(games);
+      if (boards.length) pick = { a: cands[i], j: rj, b: boards[0] };
+      if (!finished && Array.isArray(games) && games.length) finished = { a: cands[i], j: rj };
+    }
     if (pick) {
       var g = pick.b.g, round = Object.assign({}, pick.a.round, pick.j.round || {}), tour = Object.assign({}, pick.a.tour, pick.j.tour || {}), sans = null;
       try {
@@ -132,7 +134,7 @@ async function runTop(input, token, nowS, st0) {
   }
   if (!model) {   // no board in play in a broadcast: Lichess TV (classical when a strong game is on it, else the best game)
     try {
-      var ch = await tvP, c = ch && ch.classical && +ch.classical.rating >= 2000 ? ch.classical : ch && ch.best;
+      var ch = await getJson('https://lichess.org/api/tv/channels', H, LT), c = ch && ch.classical && +ch.classical.rating >= 2000 ? ch.classical : ch && ch.best;
       if (c && GAME_ID.test(c.gameId || '')) {
         var j = await getJson('https://lichess.org/game/export/' + c.gameId + '?moves=true&clocks=true&tags=false&evals=false&opening=false', H, runLeft(2200));
         model = lichessLiveModel(j, { event: LV_EN.tv_long, round: '' });

@@ -73,6 +73,6 @@ custom_fields:
   description: Lichess username. Shows their current game, or their last one.
   placeholder: DrNykterstein
   optional: true
-name: Lichess
+name: Lichess (unofficial)
 description: Lichess puzzles, games, live play
 refresh_interval: 60

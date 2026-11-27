@@ -19,8 +19,8 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
         {%- if r.back < ym_mmax %}
         <tr>
           <td class="bg--gray-60 1bit:bg--white text--center"><span class="{{ ym_t }}">{{ r.n }}.</span></td>
-          <td><span class="{{ ym_t }}{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% assign ym_g = ym_1wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% assign ym_g = ym_1wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% assign ym_g = ym_1wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% assign ym_g = ym_1wB %}{% else %}{% assign ym_f = ym_wN %}{% assign ym_g = ym_1wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.wp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.ws }}</span></td>
-          <td>{% if r.bs != "" %}<span class="{{ ym_t }}{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% assign ym_g = ym_1bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% assign ym_g = ym_1bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% assign ym_g = ym_1bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% assign ym_g = ym_1bB %}{% else %}{% assign ym_f = ym_bN %}{% assign ym_g = ym_1bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" alt="{{ r.bp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" alt="">{% endif %}{{ r.bs }}</span>{% endif %}</td>
+          <td><span class="{{ ym_t }}{% if r.hw %} label--inverted{% endif %}">{% if r.wp != "" %}{% case r.wp %}{% when "K" %}{% assign ym_f = ym_wK %}{% assign ym_g = ym_1wK %}{% when "Q" %}{% assign ym_f = ym_wQ %}{% assign ym_g = ym_1wQ %}{% when "R" %}{% assign ym_f = ym_wR %}{% assign ym_g = ym_1wR %}{% when "B" %}{% assign ym_f = ym_wB %}{% assign ym_g = ym_1wB %}{% else %}{% assign ym_f = ym_wN %}{% assign ym_g = ym_1wN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" data-ym-fig alt="{{ r.wp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" data-ym-fig alt="">{% endif %}{{ r.ws }}</span></td>
+          <td>{% if r.bs != "" %}<span class="{{ ym_t }}{% if r.hb %} label--inverted{% endif %}">{% if r.bp != "" %}{% case r.bp %}{% when "K" %}{% assign ym_f = ym_bK %}{% assign ym_g = ym_1bK %}{% when "Q" %}{% assign ym_f = ym_bQ %}{% assign ym_g = ym_1bQ %}{% when "R" %}{% assign ym_f = ym_bR %}{% assign ym_g = ym_1bR %}{% when "B" %}{% assign ym_f = ym_bB %}{% assign ym_g = ym_1bB %}{% else %}{% assign ym_f = ym_bN %}{% assign ym_g = ym_1bN %}{% endcase %}<img class="image image-stroke image-stroke--small inline-block 1bit:hidden w--[16px] h--[16px] lg:w--[28px] lg:h--[28px]" src="{{ ym_f }}" data-ym-fig alt="{{ r.bp }}"><img class="image hidden 1bit:inline-block w--[18px] h--[18px]" src="{{ ym_g }}" data-ym-fig alt="">{% endif %}{{ r.bs }}</span>{% endif %}</td>
         </tr>
         {%- endif %}
       {%- endfor %}
@@ -165,7 +165,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
   {%- capture ym_b_recent %}
     {%- if pf.show.size > 0 %}
     <div class="{{ ym_pp }} {% if pf.cards.size == 0 %}grow{% else %}shrink-0{% endif %} flex flex--col flex--stretch-x gap--xsmall" data-ym-card="recent">
-      <span class="{{ ym_t }} font--bold">{{ t.recent }}</span>
+      <span class="{{ ym_t }} font--bold shrink-0">{{ t.recent }}</span>
       {%- for g in pf.show %}
       <div class="flex flex--row flex--left flex--center-y gap--small shrink-0" data-ym-game-row>
         <span class="{{ ym_t }} label--outline{% if g.c == "W" %} label--inverted{% elsif g.c == "D" %} bg--gray-60 1bit:bg--white{% endif %} flex--center w--[26px] lg:w--[40px]" data-ym-chip="{{ g.c }}">{{ g.c }}</span>
@@ -200,7 +200,7 @@ Type: heading value--small, rating value / lg:value--large, change value--xsmall
     white on 1-bit so no dither sits behind small text. {%- endcomment -%}
     <div class="bg--gray-75 1bit:bg--white rounded p--{% if view == 4 %}1{% else %}2{% endif %} shrink-0 flex flex--row flex--left flex--center-y gap--small" data-ym-card="turn">
       {%- if turn_w %}{% assign ym_k = ym_wK %}{% else %}{% assign ym_k = ym_bK %}{% endif %}
-      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]{% if view == 4 %} hidden{% endif %}" src="{{ ym_k }}" alt="">
+      <img class="image w--[32px] h--[32px] lg:w--[48px] lg:h--[48px]{% if view == 4 %} hidden{% endif %}" src="{{ ym_k }}" data-ym-fig alt="">
       <div class="flex flex--col flex--left text--left">
         <span class="value value--small font--bold">{% if view == 4 %}{{ heading_short | default: t.your_turn }}{% else %}{{ heading | default: t.your_turn }}{% endif %}</span>
         {%- if view == 1 %}<span class="{{ ym_t }}">{{ find }}</span>{% else %}<span class="{{ ym_t }} hidden lg:visible">{% if view == 4 %}{% if turn_w %}{{ t.side_w }}{% else %}{{ t.side_b }}{% endif %}{% else %}{{ find }}{% endif %}</span>{% if meta != "" and view != 4 %}<span class="{{ ym_t }} hidden lg:visible" data-ym-meta>{{ meta }}</span>{% endif %}{% if training and training != "" and view != 4 and mode != "games" %}<span class="{{ ym_t }} hidden lg:visible" data-ym-meta data-ym-training>{{ training }}</span>{% endif %}{% endif %}

@@ -43,7 +43,7 @@ function viewModel(out, nowS) {
     out.time_label = ph === 'wait' ? t.waiting_for : ph === 'last' ? '' : t.time_left;
     out.time_value = ph === 'wait' ? out.opp_line.replace(/ \(\d+\)$/, '') : ph === 'last' ? G.res : tl;
     out.time_small = ph === 'wait';
-    out.time_value_short = ph === 'turn' && tl ? (tl === t.no_limit ? '-' : String(tl).split(' ')[0]) : out.time_value;   // the quadrant: the largest unit only ("8h")
+    out.time_value_short = ph === 'turn' && tl ? (tl === t.no_limit ? '-' : String(tl).split(' ')[0]) : ph === 'wait' ? (G.opp.length > 7 ? G.opp.slice(0, 6) + '…' : G.opp) : out.time_value;   // the quadrant: at most 7 characters at value size (the OG panel is ~140 px)   // the quadrant: the largest unit only ("8h")
     out.time_sub = ph === 'wait' ? (G.opp_rating ? '(' + G.opp_rating + ')' : '') : ph === 'last' ? t.in_moves + ' ' + G.n_moves + ' ' + t.moves_w : out.opp_line;
     out.time_sub_short = ph === 'wait' ? '' : ph === 'last' ? G.n_moves + ' ' + t.moves_w : out.opp_short;
     out.time_sub_all = ph === 'last';
@@ -55,7 +55,7 @@ function viewModel(out, nowS) {
     out.change = A.trend && A.trend !== 'flat' && A.delta ? signed(A.delta) : '';
     out.chips = (A.recent || []).slice(0, 3).reverse().map(function (d) { return { text: signed(d), up: d >= 0 }; });
     if (A.days) {
-      var s = 0, f = 0, d0 = new Date(nowS * 1000).getUTCDay();
+      var s = 0, f = 0, d0 = new Date((nowS + (+out.utc_off || 0)) * 1000).getUTCDay();   // the user's weekday (utc_off: their offset, puzzle.js)
       A.days.forEach(function (x) { s += x.s; f += x.f; });
       out.week_line = s + ' ' + out.t.solved_n + ' · ' + f + ' ' + out.t.failed_n;   // short lines: a label does not wrap
       out.week_title = out.t.this_week;

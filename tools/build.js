@@ -14,7 +14,7 @@ function pieceCaptures() {
   const bold = (svg) => '<g stroke-width="2.6">' + svg.replace(/stroke-width="[0-9.]+"/g, 'stroke-width="2.6"') + '</g>';
   return Object.keys(ctx.P).map((k) => cap('ym_' + k, ctx.P[k]) + '\n' + cap('ym_1' + k, bold(ctx.P[k]))).join('\n');
 }
-function icon() { return fs.readFileSync(path.join(ROOT, 'assets/icon-mono.svg'), 'utf8').trim(); }
+function icon() { return require('./pieces').noStyles(fs.readFileSync(path.join(ROOT, 'assets/icon-mono.svg'), 'utf8')).trim(); }   // no inline styles (TRMNL lint)
 function page() { return rd('shared.liquid').replace('{{ICON}}', icon).replace('{{PIECES}}', pieceCaptures).replace('{{DRAW}}', () => rd('pieces.js') + rd('draw.js')).replace('{{PAGE}}', () => rd('page.js')); }
 // plugin/src/transform.js ships minified (TRMNL refuses a file over 100 KB = 102400 bytes); the source stays readable. Top-level names are kept.
 // Guard: the build fails above 90 % of the limit, so the next feature meets the budget here and not at upload (NOTES.md "Size budget").

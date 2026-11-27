@@ -33,7 +33,7 @@ test('top: the broadcast of the highest tier in play; its highest rated board st
   assert.strictEqual(o.puzzle.url, 'https://lichess.org/study/rN4xYz01/g2LiveAB');
   assert.deepStrictEqual([g.w.clock, g.b.clock], [276000, 171000]);
   assert.ok(!calls.some((u) => u.includes('bigR0001')), 'a round that is not in play is not asked');
-  assert.ok(calls.some((u) => u.includes('clubR001')), 'lower tiers are asked too (a higher tier may have nothing in play)'); assert.notStrictEqual(o.puzzle.id, 'cl1LiveX', 'the tier outranks the rating: a 2900 board of tier 3 does not beat tier 4');
+  assert.ok(!calls.some((u) => u.includes('clubR001')), 'one request at a time: a lower tier is not asked once the highest has a board in play'); assert.notStrictEqual(o.puzzle.id, 'cl1LiveX', 'the tier outranks the rating: a 2900 board of tier 3 does not beat tier 4');
   assert.strictEqual(o.white_bottom, true);
 });
 
@@ -67,10 +67,10 @@ test('top: no broadcast in play: Lichess TV (classical only when strong), the ga
   assert.strictEqual(o2.puzzle.id, 'tvClas01', 'a strong classical game is preferred');
 });
 
-test('top: the broadcast and TV calls start side by side; the token is sent and never leaves in the answer', async () => {
+test('top: one call at a time, TV only when no broadcast board is in play; the token is sent and never leaves in the answer', async () => {
   const calls = [], seen = [];
   const o = await load(router({ ...TOP(), 'https://lichess.org/api/broadcast/top': (u, h) => { seen.push(h.Authorization); return resp(200, J('top_broadcast.json')); } }, calls)).run(input('top'));
-  assert.deepStrictEqual(calls.slice(0, 2), ['https://lichess.org/api/broadcast/top', 'https://lichess.org/api/tv/channels']);
+  assert.strictEqual(calls[0], 'https://lichess.org/api/broadcast/top'); assert.ok(!calls.includes('https://lichess.org/api/tv/channels'), 'no TV call: ' + calls.join(' '));
   assert.deepStrictEqual(seen, ['Bearer SECRET-TOKEN']); assert.ok(!JSON.stringify(o).includes('SECRET-TOKEN'));
   assert.ok(JSON.stringify(o.trmnl_state).length < 7500);
 });
@@ -175,4 +175,24 @@ test('top and follow: a 401 (expired or revoked token) shows the reconnect scree
   assert.strictEqual(t.connect, true); assert.strictEqual(t.notice, t.t.tokbad); assert.strictEqual(t.instance, 'Connect account'); assert.ok(!t.puzzle);
   const f = await load(router({ 'https://lichess.org/api/user/KnightOwl/current-game': resp(401, {}) })).run(input('following', undefined, 'KnightOwl'));
   assert.strictEqual(f.connect, true); assert.strictEqual(f.notice, f.t.tokbad); assert.strictEqual(f.instance, 'Connect account'); assert.ok(!f.puzzle);
+});
+
+test('top and follow work without a Lichess login: data, no Authorization header, never the connect screen', async () => {
+  for (const [mode, map] of [['top', TOP()], ['following', FOLLOW()]]) {
+    const auth = [];
+    const f = async (url, opts) => { auth.push(((opts && opts.headers) || {}).Authorization); return router(map)(url, opts); };
+    const inp = input(mode, undefined, 'KnightOwl'); delete inp.trmnl.oauth;
+    const o = await load(f).run(inp);
+    assert.strictEqual(o.none, false, mode + ' shows a game'); assert.notStrictEqual(o.mode, 'connect');
+    assert.ok(auth.length && auth.every((a) => a === undefined), mode + ' sends no Authorization header');
+  }
+});
+
+test('names: Cyrillic and Greek are kept; a name or event in a script the font lacks falls back, never an empty or "," card', async () => {
+  const api = load(router({}));
+  assert.strictEqual(api.shortEvent('Чемпионат России 2026'), 'Чемпионат России');
+  assert.strictEqual(api.shortEvent('全国象棋 2026'), 'Broadcast');
+  const r = J('top_round.json'); r.games = r.games.map((g) => ({ ...g, players: [{ ...g.players[0], name: 'Непомнящий, Ян' }, { ...g.players[1], name: '丁立人' }] }));
+  const o = await load(router({ ...TOP(), 'https://lichess.org/api/broadcast/-/-/rN4xYz01': resp(200, r) })).run(input('top'));
+  assert.strictEqual(o.puzzle.game.w.name, 'Непомнящий, Ян'); assert.strictEqual(o.puzzle.game.b.name, 'Black');
 });

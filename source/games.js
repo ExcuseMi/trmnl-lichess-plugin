@@ -45,8 +45,11 @@ function replayGame(sans) {
 }
 function slimGame(m) { return { source: m.source, id: m.id, url: m.url, board: m.board, turn: m.turn, from: m.from, to: m.to, rating: 0, themes: [], title: '', moves: m.moves || [], plays: 0, game: m.game }; }
 // A finished game row of GET /api/games/user (ndjson): { res: won|lost|drew, color: white|black, opp, opp_rating } or null.
+// Drawn: finished without a winner (draw, stalemate, a flag fall against insufficient material, ...), not aborted or unplayed.
+var NOT_PLAYED = { created: 1, started: 1, aborted: 1, noStart: 1, unknownFinish: 1 };
+function isDraw(g) { return !!g && !g.winner && typeof g.status === 'string' && !NOT_PLAYED[g.status]; }
 function lastGameInfo(g, me) {
-  if (!g || !g.players || !g.winner && g.status !== 'draw' && g.status !== 'stalemate') return null;
+  if (!g || !g.players || !g.winner && !isDraw(g)) return null;
   var w = g.players.white || {}, b = g.players.black || {}, mine = ((w.user || {}).name || '').toLowerCase() === me.toLowerCase() ? 'white' : 'black', o = mine === 'white' ? b : w;
   return { res: g.winner ? (g.winner === mine ? 'won' : 'lost') : 'drew', color: mine, opp: clean(((o.user || {}).name) || (o.aiLevel ? 'Computer' : 'Anonymous')).slice(0, 24), opp_rating: +o.rating || 0 };
 }
@@ -55,7 +58,6 @@ function lastGameLine(g, me) { var i = lastGameInfo(g, me); return i ? G_EN[i.re
 async function runGames(input, token, nowS, st0) {
   var ctx = { token: token }, H = authHeader(ctx), T = Object.assign({}, T_EN, G_EN), diag = {}, saved = stObj(st0.gm);
   var playing = getJson('https://lichess.org/api/account/playing?nb=50', H, LT);
-  var acct = getJson('https://lichess.org/api/account', H, LT); acct.catch(function () {});
   var data = null, mine = [], theirs = [], model = null, stale = false, line = '', phase = '', moreLine = '', moreShort = '';
   var keep = function (st) { ['rating', 'wk', 'last', 'cur'].forEach(function (k) { if (st0[k] != null) st[k] = st0[k]; }); return st; };   // the puzzle mode's state stays for the way back
   try { data = await playing; } catch (e) {
@@ -85,7 +87,7 @@ async function runGames(input, token, nowS, st0) {
   } else if (diag.games && saved && saved.board) { model = saved; phase = (saved.game || {}).phase || 'turn'; stale = true; }
   else if (!diag.games) {   // no ongoing game at all: the last finished correspondence game, with its result
     try {
-      var a = await acct, un = /^[A-Za-z0-9_-]{2,30}$/.test(a.username || '') ? a.username : '';
+      var a = await getJson('https://lichess.org/api/account', H, LT), un = /^[A-Za-z0-9_-]{2,30}$/.test(a.username || '') ? a.username : '';
       if (un) {
         var r = await getRaw('https://lichess.org/api/games/user/' + un + '?max=1&perfType=correspondence&ongoing=false&moves=true&tags=false&clocks=false&evals=false&opening=false', Object.assign({ Accept: 'application/x-ndjson' }, H), runLeft(2200));
         if (r.status !== 200) throw Object.assign(new Error('http'), { status: r.status });

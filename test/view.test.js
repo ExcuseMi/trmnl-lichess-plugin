@@ -21,6 +21,12 @@ test('no custom CSS outside the board: no style= or <style> in shared.liquid or 
     assert.ok(!/<style\b/i.test(t), f + ' has a <style> block');
   }
 });
+// The build injects the icon and the pieces: the built markup (what trmnlp lint reads) must stay free of style= and opacity too.
+test('built shared.liquid: the injected icon and pieces carry no style= and no opacity (trmnlp lint)', () => {
+  const t = require('../tools/build.js').page().replace(/<script\b[\s\S]*?<\/script>/g, '');
+  assert.ok(!/\sstyle\s*=/i.test(t), 'built markup has style=');
+  assert.ok(!/opacity/i.test(t), 'built markup has opacity');
+});
 
 test('the board takes its colours from the Framework resolver (no hard-coded greys) and keeps its light look in dark mode', () => {
   const asked = [];

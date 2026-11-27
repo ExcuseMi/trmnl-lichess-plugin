@@ -11,7 +11,7 @@ const T = (n) => fs.readFileSync(path.join(FXD, n), 'utf8');
 const NOW = Date.UTC(2026, 10, 14, 10) / 1000;
 function load(fetchImpl) {
   const ctx = { console, setTimeout, clearTimeout, AbortController, fetch: fetchImpl, JSON, Date, Promise, Math, Object, Array, String, Number, RegExp, Error, encodeURIComponent };
-  vm.createContext(ctx); vm.runInContext(bundle() + '\n;this.api = { run, perfPoints, change30 };', ctx); return ctx.api;
+  vm.createContext(ctx); vm.runInContext(bundle() + '\n;this.api = { run, perfPoints, changeN, lastGameInfo };', ctx); return ctx.api;
 }
 const resp = (status, body) => ({ status, text: async () => (typeof body === 'string' ? body : JSON.stringify(body)) });
 const input = (state) => ({ trmnl: { system: { timestamp_utc: NOW }, state, plugin_settings: { custom_fields_values: { mode: 'profile' } }, oauth: { access_token: 'SECRET-TOKEN' } } });
@@ -78,7 +78,7 @@ test('profile: a new player with one provisional perf: hero only, no change, no 
   assert.strictEqual(o.pf.week.n, 5); assert.strictEqual(o.pf.week.change, '', 'no week change for a provisional rating'); assert.strictEqual(o.pf.week.streak, '');
 });
 
-test('profile: calls run side by side (all three at once with a saved name), only profile endpoints, token sent and never in the answer', async () => {
+test('profile: one call at a time (account first), only profile endpoints, token sent and never in the answer', async () => {
   const calls = [], seen = [];
   const f = async (url, opt) => { seen.push((opt.headers || {}).Authorization); return router({}, calls)(url, opt); };
   const first = await load(f).run(input());
@@ -89,7 +89,7 @@ test('profile: calls run side by side (all three at once with a saved name), onl
   const slow = router({ 'https://lichess.org/api/account': async () => { await gate; return resp(200, J('profile_account_many.json')); } }, calls);
   const p = load(slow).run(input(first.trmnl_state));
   await new Promise((r) => setTimeout(r, 30));
-  assert.strictEqual(calls.length, 3, 'history and games start before the account answers when the name is saved: ' + calls.join(' '));
+  assert.strictEqual(calls.length, 1, 'one request at a time (the Lichess API asks for it): ' + calls.join(' '));
   release(); await p;
   assert.ok(JSON.stringify(first.trmnl_state).length < 7500 && first.trmnl_state.pf.name === 'KnightOwl');
 });
@@ -119,4 +119,13 @@ test('profile: failures are said on screen; saved profile stands in; 401 asks to
 test('profile: the setting lists Profile and the build ships the mode; puzzles mode is unchanged', () => {
   const y = fs.readFileSync(path.join(__dirname, '../plugin/src/settings.yml'), 'utf8');
   assert.ok(/- Puzzles: puzzles\n  - Your games: games\n  - Profile: profile/.test(y), 'mode options: key and the other options unchanged');
+});
+
+test('a finished game without a winner is a draw (flag fall against insufficient material too); aborted games are not counted', () => {
+  const api = load(async () => ({ status: 599, text: async () => '' }));
+  const g = (status, winner) => ({ status, winner, players: { white: { user: { name: 'KnightOwl' } }, black: { user: { name: 'Rival' }, rating: 1500 } } });
+  assert.strictEqual(api.lastGameInfo(g('outoftime'), 'KnightOwl').res, 'drew');
+  assert.strictEqual(api.lastGameInfo(g('draw'), 'KnightOwl').res, 'drew');
+  assert.strictEqual(api.lastGameInfo(g('outoftime', 'white'), 'KnightOwl').res, 'won');
+  assert.strictEqual(api.lastGameInfo(g('aborted'), 'KnightOwl'), null);
 });

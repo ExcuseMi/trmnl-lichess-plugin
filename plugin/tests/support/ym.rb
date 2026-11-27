@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 # Shared by plugin/tests/*_spec.rb (trmnlp test) and tools/render_sheet_spec.rb (review sheets): fixtures, Lichess mocks,
 # the OAuth seed and ym_render(trmnl, case). A case: {name, view, device, dark, palette, scenario, puzzle, checks}.
-# Scenarios: top_live, top_tv, top_fail, top_offline (mode Top game), follow_playing, follow_last, follow_unknown, follow_empty, follow_fail (mode Following), games_one, games_many, games_none, games_fail, games_scope (mode Your games), account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
+# Scenarios: top_live, top_nologin, top_tv, top_fail, top_offline (mode Top game), follow_playing, follow_last, follow_unknown, follow_empty, follow_fail (mode Following), games_one, games_many, games_none, games_fail, games_scope (mode Your games; games_wait_long: an 18-character opponent), account (Lichess login, rising rating), daily (no login: the connect screen), case (a board case), owner (a real puzzle and rating), banner (the shown puzzle was solved), offline.
 require 'json'
 require 'fileutils'
 require 'time'
@@ -199,6 +199,7 @@ def ym_render(trmnl, c)
   when 'profile_fail' then mocks = profile_mocks(status: 503); login = 'tok'
   when 'profile_partial' then mocks = profile_mocks(history_status: 503, games_status: 503); login = 'tok'
   when 'top_live' then mocks = top_mocks; login = 'tok'
+  when 'top_nologin' then mocks = top_mocks   # no Lichess login: Top game still shows the game
   when 'top_tv' then mocks = top_mocks(broadcast: 'top_broadcast_none.json'); login = 'tok'
   when 'top_fail' then mocks = top_mocks(status: 503, tv: false); login = 'tok'
   when 'top_offline'
@@ -216,6 +217,7 @@ def ym_render(trmnl, c)
   when 'games_many' then mocks = games_mocks(playing: 'games_playing_many.json'); login = 'tok'
   when 'games_none' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
   when 'games_wait' then mocks = games_mocks(playing: 'games_playing_none.json'); login = 'tok'
+  when 'games_wait_long' then mocks = games_mocks(playing: 'games_playing_long_name.json'); login = 'tok'   # an 18-character opponent name
   when 'games_last' then mocks = games_mocks(playing: 'games_playing_empty.json'); login = 'tok'
   when 'games_nothing' then mocks = games_mocks(playing: 'games_playing_empty.json', last: false).merge('https://lichess.org/api/games/user/Demo*' => { body: '' }); login = 'tok'
   when 'games_fail' then mocks = games_mocks(status: 503); login = 'tok'
@@ -267,7 +269,9 @@ def ym_checks(s, c)
   expect(small).to be_empty, "#{c['name']}: text under #{OG_MIN_TEXT_PX}px on the OG: #{small.inspect}"
   share = s.evaluate(PORTRAIT_BOARD_JS)
   # rendered 2026-11-15: live modes 70 to 84 % (two player cards, the event and the QR under the board), the rest 92 to 100 %; thresholds sit 5 points below the lowest
-  expect(share).to be >= (c['scenario'].to_s =~ /^(top|follow)/ ? 0.65 : 0.87), "#{c['name']}: the board is #{(share * 100).round} % of the portrait width"
+  # The X (3:4) is height-bound: the board is 66 % of the height = 84 % of the width (2026-11-27); the OG (3:5) is width-bound.
+  min_share = c['scenario'].to_s =~ /^(top|follow)/ ? 0.65 : c['device'].to_s == 'v2' ? 0.80 : 0.87
+  expect(share).to be >= min_share, "#{c['name']}: the board is #{(share * 100).round} % of the portrait width"
   hdr = s.evaluate(HEADER_OVERLAP_JS)
   expect(hdr).to be_empty, "#{c['name']}: Profile header: #{hdr.inspect}"
   outside = s.evaluate(PROBLEMS_INSIDE_JS)
